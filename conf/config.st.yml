@@ -1,0 +1,62 @@
+# stage
+system:
+  # 系统名称
+  app-name: go-gin-rest-api
+  # 系统环境
+  run-mode: st
+  # url前缀
+  url-path-prefix: api
+  # 程序监听端口
+  port: 8080
+  # API地址
+  base-api: http://10.75.3.30:8080
+  # 开启全局事务管理器
+  transaction: true
+  # 是否初始化数据(没有初始数据时使用, 已发布正式版谨慎使用)
+  init-data: true
+
+logs:
+  # 日志等级(-1:Debug, 0:Info, -1<=level<=5, 参照zap.level源码)
+  level: 0
+  # 日志路径
+  path: logs
+  # 文件最大大小, M
+  max-size: 50
+  # 备份数
+  max-backups: 100
+  # 存放时间, 天
+  max-age: 30
+  # 是否压缩
+  compress: false
+
+mysql:
+  # 用户名
+  username: root
+  # 密码
+  password: mysql
+  # 数据库名
+  database: go-gin-rest-api
+  # 主机地址
+  host: 10.75.3.30
+  # 端口
+  port: 3306
+  # 连接字符串查询参数
+  query: charset=utf8&parseTime=True&loc=Local&timeout=10000ms
+
+# casbin配置
+casbin:
+  # 模型配置文件, 默认以conf目录为根目录
+  model-path: "rbac_model.conf"
+
+# jwt配置
+jwt:
+  # token过期时间, 小时
+  timeout: 2
+  # token更新时间, 小时
+  max-refresh: 2
+
+# 速率限制配置
+rate-limit:
+  # 访问最大限制, 次/秒
+  max: 100
+ 

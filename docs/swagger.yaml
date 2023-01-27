@@ -1,0 +1,890 @@
+definitions:
+  gorm_io_gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  models.Req:
+    properties:
+      filter:
+        additionalProperties: true
+        description: "Filter is the query object for building the value for the `WHERE`
+          clause.\nThe full documentation of the supported operators is writtern in
+          the README.\nAn example for filter object:\n\n\tparams, err := p.Parse([]byte(`{\n\t\t\"filter\":
+          {\n\t\t\t\"account\": { \"$like\": \"%github%\" },\n\t\t\t\"$or\": [\n\t\t\t\t{
+          \"city\": \"TLV\" },\n\t\t\t\t{ \"city\": \"NYC\" }\n\t\t\t]\n\t\t}\n\t}`))"
+        type: object
+      limit:
+        description: Limit must be > 0 and <= to `LimitMaxValue`.
+        type: integer
+      offset:
+        description: Offset must be >= 0.
+        type: integer
+      select:
+        description: "Select contains the list of expressions define the value for
+          the `SELECT` clause.\nFor example:\n\n\tparams, err := p.Parse([]byte(`{\n\t\t\"select\":
+          [\"name\", \"age\"]\n\t}`))"
+        items:
+          type: string
+        type: array
+      sort:
+        description: "Sort contains list of expressions define the value for the `ORDER
+          BY` clause.\nIn order to return the rows in descending order you can prefix
+          your field with `-`.\nFor example:\n\n\tparams, err := p.Parse([]byte(`{\n\t\t\"sort\":
+          [\"name\", \"-age\", \"+redundant\"]\n\t}`))"
+        items:
+          type: string
+        type: array
+    type: object
+  models.ReqToken:
+    properties:
+      AppId:
+        description: AppId
+        type: string
+      AppSecret:
+        description: AppSecret
+        type: string
+    required:
+    - AppId
+    - AppSecret
+    type: object
+  models.Resp:
+    properties:
+      code:
+        description: 错误代码
+        type: integer
+      data:
+        description: 数据内容
+      msg:
+        description: 消息提示
+        type: string
+      request_id:
+        description: 请求ID
+        type: string
+    type: object
+  models.Token:
+    properties:
+      expires:
+        description: 过期时间
+        type: string
+      token:
+        description: token
+        type: string
+    type: object
+  sys.RbacRolePerm:
+    properties:
+      absolutePath:
+        description: 路由地址
+        type: string
+      httpMethod:
+        description: HTTP方法
+        type: string
+    required:
+    - absolutePath
+    - httpMethod
+    type: object
+  sys.SysRole:
+    properties:
+      Desc:
+        description: 角色说明
+        type: string
+      Keyword:
+        description: 角色关键词
+        type: string
+      Name:
+        description: 角色名称
+        type: string
+      Operator:
+        type: string
+      Status:
+        description: 角色状态(正常/禁用, 默认正常)
+        type: boolean
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm_io_gorm.DeletedAt'
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    required:
+    - Name
+    type: object
+  sys.SysSystem:
+    properties:
+      AppId:
+        description: AppId
+        type: string
+      AppSecret:
+        description: AppSecret
+        type: string
+      IP:
+        description: 系统来源IP
+        type: string
+      Operator:
+        description: 操作人
+        type: string
+      SystemName:
+        description: 系统名称
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm_io_gorm.DeletedAt'
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    required:
+    - AppId
+    - AppSecret
+    type: object
+info:
+  contact:
+    email: linchao@mucfc.com
+    name: 林超
+    url: https://ops.mucfc.com
+  description: uWork部署作业API，支持腾讯云/阿里云API操作、K8S集群API、Helm部署操作API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://ops.mucfc.com
+  title: uWork部署作业API
+  version: 1.0.0
+paths:
+  /api/v1/apilog/get/{requestid}:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetApiLogById
+      parameters:
+      - description: RequestId
+        in: path
+        name: requestid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]根据ID获取接口日志'
+      tags:
+      - '[系统内部]日志'
+  /api/v1/apilog/list:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: GetApiLog
+      parameters:
+      - description: RQL查询json
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Req'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取服务接口日志'
+      tags:
+      - '[系统内部]日志'
+  /api/v1/base/auth:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: auth
+      parameters:
+      - description: token请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ReqToken'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Token'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      summary: '[系统内部]获取token'
+      tags:
+      - '[系统内部]Token'
+  /api/v1/base/refresh_token:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: refresh_token
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Token'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]刷新token'
+      tags:
+      - '[系统内部]Token'
+  /api/v1/reqapilog/get/{requestid}:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetReqApiLogById
+      parameters:
+      - description: RequestId
+        in: path
+        name: requestid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]根据ID获取请求接口日志'
+      tags:
+      - '[系统内部]日志'
+  /api/v1/reqapilog/list:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: GetReqApiLog
+      parameters:
+      - description: RQL查询json
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Req'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取请求接口日志'
+      tags:
+      - '[系统内部]日志'
+  /api/v1/role/create:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: 3 CreateRole
+      parameters:
+      - description: 角色
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sys.SysRole'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]创建角色'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/delete/{id}:
+    delete:
+      consumes:
+      - application/x-json-stream
+      operationId: DeleteRoleById
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]删除角色'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/get/{id}:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: 2 GetRoleById
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]根据ID获取角色'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/list:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: 1 GetRoles
+      parameters:
+      - description: RQL查询json
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Req'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取角色列表'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/perm/create/{id}:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: CreateRolePerm
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 角色权限
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/sys.RbacRolePerm'
+          type: array
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]创建角色权限'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/perm/delete/{id}:
+    delete:
+      consumes:
+      - application/x-json-stream
+      operationId: DeleteRolePermById
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 角色权限
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/sys.RbacRolePerm'
+          type: array
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]删除角色权限'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/perm/get/{id}:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetRolePermById
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取角色所有权限'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/update/{id}:
+    patch:
+      consumes:
+      - application/x-json-stream
+      operationId: 4 UpdateRoleById
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 角色
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sys.SysRole'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]更新角色'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/users/create/{id}:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: CreateRoleUser
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 用户
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]创建角色用户'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/users/delete/{id}:
+    delete:
+      consumes:
+      - application/x-json-stream
+      operationId: DeleteRoleUserById
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 用户
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]删除角色用户'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/role/users/get/{id}:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetRoleUsersById
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取角色所有用户'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/router/list:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: GetRouters
+      parameters:
+      - description: RQL查询json
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Req'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取系统路由'
+      tags:
+      - '[系统内部]路由'
+  /api/v1/system/create:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: CreateSystem
+      parameters:
+      - description: 系统
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sys.SysSystem'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]创建系统'
+      tags:
+      - '[系统内部]系统'
+  /api/v1/system/delete/{id}:
+    delete:
+      consumes:
+      - application/x-json-stream
+      operationId: DeleteSystemById
+      parameters:
+      - description: 系统ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]删除系统'
+      tags:
+      - '[系统内部]系统'
+  /api/v1/system/get/{id}:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetSystemById
+      parameters:
+      - description: 系统ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]根据ID获取系统'
+      tags:
+      - '[系统内部]系统'
+  /api/v1/system/list:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: GetSystems
+      parameters:
+      - description: RQL查询json
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Req'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取系统列表'
+      tags:
+      - '[系统内部]系统'
+  /api/v1/system/perm/create/{id}:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: CreateSystemPerm
+      parameters:
+      - description: 系统ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 系统权限
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/sys.RbacRolePerm'
+          type: array
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]创建系统权限'
+      tags:
+      - '[系统内部]系统'
+  /api/v1/system/perm/delete/{id}:
+    delete:
+      consumes:
+      - application/x-json-stream
+      operationId: DeleteSystemPermById
+      parameters:
+      - description: 系统ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 系统权限
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/sys.RbacRolePerm'
+          type: array
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]删除系统权限'
+      tags:
+      - '[系统内部]系统'
+  /api/v1/system/perm/get/{id}:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetSystemPermById
+      parameters:
+      - description: 系统ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取系统所有权限'
+      tags:
+      - '[系统内部]系统'
+  /api/v1/system/update/{id}:
+    patch:
+      consumes:
+      - application/x-json-stream
+      operationId: UpdateSystemById
+      parameters:
+      - description: 系统ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 系统
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sys.SysSystem'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]更新系统'
+      tags:
+      - '[系统内部]系统'
+  /heatch_check:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: HeathCheck
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Resp'
+      summary: '[系统内部]健康检查接口'
+      tags:
+      - '[系统内部]路由'
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,6 @@
+.idea
+./tmp/
+./logs/*
+go-gin-rest-api
+go-gin-rest-api.exe
+go-gin-rest-api.exe~ 
