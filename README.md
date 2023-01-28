@@ -2,9 +2,96 @@
 
 <div align="center">
 gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
+<p align="center">
+<img src="https://img.shields.io/badge/Golang-1.19.5-brightgreen" alt="Go version"/>
+<img src="https://img.shields.io/badge/Gin-1.8.2-brightgreen" alt="Gin version"/>
+<img src="https://img.shields.io/badge/Gorm-1.24.3-brightgreen" alt="Gorm version"/> 
+</p>
 </div>
 
-## 使用开源类库，选择github star最多的库
+## 主要功能
+- 基于`Gin`框架开发的REST API
+- API使用`JWT`的Token认证和`Casbin`的接口RBAC权限控制
+- 使用`rql`REST资源查询语言,支持功能更丰富的数据查询接口
+- 使用`Gorm`支持MySQL数据库管理 
+- 使用`Viper`进行配置文件管理 
+- 使用`Zap`进行日志管理
+
+## 接口使用指南
+
+1.获取token
+``` shell
+curl -X 'POST' \
+  'http://127.0.0.1:8080/api/v1/base/auth' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/x-json-stream' \
+  -d '{
+  "AppId": "2023012801",
+  "AppSecret": "fa2e25cb060c8d748fd16ac5210581f41"
+}'
+```
+接口返回
+``` shell
+{
+  "token": "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJBcHBJZCI6IjIwMjMwMTI4MDEiLCJleHAiOjE2NzQ5MjQ3MTcsImlkZW50aXR5IjoiMjAyMzAxMjgwMSIsIm9yaWdfaWF0IjoxNjc0OTE3NTE3fQ.tL0dbrBMOwHJLAvpdHc88OGGxqUiSQHDR_fAupZ4PKsIrDV3CmYgoM4PPrE-3UW2qjV0cE_f_zQ25aRW8-4SNATAoUU1FGd500Ts-SP5WqK30SqEzih0nhhfGS8nRvDoJVzyD7xKip08EwfrmCyVgajYEi1DNC0y02g7jZ47qlManu53xArIFMAzu7bxQxYZPq5DcF0QF8LQipfKNx_LiFdv5ddv_3qf2J3o9uWWGgR_VjZ5p5u4qFFxGla4mSEUX-t9ZtD335D0YJPUayilGCOw7HyyxbdxVRIq1V6R-S17rJFaB48n8pCvpDY_nfs3tbggAMcoJpdBPwvRZlYwKg",
+  "expires": "2023-01-29T00:51:57.1720961+08:00"
+}
+```
+2.使用token请求API，如下也是rql的使用示例
+``` shell
+curl -X 'POST' \
+  'http://127.0.0.1:8080/api/v1/apilog/list' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJBcHBJZCI6IjIwMjMwMTI4MDEiLCJleHAiOjE2NzQ5MjQ3MTcsImlkZW50aXR5IjoiMjAyMzAxMjgwMSIsIm9yaWdfaWF0IjoxNjc0OTE3NTE3fQ.tL0dbrBMOwHJLAvpdHc88OGGxqUiSQHDR_fAupZ4PKsIrDV3CmYgoM4PPrE-3UW2qjV0cE_f_zQ25aRW8-4SNATAoUU1FGd500Ts-SP5WqK30SqEzih0nhhfGS8nRvDoJVzyD7xKip08EwfrmCyVgajYEi1DNC0y02g7jZ47qlManu53xArIFMAzu7bxQxYZPq5DcF0QF8LQipfKNx_LiFdv5ddv_3qf2J3o9uWWGgR_VjZ5p5u4qFFxGla4mSEUX-t9ZtD335D0YJPUayilGCOw7HyyxbdxVRIq1V6R-S17rJFaB48n8pCvpDY_nfs3tbggAMcoJpdBPwvRZlYwKg' \
+  -H 'Content-Type: application/x-json-stream' \
+  -d '{
+  "filter": {
+    "RequestId": "84692443-987c-4df1-b91c-606fcff6b556"
+  },
+  "limit": 10,
+  "offset": 0,
+  "select": [
+    "RequestId","RequestMethod","RequestURI","RequestBody","StatusCode","RespBody"
+  ],
+  "sort": [
+    "-StartTime"
+  ]
+}'
+```
+接口返回
+``` shell
+{
+  "request_id": "cd7548de-9622-46be-8543-478e70ceb793",
+  "code": 0,
+  "data": {
+    "offset": 0,
+    "limit": 10,
+    "total": 1,
+    "sortby": "",
+    "order": "StartTime desc",
+    "list": [
+      {
+        "ID": 33,
+        "CreatedAt": "2023-01-28T22:51:57+08:00",
+        "UpdatedAt": "2023-01-28T22:51:57+08:00",
+        "DeletedAt": null,
+        "RequestId": "84692443-987c-4df1-b91c-606fcff6b556",
+        "RequestMethod": "POST",
+        "RequestURI": "/api/v1/base/auth",
+        "RequestBody": "{\n  \"AppId\": \"2023012801\",\n  \"AppSecret\": \"fa2e25cb060c8d748fd16ac5210581f41\"\n}",
+        "StatusCode": 200,
+        "RespBody": "{\"token\":\"eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJBcHBJZCI6IjIwMjMwMTI4MDEiLCJleHAiOjE2NzQ5MjQ3MTcsImlkZW50aXR5IjoiMjAyMzAxMjgwMSIsIm9yaWdfaWF0IjoxNjc0OTE3NTE3fQ.tL0dbrBMOwHJLAvpdHc88OGGxqUiSQHDR_fAupZ4PKsIrDV3CmYgoM4PPrE-3UW2qjV0cE_f_zQ25aRW8-4SNATAoUU1FGd500Ts-SP5WqK30SqEzih0nhhfGS8nRvDoJVzyD7xKip08EwfrmCyVgajYEi1DNC0y02g7jZ47qlManu53xArIFMAzu7bxQxYZPq5DcF0QF8LQipfKNx_LiFdv5ddv_3qf2J3o9uWWGgR_VjZ5p5u4qFFxGla4mSEUX-t9ZtD335D0YJPUayilGCOw7HyyxbdxVRIq1V6R-S17rJFaB48n8pCvpDY_nfs3tbggAMcoJpdBPwvRZlYwKg\",\"expires\":\"2023-01-29T00:51:57.1720961+08:00\"}",
+        "ClientIP": "127.0.0.1",
+        "StartTime": "2023-01-28T22:51:57+08:00",
+        "ExecTime": "4.6134ms"
+      }
+    ]
+  },
+  "msg": "操作成功"
+}
+```
+
+## 使用golang大众开源类库
 - [gin](https://github.com/gin-gonic/gin) 一款高效的golang web框架 [教程](https://gin-gonic.com/zh-cn/docs/)
 - [gorm](https://gorm.io/gorm) 数据库ORM管理框架, 可自行扩展多种数据库类型 [教程](https://gorm.io/zh_CN/)
 - [rql](https://github.com/a8m/rql) 用于REST的资源查询语言，作为http请求和orm之间的连接器，gin和gorm的连接器
@@ -16,7 +103,7 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 - [lumberjack](https://github.com/natefinch/lumberjack) 日志切割工具, 高效分离大日志文件, 按日期保存文件
 - [cast](https://github.com/spf13/cast) 一个小巧、实用的类型转换库，用于将一个类型转为另一个类型 [教程](https://darjun.github.io/2020/01/20/godailylib/cast/)
 - [go-cache](https://github.com/patrickmn/go-cache)  缓存库
-- [resty](https://github.com/go-resty/resty) Go的简单HTTP和REST请求客户端   
+- [resty](https://github.com/go-resty/resty) Go的简单HTTP和REST请求客户端  [教程](https://darjun.github.io/2021/06/26/godailylib/resty/) 
 - [cron](https://github.com/robfig/cron) 实现了 cron 规范解析器和任务运行器，简单来讲就是包含了定时任务所需的功能  [教程](https://darjun.github.io/2020/06/25/godailylib/cron) 
 - [tunny](https://github.com/Jeffail/tunny) 协程池，支持同步执行汇总结果,支持超时、取消 [教程](https://https://darjun.github.io/2021/06/10/godailylib/tunny/) 
 
@@ -58,7 +145,6 @@ docker run -d --name mysql -h mysql -p 3306:3306 --restart=always -v D:\MySQL:/v
 ```
 
 ## 快速开始开发
-
 ``` 
 golang版本>1.19
 # 设置常用环境变量
@@ -75,17 +161,14 @@ gowatch
 ```
 
 ## Prometheus exportor集成
-
 ```  
 访问地址:http://127.0.0.1:8080/metrics
 ```
 
 ## Swagger文档自动生成
-
 ``` 
 go install github.com/swaggo/swag/cmd/swag@latest 
 swag init --parseDependency --parseVendor --parseInternal --parseDepth 1
-
 访问地址:http://127.0.0.1:8080/swagger/index.html
 ```
 
@@ -111,13 +194,20 @@ BuildGoVersion=`go version`
 LDFlags="-w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"
 go build -ldflags="$LDFlags" -o  ./go-gin-rest-api
 ```
-## Docker 镜像制作
+## Docker 镜像构建
 ``` shell
 # 使用multi-stage(多阶段构建)需要docker 17.05+版本支持
-DOCKER_BUILDKIT=1 docker build  --network=host --no-cache --force-rm  -t   go-gin-rest-api:1.0.0 .
-docker push  go-gin-rest-api
+DOCKER_BUILDKIT=1 docker build  --network=host --no-cache --force-rm -t lc13579443/go-gin-rest-api:1.0.0 .
+docker push  lc13579443/go-gin-rest-api
 docker save -o go-gin-rest-api-1.0.0.tar  go-gin-rest-api:1.0.0
 docker load -i go-gin-rest-api-1.0.0.tar
 ```
-
+## Docker 容器运行
+``` shell
+docker run -d --name go-gin-rest-api -e RunMode=se -p 8080:8080 --restart always lc13579443/go-gin-rest-api:1.0.0 
+```
+## K8S 容器运行
+``` shell
+kubectl apply -f .\k8s-deploy.yaml
+```
 

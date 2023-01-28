@@ -49,7 +49,7 @@ func init() {
 
 // @title go-gin-rest-api
 // @version 1.0.0
-// @description go-gin-rest-api
+// @description go-gin-rest-api Golang后台api开发脚手架
 // @termsOfService https://github.com/linclin
 // @contact.name LC
 // @contact.url https://github.com/linclin

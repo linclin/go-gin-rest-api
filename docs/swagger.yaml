@@ -144,15 +144,15 @@ definitions:
     type: object
 info:
   contact:
-    email: linchao@mucfc.com
-    name: 林超
-    url: https://ops.mucfc.com
-  description: uWork部署作业API，支持腾讯云/阿里云API操作、K8S集群API、Helm部署操作API
+    email: 13579443@qq.com
+    name: LC
+    url: https://github.com/linclin
+  description: go-gin-rest-api Golang后台api开发脚手架
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: https://ops.mucfc.com
-  title: uWork部署作业API
+  termsOfService: https://github.com/linclin
+  title: go-gin-rest-api
   version: 1.0.0
 paths:
   /api/v1/apilog/get/{requestid}:
@@ -228,25 +228,6 @@ paths:
           schema:
             $ref: '#/definitions/models.Resp'
       summary: '[系统内部]获取token'
-      tags:
-      - '[系统内部]Token'
-  /api/v1/base/refresh_token:
-    post:
-      consumes:
-      - application/x-json-stream
-      operationId: refresh_token
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.Token'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.Resp'
-      security:
-      - ApiKeyAuth: []
-      summary: '[系统内部]刷新token'
       tags:
       - '[系统内部]Token'
   /api/v1/reqapilog/get/{requestid}:

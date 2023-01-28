@@ -86,5 +86,8 @@ func Mysql() {
 	if !global.Mysql.Migrator().HasTable(&sys.SysApiLog{}) {
 		global.Mysql.Migrator().CreateTable(&sys.SysApiLog{})
 	}
+	if !global.Mysql.Migrator().HasTable(&sys.SysReqApiLog{}) {
+		global.Mysql.Migrator().CreateTable(&sys.SysReqApiLog{})
+	}
 	global.Log.Debug("初始化mysql完成")
 }

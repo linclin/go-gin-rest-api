@@ -28,8 +28,8 @@ func InitSysSystem() {
 			Model: gorm.Model{
 				ID: 1,
 			},
-			AppId:      "2021111601",
-			AppSecret:  "fa2e25cb060c8d748fd16ac5210581f4",
+			AppId:      "2023012801",
+			AppSecret:  "fa2e25cb060c8d748fd16ac5210581f41",
 			SystemName: "api",
 			IP:         "",
 			Operator:   "lc",
@@ -38,8 +38,8 @@ func InitSysSystem() {
 			Model: gorm.Model{
 				ID: 2,
 			},
-			AppId:      "2021111602",
-			AppSecret:  "61c94399f47c485334b48f8f340bc07b",
+			AppId:      "2023012802",
+			AppSecret:  "61c94399f47c485334b48f8f340bc07b2",
 			SystemName: "UI",
 			IP:         "",
 			Operator:   "lc",

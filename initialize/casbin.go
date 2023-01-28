@@ -28,8 +28,8 @@ func InitCasbin() {
 	//CasbinACLEnforcer.LoadPolicy()
 	//CasbinACLEnforcer.EnableEnforce(false)
 	// 添加API系统权限
-	CasbinACLEnforcer.AddPolicy("2023012701", "/*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)")
-	CasbinACLEnforcer.AddPolicy("2023012702", "/*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)")
+	CasbinACLEnforcer.AddPolicy("2023012801", "/*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)")
+	CasbinACLEnforcer.AddPolicy("2023012801", "/*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)")
 	// 添加前台普通用户组权限
 	CasbinACLEnforcer.AddPolicy("group_user", "/*", "GET")
 	// 添加前台开发用户组权限

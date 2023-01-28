@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
 	"go-gin-rest-api/models"
 	"go-gin-rest-api/models/sys"
@@ -75,26 +74,13 @@ func auth(c *gin.Context) (interface{}, error) {
 	var system sys.SysSystem
 	query := global.Mysql.Where(req).First(&system)
 	if query.Error != nil {
-		return nil, errors.New(fmt.Sprintf("AppId:%s和AppSecret:%s不存在:%s", req.AppId, req.AppSecret, query.Error))
+		return nil, fmt.Errorf("AppId:%s和AppSecret:%s不存在:%s", req.AppId, req.AppSecret, query.Error)
 	}
 	// 将AppId以json格式写入, payloadFunc/authorizator会使用到
 	return map[string]interface{}{
 		"AppId": req.AppId,
 		"exp":   time.Now().Unix() + 7200,
 	}, nil
-}
-
-// @Summary [系统内部]刷新token
-// @Id refresh_token
-// @Tags [系统内部]Token
-// @version 1.0
-// @Accept application/x-json-stream
-// @Success 200 object models.Token 返回列表
-// @Failure 400 object models.Resp 查询失败
-// @Security ApiKeyAuth
-// @Router /api/v1/base/refresh_token [post]
-func refresh_token(c *gin.Context) {
-
 }
 
 func authorizator(data interface{}, c *gin.Context) bool {
@@ -108,22 +94,12 @@ func authorizator(data interface{}, c *gin.Context) bool {
 
 func unauthorized(c *gin.Context, code int, message string) {
 	global.Log.Error(fmt.Sprintf("JWT认证失败, 错误码%d, 错误信息%s", code, message))
-	if message == models.LoginCheckErrorMsg {
-		c.JSON(http.StatusUnauthorized, models.Resp{
-			Code: http.StatusUnauthorized,
-			Data: models.LoginCheckErrorMsg,
-			Msg:  models.CustomError[models.Unauthorized],
-		})
-		return
-	} else {
-		c.JSON(http.StatusUnauthorized, models.Resp{
-			Code: http.StatusUnauthorized,
-			Data: "认证失败",
-			Msg:  models.CustomError[models.Unauthorized],
-		})
-		return
-	}
-
+	c.JSON(http.StatusUnauthorized, models.Resp{
+		Code: http.StatusUnauthorized,
+		Data: "认证失败",
+		Msg:  message,
+	})
+	return
 }
 
 func loginResponse(c *gin.Context, code int, token string, expires time.Time) {
