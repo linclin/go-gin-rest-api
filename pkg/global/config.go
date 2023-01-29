@@ -11,7 +11,6 @@ type Configuration struct {
 	Casbin    CasbinConfiguration    `mapstructure:"casbin" json:"casbin"`
 	Jwt       JwtConfiguration       `mapstructure:"jwt" json:"jwt"`
 	RateLimit RateLimitConfiguration `mapstructure:"rate-limit" json:"rateLimit"`
-	Trace     TraceConfiguration     `mapstructure:"trace" json:"trace"`
 }
 
 type SystemConfiguration struct {
@@ -20,7 +19,6 @@ type SystemConfiguration struct {
 	UrlPathPrefix string `mapstructure:"url-path-prefix" json:"urlPathPrefix"`
 	Port          int    `mapstructure:"port" json:"port"`
 	BaseApi       string `mapstructure:"base-api" json:"baseApi"`
-	UseRedis      bool   `mapstructure:"use-redis" json:"useRedis"`
 	Transaction   bool   `mapstructure:"transaction" json:"transaction"`
 	InitData      bool   `mapstructure:"init-data" json:"initData"`
 }
@@ -52,11 +50,6 @@ type CasbinConfiguration struct {
 type JwtConfiguration struct {
 	Timeout    int `mapstructure:"timeout" json:"timeout"`
 	MaxRefresh int `mapstructure:"max-refresh" json:"maxRefresh"`
-}
-
-type TraceConfiguration struct {
-	UseTrace   bool   `mapstructure:"use-trace" json:"useTrace"`
-	JaegerAddr string `mapstructure:"jaeger-addr" json:"jaegerAddr"`
 }
 
 type RateLimitConfiguration struct {

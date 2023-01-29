@@ -11,11 +11,12 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 
 ## 主要功能
 - 基于`Gin`框架开发的REST API
-- API使用`JWT`的Token认证和`Casbin`的接口RBAC权限控制
-- 使用`rql`REST资源查询语言,支持功能更丰富的数据查询接口
-- 使用`Gorm`支持MySQL数据库管理 
-- 使用`Viper`进行配置文件管理 
-- 使用`Zap`进行日志管理
+- API使用`JWT`的Token认证和`Casbin`的接口ACL、RBAC权限控制
+- 使用`rql`资源查询语言,支持功能更丰富的数据查询接口
+- 使用`Gorm`支持MySQL数据库
+- 使用`Viper`进行配置文件管理，配置文件变更热加载，无需重启应用(框架基础http服务、日志、数据库不变，仅针对业务配置生效) 
+- 使用`Zap`日志输出，搭配`lumberjack`日志切割
+- 使用`robfig/cron`运行定时任务
 
 ## 接口使用指南
 

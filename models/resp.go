@@ -88,11 +88,10 @@ func FailWithDetailed(data interface{}, message string, c *gin.Context) {
 
 // 分页封装
 type PageInfo struct {
+	Total  int64  `json:"total"`                // 数据总条数
 	Offset int    `json:"offset" form:"offset"` // 当前页码
 	Limit  int    `json:"limit" form:"limit"`   // 每页显示条数
-	Total  int64  `json:"total"`                // 数据总条数
 	SortBy string `json:"sortby"`               // 排序字段
-	Order  string `json:"order"`                //排序字段升序降序
 
 }
 

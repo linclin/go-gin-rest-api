@@ -22,15 +22,6 @@ import (
 func GetApiLog(c *gin.Context) {
 	rqlQueryParser, err := rql.NewParser(rql.Config{
 		Model: sys.SysApiLog{},
-		// Since we work with gorm, we want to use its column-function, and not rql default.
-		// although, they are pretty the same.
-		//ColumnFn: gorm.ToDBName,
-		// Use your own custom logger. This logger is used only in the building stage.
-		//Log: global.Log.Debug,
-		// Default limit returned by the `Parse` function if no limit provided by the user.
-		DefaultLimit: 10,
-		// Accept only requests that pass limit value that is greater than or equal to 200.
-		LimitMaxValue: 200,
 	})
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
@@ -64,7 +55,7 @@ func GetApiLog(c *gin.Context) {
 	resp.PageInfo.Offset = rqlParams.Offset
 	resp.PageInfo.Limit = rqlParams.Limit
 	resp.PageInfo.Total = count
-	resp.PageInfo.Order = rqlParams.Sort
+	resp.PageInfo.SortBy = rqlParams.Sort
 	// 设置数据列表
 	resp.List = list
 	models.OkWithData(resp, c)
