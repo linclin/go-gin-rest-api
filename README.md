@@ -13,14 +13,16 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 - 基于`Gin`框架开发的REST API
 - API使用`JWT`的Token认证和`Casbin`的接口ACL、RBAC权限控制
 - 使用`rql`资源查询语言,支持功能更丰富的数据查询接口
-- 使用`Gorm`支持MySQL数据库
-- 使用`Viper`进行配置文件管理，配置文件变更热加载，无需重启应用(框架基础http服务、日志、数据库不变，仅针对业务配置生效) 
-- 使用`Zap`日志输出，搭配`lumberjack`日志切割
-- 使用`robfig/cron`运行定时任务
+- MySQL数据库使用`Gorm`支持
+- 配置文件管理使用`Viper`进行，配置文件变更热加载，无需重启应用(框架基础http服务、日志、数据库不变，仅针对业务配置生效) 
+- 日志输出使用`Zap`，搭配`lumberjack`日志切割
+- 定时任务使用`robfig/cron`运行
 
-## 接口使用指南
 
-1.获取token
+## 接口使用指南  
+- golang客户端示例代码参见client目录，使用`resty`和`go-cache`编写
+
+- 1.获取JWT生成的token，AppId和AppSecret存放SysSystem模型
 ``` shell
 curl -X 'POST' \
   'http://127.0.0.1:8080/api/v1/base/auth' \
@@ -38,7 +40,7 @@ curl -X 'POST' \
   "expires": "2023-01-29T00:51:57.1720961+08:00"
 }
 ```
-2.使用token请求API，如下也是rql的使用示例
+- 2.使用token请求API，如下也是rql的使用示例
 ``` shell
 curl -X 'POST' \
   'http://127.0.0.1:8080/api/v1/apilog/list' \
@@ -103,7 +105,7 @@ curl -X 'POST' \
 - [zap](https://github.com/uber-go/zap): uber开源的日志库zap，对性能和内存分配做了极致的优化.  [教程](https://darjun.github.io/2020/04/23/godailylib/zap/)
 - [lumberjack](https://github.com/natefinch/lumberjack) 日志切割工具, 高效分离大日志文件, 按日期保存文件
 - [cast](https://github.com/spf13/cast) 一个小巧、实用的类型转换库，用于将一个类型转为另一个类型 [教程](https://darjun.github.io/2020/01/20/godailylib/cast/)
-- [go-cache](https://github.com/patrickmn/go-cache)  缓存库
+- [go-cache](https://github.com/patrickmn/go-cache)  缓存库 [教程](https://cloud.tencent.com/developer/article/2176204)
 - [resty](https://github.com/go-resty/resty) Go的简单HTTP和REST请求客户端  [教程](https://darjun.github.io/2021/06/26/godailylib/resty/) 
 - [cron](https://github.com/robfig/cron) 实现了 cron 规范解析器和任务运行器，简单来讲就是包含了定时任务所需的功能  [教程](https://darjun.github.io/2020/06/25/godailylib/cron) 
 - [tunny](https://github.com/Jeffail/tunny) 协程池，支持同步执行汇总结果,支持超时、取消 [教程](https://https://darjun.github.io/2021/06/10/godailylib/tunny/) 

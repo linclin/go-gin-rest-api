@@ -222,6 +222,9 @@ github.com/modern-go/reflect2
 # github.com/natefinch/lumberjack v2.0.0+incompatible
 ## explicit
 github.com/natefinch/lumberjack
+# github.com/patrickmn/go-cache v2.1.0+incompatible
+## explicit
+github.com/patrickmn/go-cache
 # github.com/pelletier/go-toml/v2 v2.0.6
 ## explicit; go 1.16
 github.com/pelletier/go-toml/v2
@@ -438,3 +441,4 @@ gorm.io/gorm/utils
 # gorm.io/plugin/dbresolver v1.3.0
 ## explicit; go 1.14
 gorm.io/plugin/dbresolver
+ 
