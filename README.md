@@ -16,13 +16,13 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 - MySQL数据库使用`Gorm`支持
 - 配置文件管理使用`Viper`进行，配置文件变更热加载，无需重启应用(框架基础http服务、日志、数据库不变，仅针对业务配置生效) 
 - 日志输出使用`Zap`，搭配`lumberjack`日志切割
-- 定时任务使用`robfig/cron`运行
+- 定时任务使用`robfig/cron`运行,使用基于MySQL唯一索引的分布式锁避免多副本重复执行，并记录任务执行状态到数据表
 
 
 ## 接口使用指南  
 - golang客户端示例代码参见client目录，使用`resty`和`go-cache`编写
 
-- 1.获取JWT生成的token，AppId和AppSecret存放SysSystem模型
+- 1.获取JWT生成的token(2小时超时)，AppId和AppSecret存放SysSystem模型
 ``` shell
 curl -X 'POST' \
   'http://127.0.0.1:8080/api/v1/base/auth' \
@@ -53,9 +53,6 @@ curl -X 'POST' \
   },
   "limit": 10,
   "offset": 0,
-  "select": [
-    "RequestId","RequestMethod","RequestURI","RequestBody","StatusCode","RespBody"
-  ],
   "sort": [
     "-StartTime"
   ]

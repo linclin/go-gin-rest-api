@@ -230,6 +230,32 @@ paths:
       summary: '[系统内部]获取token'
       tags:
       - '[系统内部]Token'
+  /api/v1/cronjoblog/list:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: GetCronjobLog
+      parameters:
+      - description: RQL查询json
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Req'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取定时任务日志'
+      tags:
+      - '[系统内部]日志'
   /api/v1/reqapilog/get/{requestid}:
     get:
       consumes:

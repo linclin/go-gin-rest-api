@@ -83,13 +83,14 @@ func Routers() *gin.Engine {
 	apiGroup := r.Group(global.Conf.System.UrlPathPrefix)
 	// 方便统一添加路由前缀
 	v1Group := apiGroup.Group("v1")
-	sysRouter.InitPublicRouter(v1Group)                    // 注册公共路由
-	sysRouter.InitBaseRouter(v1Group, authMiddleware)      // 注册基础路由, 不会鉴权
-	sysRouter.InitRoleRouter(v1Group, authMiddleware)      // 注册角色路由
-	sysRouter.InitSystemRouter(v1Group, authMiddleware)    // 注册系统路由
-	sysRouter.InitRouterRouter(v1Group, authMiddleware)    // 注册系统路由路由
-	sysRouter.InitApiLogRouter(v1Group, authMiddleware)    // 注册服务接口日志路由
-	sysRouter.InitReqApiLogRouter(v1Group, authMiddleware) // 注册请求接口日志路由
+	sysRouter.InitPublicRouter(v1Group)                     // 注册公共路由
+	sysRouter.InitBaseRouter(v1Group, authMiddleware)       // 注册基础路由, 不会鉴权
+	sysRouter.InitRoleRouter(v1Group, authMiddleware)       // 注册角色路由
+	sysRouter.InitSystemRouter(v1Group, authMiddleware)     // 注册系统路由
+	sysRouter.InitRouterRouter(v1Group, authMiddleware)     // 注册系统路由路由
+	sysRouter.InitApiLogRouter(v1Group, authMiddleware)     // 注册服务接口日志路由
+	sysRouter.InitReqApiLogRouter(v1Group, authMiddleware)  // 注册请求接口日志路由
+	sysRouter.InitCronjobLogRouter(v1Group, authMiddleware) // 注册任务日志路由
 	global.Log.Debug("初始化基础路由完成")
 	return r
 }

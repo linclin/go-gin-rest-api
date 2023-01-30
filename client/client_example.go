@@ -43,7 +43,8 @@ func main() {
 		fmt.Println("Token:", tokenresp.Token)
 		fmt.Println("Token Expires:", tokenresp.Expires)
 		token = tokenresp.Token
-		gocache.Set("token", tokenresp, 120*time.Minute)
+		//缓存时间小于120分钟
+		gocache.Set("token", tokenresp, 100*time.Minute)
 	}
 	if token != "" {
 		// 2.请求token
@@ -57,9 +58,6 @@ func main() {
 				},
 				"limit": 10,
 				"offset": 0,
-				"select": [
-				  "RequestId","RequestMethod","RequestURI","RequestBody","StatusCode","RespBody"
-				],
 				"sort": [
 				  "-StartTime"
 				]

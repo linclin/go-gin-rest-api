@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 系统路由
+// 服务接口日志
 func InitApiLogRouter(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) (R gin.IRoutes) {
 	router := r.Group("apilog").Use(authMiddleware.MiddlewareFunc()).Use(middleware.CasbinMiddleware)
 	{

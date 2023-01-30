@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 系统路由
+// 系统
 func InitSystemRouter(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) (R gin.IRoutes) {
 	router := r.Group("system").Use(authMiddleware.MiddlewareFunc()).Use(middleware.CasbinMiddleware)
 	{
