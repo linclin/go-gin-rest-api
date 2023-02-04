@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/requestid"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
@@ -58,6 +59,8 @@ func Routers() *gin.Engine {
 	// 添加全局异常处理中间件
 	r.Use(middleware.Exception)
 	global.Log.Debug("请求已支持跨域")
+	// 初始化pprof
+	pprof.Register(r)
 	// 初始化Trace中间件
 	r.Use(requestid.New())
 	// 初始化jwt auth中间件
