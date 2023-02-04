@@ -170,7 +170,13 @@ go install github.com/swaggo/swag/cmd/swag@latest
 swag init --parseDependency --parseVendor --parseInternal --parseDepth 1
 访问地址:http://127.0.0.1:8080/swagger/index.html
 ```
-
+## pprof
+```  
+go tool pprof http://localhost:8080/debug/pprof/heap
+go tool pprof http://localhost:8080/debug/pprof/profile
+go tool pprof http://localhost:8080/debug/pprof/block
+wget http://localhost:8080/debug/pprof/trace?seconds=5
+```
 ## 更新依赖包
 ```  
 go install github.com/oligot/go-mod-upgrade@latest
