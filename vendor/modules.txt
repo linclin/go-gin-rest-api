@@ -40,6 +40,9 @@ github.com/casbin/gorm-adapter/v3
 # github.com/cespare/xxhash/v2 v2.1.2
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
+# github.com/dustin/go-humanize v1.0.1
+## explicit; go 1.16
+github.com/dustin/go-humanize
 # github.com/fsnotify/fsnotify v1.6.0
 ## explicit; go 1.16
 github.com/fsnotify/fsnotify
@@ -65,8 +68,8 @@ github.com/gin-gonic/gin/binding
 github.com/gin-gonic/gin/internal/bytesconv
 github.com/gin-gonic/gin/internal/json
 github.com/gin-gonic/gin/render
-# github.com/glebarez/go-sqlite v1.19.1
-## explicit; go 1.16
+# github.com/glebarez/go-sqlite v1.20.3
+## explicit; go 1.17
 github.com/glebarez/go-sqlite
 # github.com/glebarez/sqlite v1.5.0
 ## explicit; go 1.16
@@ -114,6 +117,8 @@ github.com/goccy/go-json/internal/encoder/vm_color_indent
 github.com/goccy/go-json/internal/encoder/vm_indent
 github.com/goccy/go-json/internal/errors
 github.com/goccy/go-json/internal/runtime
+# github.com/gofrs/uuid v4.2.0+incompatible
+## explicit
 # github.com/golang-jwt/jwt/v4 v4.4.3
 ## explicit; go 1.16
 github.com/golang-jwt/jwt/v4
@@ -170,6 +175,10 @@ github.com/jackc/pgtype
 github.com/jackc/pgx/v4
 github.com/jackc/pgx/v4/internal/sanitize
 github.com/jackc/pgx/v4/stdlib
+# github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
+## explicit
+# github.com/jinzhu/gorm v1.9.16
+## explicit; go 1.12
 # github.com/jinzhu/inflection v1.0.0
 ## explicit
 github.com/jinzhu/inflection
@@ -197,7 +206,7 @@ github.com/mailru/easyjson
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/mattn/go-isatty v0.0.16
+# github.com/mattn/go-isatty v0.0.17
 ## explicit; go 1.15
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
@@ -253,12 +262,14 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0
+# github.com/remyoudompheng/bigfft v0.0.0-20230126093431-47fa9a501578
 ## explicit; go 1.12
 github.com/remyoudompheng/bigfft
 # github.com/robfig/cron/v3 v3.0.1
 ## explicit; go 1.12
 github.com/robfig/cron/v3
+# github.com/satori/go.uuid v1.2.0
+## explicit
 # github.com/sirupsen/logrus v1.6.0
 ## explicit; go 1.13
 github.com/sirupsen/logrus
@@ -350,7 +361,7 @@ golang.org/x/net/idna
 golang.org/x/net/publicsuffix
 golang.org/x/net/webdav
 golang.org/x/net/webdav/internal/xml
-# golang.org/x/sys v0.3.0
+# golang.org/x/sys v0.4.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -441,4 +452,40 @@ gorm.io/gorm/utils
 # gorm.io/plugin/dbresolver v1.3.0
 ## explicit; go 1.14
 gorm.io/plugin/dbresolver
- 
+# modernc.org/libc v1.22.2
+## explicit; go 1.17
+modernc.org/libc
+modernc.org/libc/errno
+modernc.org/libc/fcntl
+modernc.org/libc/fts
+modernc.org/libc/grp
+modernc.org/libc/honnef.co/go/netdb
+modernc.org/libc/langinfo
+modernc.org/libc/limits
+modernc.org/libc/netdb
+modernc.org/libc/netinet/in
+modernc.org/libc/poll
+modernc.org/libc/pthread
+modernc.org/libc/pwd
+modernc.org/libc/signal
+modernc.org/libc/stdio
+modernc.org/libc/stdlib
+modernc.org/libc/sys/socket
+modernc.org/libc/sys/stat
+modernc.org/libc/sys/types
+modernc.org/libc/termios
+modernc.org/libc/time
+modernc.org/libc/unistd
+modernc.org/libc/utime
+modernc.org/libc/uuid
+modernc.org/libc/uuid/uuid
+modernc.org/libc/wctype
+# modernc.org/mathutil v1.5.0
+## explicit; go 1.13
+modernc.org/mathutil
+# modernc.org/memory v1.5.0
+## explicit; go 1.18
+modernc.org/memory
+# modernc.org/sqlite v1.20.3
+## explicit; go 1.17
+modernc.org/sqlite/lib
