@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/requestid"
 	ginzap "github.com/gin-contrib/zap"
@@ -45,8 +44,14 @@ func Routers() *gin.Engine {
 	// r := gin.Default()
 	// 创建不带中间件的路由:
 	r := gin.New()
+	// 初始化Trace中间件
+	r.Use(requestid.New())
+	// 添加访问记录
+	r.Use(middleware.AccessLog)
+	// 添加全局异常处理中间件
+	r.Use(middleware.Exception)
 	// GZip压缩插件
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	//r.Use(gzip.Gzip(gzip.DefaultCompression))
 	// 添加跨域中间件, 让请求支持跨域
 	r.Use(cors.Default())
 	// zap日志记录插件
@@ -54,15 +59,8 @@ func Routers() *gin.Engine {
 	r.Use(ginzap.RecoveryWithZap(global.Logger, true))
 	// 添加速率访问中间件
 	r.Use(middleware.RateLimiter())
-	// 添加访问记录
-	r.Use(middleware.AccessLog)
-	// 添加全局异常处理中间件
-	r.Use(middleware.Exception)
-	global.Log.Debug("请求已支持跨域")
 	// 初始化pprof
 	pprof.Register(r)
-	// 初始化Trace中间件
-	r.Use(requestid.New())
 	// 初始化jwt auth中间件
 	authMiddleware, err := middleware.InitAuth()
 	if err != nil {

@@ -3,7 +3,8 @@ package models
 import (
 	"net/http"
 
-	"github.com/gin-contrib/requestid"
+	"github.com/spf13/cast"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -50,8 +51,9 @@ const (
 var EmptyArray = []interface{}{}
 
 func Result(code int, data interface{}, msg string, c *gin.Context) {
+	requestId, _ := c.Get("RequestId")
 	c.JSON(http.StatusOK, Resp{
-		requestid.Get(c),
+		cast.ToString(requestId),
 		code,
 		data,
 		msg,

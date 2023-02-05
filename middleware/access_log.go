@@ -17,10 +17,21 @@ type AccessLogWriter struct {
 }
 
 func (w AccessLogWriter) Write(p []byte) (int, error) {
+	global.Log.Info("AccessLogWriter WriteString", string(p))
 	if n, err := w.body.Write(p); err != nil {
+		global.Log.Info("AccessLogWriter Write", err.Error())
 		return n, err
 	}
 	return w.ResponseWriter.Write(p)
+}
+
+func (w AccessLogWriter) WriteString(p string) (int, error) {
+	global.Log.Info("AccessLogWriter WriteString", p)
+	if n, err := w.body.WriteString(p); err != nil {
+		global.Log.Info("AccessLogWriter WriteString", err.Error())
+		return n, err
+	}
+	return w.ResponseWriter.WriteString(p)
 }
 
 // 访问日志
@@ -35,6 +46,8 @@ func AccessLog(c *gin.Context) {
 	}
 	// 新建缓冲区并替换原有Request.body
 	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	requestId := requestid.Get(c)
+	c.Set("RequestId", requestId)
 	// 开始时间
 	startTime := time.Now()
 	// 处理请求
@@ -52,24 +65,24 @@ func AccessLog(c *gin.Context) {
 	// 状态码
 	statusCode := c.Writer.Status()
 	// 返回体
-	RespBody := bodyWriter.body.String()
+	respBody := bodyWriter.body.String()
 	// 请求IP
 	clientIP := c.ClientIP()
 	if reqMethod != "OPTIONS" {
 		sysApiLog := sys.SysApiLog{
-			RequestId:     requestid.Get(c),
+			RequestId:     requestId,
 			RequestMethod: reqMethod,
 			RequestURI:    reqUri,
 			RequestBody:   reqBody,
 			StatusCode:    statusCode,
-			RespBody:      RespBody,
+			RespBody:      respBody,
 			ClientIP:      clientIP,
 			StartTime:     startTime,
 			ExecTime:      execTime.String(),
 		}
 		err = global.Mysql.Create(&sysApiLog).Error
 		if err != nil {
-			global.Log.Info("接口日志存库错误", err, requestid.Get(c), reqMethod, reqUri, reqBody, RespBody, statusCode, execTime.String(), clientIP)
+			global.Log.Info("接口日志存库错误", err, requestId, reqMethod, reqUri, reqBody, respBody, statusCode, execTime.String(), clientIP)
 		}
 	}
 }

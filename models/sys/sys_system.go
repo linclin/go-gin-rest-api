@@ -3,6 +3,7 @@ package sys
 import (
 	"go-gin-rest-api/pkg/global"
 
+	loggable "github.com/linclin/gorm2-loggable"
 	"gorm.io/gorm"
 )
 
@@ -14,6 +15,11 @@ type SysSystem struct {
 	SystemName string `gorm:"column:SystemName;comment:系统名称" json:"SystemName" rql:"filter,sort,column=SystemName"`              // 系统名称
 	IP         string `gorm:"column:IP;comment:系统来源IP" json:"IP" rql:"filter,sort,column=IP"`                                    // 系统来源IP
 	Operator   string `gorm:"column:Operator;comment:操作人" json:"Operator" rql:"filter,sort,column=Operator"`                     // 操作人
+	loggable.LoggableModel
+}
+
+func (system SysSystem) Meta() interface{} {
+	return nil
 }
 
 // 权限

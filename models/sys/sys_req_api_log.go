@@ -4,7 +4,8 @@ import (
 	"go-gin-rest-api/pkg/global"
 	"time"
 
-	"github.com/gin-contrib/requestid"
+	"github.com/spf13/cast"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -23,8 +24,9 @@ type SysReqApiLog struct {
 }
 
 func AddReqApi(c *gin.Context, RequestMethod, RequestURI, RequestBody, RespBody, ExecTime string, StatusCode int, StartTime time.Time) (err error) {
+	requestId, _ := c.Get("RequestId")
 	reqapilog := SysReqApiLog{
-		RequestId:     requestid.Get(c),
+		RequestId:     cast.ToString(requestId),
 		RequestMethod: RequestMethod,
 		RequestURI:    RequestURI,
 		RequestBody:   RequestBody,

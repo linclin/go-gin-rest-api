@@ -9,6 +9,7 @@ import (
 	"github.com/a8m/rql"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	loggable "github.com/linclin/gorm2-loggable"
 	"github.com/spf13/cast"
 )
 
@@ -113,7 +114,9 @@ func CreateSystem(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-	err = global.Mysql.Create(&system).Error
+	appId, _ := c.Get("AppId")
+	requestId, _ := c.Get("RequestId")
+	err = global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: "", ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&system).Error
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
@@ -135,7 +138,9 @@ func CreateSystem(c *gin.Context) {
 func UpdateSystemById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var system sys.SysSystem
-	query := global.Mysql.Where("id = ?", id).First(&system)
+	appId, _ := c.Get("AppId")
+	requestId, _ := c.Get("RequestId")
+	query := global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: "", ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Where("id = ?", id).First(&system)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return
@@ -156,7 +161,6 @@ func UpdateSystemById(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-
 	err = query.Updates(system).Error
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
@@ -178,7 +182,9 @@ func UpdateSystemById(c *gin.Context) {
 func DeleteSystemById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var system sys.SysSystem
-	query := global.Mysql.Where("id = ?", id).First(&system)
+	appId, _ := c.Get("AppId")
+	requestId, _ := c.Get("RequestId")
+	query := global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: "", ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Where("id = ?", id).First(&system)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return

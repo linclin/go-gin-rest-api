@@ -7,8 +7,8 @@ import (
 	"go-gin-rest-api/pkg/global"
 	"time"
 
-	loggable "github.com/LibertusDio/gorm2-loggable/v4"
 	sqlDriver "github.com/go-sql-driver/mysql" // mysql驱动
+	loggable "github.com/linclin/gorm2-loggable"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -96,8 +96,12 @@ func Mysql() {
 	if !global.Mysql.Migrator().HasTable(&sys.SysLock{}) {
 		global.Mysql.Migrator().CreateTable(&sys.SysLock{})
 	}
+	if !global.Mysql.Migrator().HasTable(&loggable.ChangeLog{}) {
+		global.Mysql.Migrator().CreateTable(&loggable.ChangeLog{})
+	}
 	global.Log.Debug("初始化mysql完成")
-	plugin, err := loggable.Register(db, "change_logs") // database is a *gorm.DB
+	//初始化数据变更记录插件
+	_, err = loggable.Register(db, "change_logs")
 	if err != nil {
 		panic(err)
 	}
