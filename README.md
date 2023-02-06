@@ -13,9 +13,9 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 - 基于`Gin`框架开发的REST API
 - API使用`JWT`的Token认证和`Casbin`的接口ACL、RBAC权限控制
 - 使用`rql`资源查询语言,支持功能更丰富的数据查询接口
-- MySQL数据库使用`Gorm`支持
+- MySQL数据库使用`Gorm`支持，使用`gorm2-loggable`插件实现数据变更记录表
 - 配置文件管理使用`Viper`进行，配置文件变更热加载，无需重启应用(框架基础http服务、日志、数据库不变，仅针对业务配置生效) 
-- 日志输出使用`Zap`，搭配`lumberjack`日志切割
+- 日志输出使用`Zap`，搭配`lumberjack`日志文件切割
 - 定时任务使用`robfig/cron`运行,使用基于MySQL唯一索引的分布式锁避免多副本重复执行，并记录任务执行状态到数据表
 
 
@@ -110,13 +110,19 @@ curl -X 'POST' \
 
 
 ## gin中间件
-- `RateLimiter` 访问速率限制中间件 -- 限制访问流量
-- `Exception` 全局异常处理中间件 -- 使用golang recover特性, 捕获所有异常, 保存到日志, 方便追溯
-- `Transaction` 全局事务处理中间件 -- 每次请求无异常自动提交, 有异常自动回滚事务, 无需每个service单独调用(GET/OPTIONS跳过)
+- [appleboy/gin-jwt](https://github.com/appleboy/gin-jwt)  权限认证中间件 -- 处理登录、登出、无状态token校验
+- [casbin](https://github.com/casbin/casbin/) 和[casbin/gorm-adapter](https://github.com/casbin/gorm-adapter)权限访问中间件 -- 基于Cabin RBAC, 对不同角色访问不同API进行校验
+- [ulule/limiter](https://github.com/ulule/limiter) 访问速率限制中间件 -- 限制api访问流量
+- [gin-contrib/requestid](https://github.com/gin-contrib/requestid)  requestid中间件 -- 接口trace id，每次api请求均会生成唯一id返回客户端，并保存数据库接口日志表
+- [gin-contrib/cors](https://github.com/gin-contrib/cors)  cors跨域中间件-- 所有请求均可跨域访问  
+- [gin-contrib/gzip](https://github.com/gin-contrib/gzip)  gzip中间件-- 所有API返回均进行压缩 
+- [gin-contrib/zap](https://github.com/gin-contrib/zap)  zap日志中间件-- 使用zap打印gin日志 
+- [gin-contrib/pprof](https://github.com/gin-contrib/pprof)  pprof中间件 
+- [zsais/go-gin-prometheus](https://github.com/zsais/go-gin-prometheus)  prometheus中间件-- http接口指标 
+- `Exception` 全局异常处理中间件 -- 使用golang recover特性, 捕获所有异常, 保存到日志, 方便追溯  
 - `AccessLog` 请求日志中间件 -- 每次请求的路由、IP自动写入日志
-- `Cors`  跨域中间件-- 所有请求均可跨域访问
-- `JwtAuth` 权限认证中间件 -- 处理登录、登出、无状态token校验
-- `CasbinMiddleware` 权限访问中间件 -- 基于Cabin RBAC, 对不同角色访问不同API进行校验
+
+
 
 ## 项目结构概览
 

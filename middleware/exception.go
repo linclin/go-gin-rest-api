@@ -15,7 +15,7 @@ func Exception(c *gin.Context) {
 		if err := recover(); err != nil {
 			// 将异常写入日志
 			global.Log.Error(fmt.Sprintf("未知异常: %v\n堆栈信息: %v", err, string(debug.Stack())))
-			models.FailWithDetailed(err, models.CustomError[models.InternalServerError], c)
+			models.FailWithDetailed(fmt.Sprintf("未知异常: %v\n堆栈信息: %v", err, string(debug.Stack())), models.CustomError[models.InternalServerError], c)
 			c.Abort()
 			return
 		}

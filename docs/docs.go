@@ -143,6 +143,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/changelog/list": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/x-json-stream"
+                ],
+                "tags": [
+                    "[系统内部]日志"
+                ],
+                "summary": "[系统内部]获取数据审计日志",
+                "operationId": "GetChangeLog",
+                "parameters": [
+                    {
+                        "description": "RQL查询json",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Req"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resp"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/cronjoblog/list": {
             "post": {
                 "security": [
@@ -1377,6 +1419,9 @@ const docTemplate = `{
                 },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm_io_gorm.DeletedAt"
+                },
+                "disabled": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "integer"

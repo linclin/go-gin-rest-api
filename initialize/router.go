@@ -7,9 +7,11 @@ import (
 	"go-gin-rest-api/models/sys"
 	"go-gin-rest-api/pkg/global"
 	sysRouter "go-gin-rest-api/router/sys"
+
 	"time"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/requestid"
 	ginzap "github.com/gin-contrib/zap"
@@ -51,7 +53,7 @@ func Routers() *gin.Engine {
 	// 添加全局异常处理中间件
 	r.Use(middleware.Exception)
 	// GZip压缩插件
-	//r.Use(gzip.Gzip(gzip.DefaultCompression))
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	// 添加跨域中间件, 让请求支持跨域
 	r.Use(cors.Default())
 	// zap日志记录插件

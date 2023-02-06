@@ -17,7 +17,6 @@ type AccessLogWriter struct {
 }
 
 func (w AccessLogWriter) Write(p []byte) (int, error) {
-	global.Log.Info("AccessLogWriter WriteString", string(p))
 	if n, err := w.body.Write(p); err != nil {
 		global.Log.Info("AccessLogWriter Write", err.Error())
 		return n, err
@@ -26,7 +25,6 @@ func (w AccessLogWriter) Write(p []byte) (int, error) {
 }
 
 func (w AccessLogWriter) WriteString(p string) (int, error) {
-	global.Log.Info("AccessLogWriter WriteString", p)
 	if n, err := w.body.WriteString(p); err != nil {
 		global.Log.Info("AccessLogWriter WriteString", err.Error())
 		return n, err
@@ -75,10 +73,10 @@ func AccessLog(c *gin.Context) {
 			RequestURI:    reqUri,
 			RequestBody:   reqBody,
 			StatusCode:    statusCode,
-			RespBody:      respBody,
-			ClientIP:      clientIP,
-			StartTime:     startTime,
-			ExecTime:      execTime.String(),
+			//RespBody:      respBody,  使用gzip插件不记录返回体，会导致保存数据库失败
+			ClientIP:  clientIP,
+			StartTime: startTime,
+			ExecTime:  execTime.String(),
 		}
 		err = global.Mysql.Create(&sysApiLog).Error
 		if err != nil {

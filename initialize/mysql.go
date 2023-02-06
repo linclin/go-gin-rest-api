@@ -75,33 +75,17 @@ func Mysql() {
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	global.Mysql = db
 	// 自动迁移表结构
-	if !global.Mysql.Migrator().HasTable(&sys.SysSystem{}) {
-		global.Mysql.Migrator().CreateTable(&sys.SysSystem{})
-	}
-	if !global.Mysql.Migrator().HasTable(&sys.SysRouter{}) {
-		global.Mysql.Migrator().CreateTable(&sys.SysRouter{})
-	}
-	if !global.Mysql.Migrator().HasTable(&sys.SysRole{}) {
-		global.Mysql.Migrator().CreateTable(&sys.SysRole{})
-	}
-	if !global.Mysql.Migrator().HasTable(&sys.SysApiLog{}) {
-		global.Mysql.Migrator().CreateTable(&sys.SysApiLog{})
-	}
-	if !global.Mysql.Migrator().HasTable(&sys.SysReqApiLog{}) {
-		global.Mysql.Migrator().CreateTable(&sys.SysReqApiLog{})
-	}
-	if !global.Mysql.Migrator().HasTable(&sys.SysCronjobLog{}) {
-		global.Mysql.Migrator().CreateTable(&sys.SysCronjobLog{})
-	}
-	if !global.Mysql.Migrator().HasTable(&sys.SysLock{}) {
-		global.Mysql.Migrator().CreateTable(&sys.SysLock{})
-	}
-	if !global.Mysql.Migrator().HasTable(&loggable.ChangeLog{}) {
-		global.Mysql.Migrator().CreateTable(&loggable.ChangeLog{})
-	}
+	global.Mysql.AutoMigrate(&sys.SysSystem{})
+	global.Mysql.AutoMigrate(&sys.SysRouter{})
+	global.Mysql.AutoMigrate(&sys.SysRole{})
+	global.Mysql.AutoMigrate(&sys.SysApiLog{})
+	global.Mysql.AutoMigrate(&sys.SysReqApiLog{})
+	global.Mysql.AutoMigrate(&sys.SysCronjobLog{})
+	global.Mysql.AutoMigrate(&sys.SysLock{})
+	global.Mysql.Table("sys_change_logs").AutoMigrate(&loggable.ChangeLog{})
 	global.Log.Debug("初始化mysql完成")
 	//初始化数据变更记录插件
-	_, err = loggable.Register(db, "change_logs")
+	_, err = loggable.Register(db, "sys_change_logs", loggable.ComputeDiff())
 	if err != nil {
 		panic(err)
 	}

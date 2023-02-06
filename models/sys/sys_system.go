@@ -19,7 +19,11 @@ type SysSystem struct {
 }
 
 func (system SysSystem) Meta() interface{} {
-	return nil
+	return struct {
+		CreatedBy string
+	}{
+		CreatedBy: system.Operator,
+	}
 }
 
 // 权限

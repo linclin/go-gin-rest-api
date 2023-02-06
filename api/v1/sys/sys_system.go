@@ -145,6 +145,7 @@ func UpdateSystemById(c *gin.Context) {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return
 	}
+	query.Set(loggable.LoggablePrevVersion, &system)
 	// 绑定参数
 	err := c.ShouldBindJSON(&system)
 	if err != nil {
