@@ -116,7 +116,8 @@ func CreateSystem(c *gin.Context) {
 	}
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
-	err = global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: "", ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&system).Error
+	userName := c.GetHeader("User")
+	err = global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&system).Error
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
@@ -138,14 +139,12 @@ func CreateSystem(c *gin.Context) {
 func UpdateSystemById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var system sys.SysSystem
-	appId, _ := c.Get("AppId")
-	requestId, _ := c.Get("RequestId")
-	query := global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: "", ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Where("id = ?", id).First(&system)
+	query := global.Mysql.Where("id = ?", id).First(&system)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return
 	}
-	query.Set(loggable.LoggablePrevVersion, &system)
+	oldvalue := system
 	// 绑定参数
 	err := c.ShouldBindJSON(&system)
 	if err != nil {
@@ -162,7 +161,13 @@ func UpdateSystemById(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-	err = query.Updates(system).Error
+	appId, _ := c.Get("AppId")
+	requestId, _ := c.Get("RequestId")
+	userName := c.GetHeader("User")
+	err = global.Mysql.Set(loggable.LoggablePrevVersion, &oldvalue).
+		Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).
+		Model(&system).Omit("ID", "CreatedAt", "UpdatedAt", "DeletedAt").
+		Where("id = ?", id).Updates(&system).Error
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
@@ -185,7 +190,9 @@ func DeleteSystemById(c *gin.Context) {
 	var system sys.SysSystem
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
-	query := global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: "", ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Where("id = ?", id).First(&system)
+	userName := c.GetHeader("User")
+	query := global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).
+		Where("id = ?", id).First(&system)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return

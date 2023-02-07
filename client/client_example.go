@@ -51,6 +51,7 @@ func main() {
 		resp, err := client.R().
 			SetHeader("accept", "application/json").
 			SetHeader("Content-Type", "application/json").
+			SetHeader("User", "lc").
 			SetAuthToken(token).
 			SetBody(`{
 				"filter": {

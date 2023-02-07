@@ -6,6 +6,8 @@ import (
 	"go-gin-rest-api/pkg/global"
 	"runtime/debug"
 	"time"
+
+	loggable "github.com/linclin/gorm2-loggable"
 )
 
 // 清理超过一周的日志表数据
@@ -38,6 +40,9 @@ func (u CleanLog) Run() {
 	}
 	if err := global.Mysql.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysCronjobLog{}).Error; err != nil {
 		global.Log.Error("cronjob定时任务:CleanLog删除SysCronjobLog失败")
+	}
+	if err := global.Mysql.Table("sys_change_logs").Where("created_at < ? ", time.Now().AddDate(0, 0, -7).Unix()).Unscoped().Delete(loggable.ChangeLog{}).Error; err != nil {
+		global.Log.Error("cronjob定时任务:CleanLog删除ChangeLog失败")
 	}
 	//记录任务日志表
 	endTime := time.Now()
