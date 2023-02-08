@@ -3,9 +3,9 @@
 <div align="center">
 gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 <p align="center">
-<img src="https://img.shields.io/badge/Golang-1.19.5-brightgreen" alt="Go version"/>
+<img src="https://img.shields.io/badge/Golang-1.20-brightgreen" alt="Go version"/>
 <img src="https://img.shields.io/badge/Gin-1.8.2-brightgreen" alt="Gin version"/>
-<img src="https://img.shields.io/badge/Gorm-1.24.3-brightgreen" alt="Gorm version"/> 
+<img src="https://img.shields.io/badge/Gorm-1.24.5-brightgreen" alt="Gorm version"/> 
 </p>
 </div>
 
@@ -118,7 +118,7 @@ curl -X 'POST' \
 - [gin-contrib/gzip](https://github.com/gin-contrib/gzip)  gzip中间件-- 所有API返回均进行压缩 
 - [gin-contrib/zap](https://github.com/gin-contrib/zap)  zap日志中间件-- 使用zap打印gin日志 
 - [gin-contrib/pprof](https://github.com/gin-contrib/pprof)  pprof中间件 
-- [zsais/go-gin-prometheus](https://github.com/zsais/go-gin-prometheus)  prometheus中间件 
+- [zsais/go-gin-prometheus](https://github.com/zsais/go-gin-prometheus)  prometheus中间件  
 - [swaggo/gin-swagger](https://github.com/swaggo/gin-swagger)  swagger中间件 
 - `Exception` 全局异常处理中间件 -- 使用golang recover特性, 捕获所有异常, 保存到日志, 方便追溯  
 - `AccessLog` 请求日志中间件 -- 每次请求的路由、IP自动写入日志
@@ -152,8 +152,7 @@ docker run -d --name mysql -h mysql -p 3306:3306 --restart=always -v D:\MySQL:/v
 ```
 
 ## 快速开始开发
-``` 
-golang版本>1.19
+```  
 # 设置常用环境变量
 go env -w GOROOT=C:\Go 
 go env -w GO111MODULE=on
