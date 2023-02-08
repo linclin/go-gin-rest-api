@@ -3,7 +3,6 @@ package loggable
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"reflect"
 
 	uuid "github.com/satori/go.uuid"
@@ -85,14 +84,14 @@ func newChangeLog(db *gorm.DB, action string) (*ChangeLog, error) {
 	ui, ok := db.Get(LoggableUserTag)
 	var u *User
 	if !ok {
-		u = &User{"null", "null", "null"}
+		u = &User{"unknown", "system", "unknown"}
 	} else {
 		u, ok = ui.(*User)
 		if !ok {
-			u = &User{"null", "default", "null"}
+			u = &User{"unknown", "system", "unknown"}
 		}
 	}
-	us := `{"name":"null","id":"system","class":"null"}`
+	us := `{"name":"unknown","id":"system","class":"unknown"}`
 	ub, err := json.Marshal(u)
 	if err == nil {
 		us = string(ub)
@@ -137,9 +136,7 @@ func (p *Plugin) addRecord(db *gorm.DB, action string) error {
 }
 
 func computeUpdateDiff(db *gorm.DB) UpdateDiff {
-	fmt.Print("computeUpdateDiff \r\n")
 	old, ok := db.Get(LoggablePrevVersion)
-	fmt.Print("computeUpdateDiff LoggablePrevVersion \r\n", old, " \r\n")
 	if !ok {
 		return nil
 	}
@@ -147,14 +144,12 @@ func computeUpdateDiff(db *gorm.DB) UpdateDiff {
 	ov := reflect.Indirect(reflect.ValueOf(old))
 	nv := reflect.Indirect(reflect.ValueOf(db.Statement.Dest))
 	names := getLoggableFieldNames(old)
-	fmt.Print("computeUpdateDiff names \r\n", names, " \r\n")
+
 	diff := make(UpdateDiff)
 
 	for _, name := range names {
-
 		ofv := ov.FieldByName(name).Interface()
 		nfv := nv.FieldByName(name).Interface()
-		fmt.Print("computeUpdateDiff names \r\n", name, ofv, nfv, reflect.DeepEqual(ofv, nfv), " \r\n")
 		if !reflect.DeepEqual(ofv, nfv) {
 			diff[ToSnakeCaseRegEx(name)] = DiffObject{
 				Old: ofv,

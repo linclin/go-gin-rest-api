@@ -118,7 +118,8 @@ curl -X 'POST' \
 - [gin-contrib/gzip](https://github.com/gin-contrib/gzip)  gzip中间件-- 所有API返回均进行压缩 
 - [gin-contrib/zap](https://github.com/gin-contrib/zap)  zap日志中间件-- 使用zap打印gin日志 
 - [gin-contrib/pprof](https://github.com/gin-contrib/pprof)  pprof中间件 
-- [zsais/go-gin-prometheus](https://github.com/zsais/go-gin-prometheus)  prometheus中间件-- http接口指标 
+- [zsais/go-gin-prometheus](https://github.com/zsais/go-gin-prometheus)  prometheus中间件 
+- [swaggo/gin-swagger](https://github.com/swaggo/gin-swagger)  swagger中间件 
 - `Exception` 全局异常处理中间件 -- 使用golang recover特性, 捕获所有异常, 保存到日志, 方便追溯  
 - `AccessLog` 请求日志中间件 -- 每次请求的路由、IP自动写入日志
 
@@ -132,6 +133,7 @@ curl -X 'POST' \
 ├── cronjob # cron定时任务
 ├── conf # 配置文件目录(包含测试/预发布/生产环境配置参数及casbin模型配置)
 ├── initialize # 数据初始化目录
+├── internal  # 内部方法
 ├── logs # 日志文件默认目录(运行代码时生成)
 ├── middleware # 中间件目录
 ├── models # 存储层模型定义目录

@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/a8m/rql v1.3.0
 	github.com/appleboy/gin-jwt/v2 v2.9.1
-	github.com/casbin/casbin/v2 v2.61.0
+	github.com/casbin/casbin/v2 v2.61.1
 	github.com/casbin/gorm-adapter/v3 v3.14.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-contrib/cors v1.4.0
@@ -31,7 +31,7 @@ require (
 	github.com/ulule/limiter/v3 v3.11.0
 	github.com/zsais/go-gin-prometheus v0.1.0
 	go.uber.org/zap v1.24.0
-	gorm.io/driver/mysql v1.4.5
+	gorm.io/driver/mysql v1.4.6
 	gorm.io/gorm v1.24.5
 )
 
