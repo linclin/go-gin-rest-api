@@ -3,7 +3,7 @@ ENV APP go-gin-rest-api
 RUN sed -i 's/https/http/' /etc/apk/repositories && \
     sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update --no-cache && \
-    apk add --no-cache ca-certificates git bash gcc openssh && \ 
+    apk add --no-cache ca-certificates git bash gcc musl-dev openssh && \ 
     rm -rf /var/cache/apk/*   /tmp/*     
 ADD ./ /data/${APP}/${APP}
 ADD .git/ /data/${APP}/${APP}/.git
