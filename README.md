@@ -4,8 +4,8 @@
 gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 <p align="center">
 <img src="https://img.shields.io/badge/Golang-1.20-brightgreen" alt="Go version"/>
-<img src="https://img.shields.io/badge/Gin-1.8.2-brightgreen" alt="Gin version"/>
-<img src="https://img.shields.io/badge/Gorm-1.24.5-brightgreen" alt="Gorm version"/> 
+<img src="https://img.shields.io/badge/Gin-1.9.0-brightgreen" alt="Gin version"/>
+<img src="https://img.shields.io/badge/Gorm-1.24.6-brightgreen" alt="Gorm version"/> 
 </p>
 </div>
 
