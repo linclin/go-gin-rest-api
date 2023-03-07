@@ -1,4 +1,4 @@
-FROM golang:1.19.5-alpine3.17 as golang
+FROM golang:1.20.1-alpine3.17 as golang
 ENV APP go-gin-rest-api
 RUN sed -i 's/https/http/' /etc/apk/repositories && \
     sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
@@ -17,7 +17,7 @@ RUN GitBranch=$(git name-rev --name-only HEAD) && \
     LDFlags="-w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"  && \
     go build -ldflags="$LDFlags" -o  ./${APP} 
 
-FROM alpine:3.17.1
+FROM alpine:3.17.2
 LABEL MAINTAINER="13579443@qq.com"
 ENV APP go-gin-rest-api
 ENV TZ='Asia/Shanghai' 

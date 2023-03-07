@@ -19,7 +19,28 @@ github.com/appleboy/gin-jwt/v2
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
-# github.com/casbin/casbin/v2 v2.61.1
+# github.com/bytedance/sonic v1.8.0
+## explicit; go 1.15
+github.com/bytedance/sonic
+github.com/bytedance/sonic/ast
+github.com/bytedance/sonic/decoder
+github.com/bytedance/sonic/encoder
+github.com/bytedance/sonic/internal/caching
+github.com/bytedance/sonic/internal/cpu
+github.com/bytedance/sonic/internal/jit
+github.com/bytedance/sonic/internal/loader
+github.com/bytedance/sonic/internal/native
+github.com/bytedance/sonic/internal/native/avx
+github.com/bytedance/sonic/internal/native/avx2
+github.com/bytedance/sonic/internal/native/sse
+github.com/bytedance/sonic/internal/native/types
+github.com/bytedance/sonic/internal/resolver
+github.com/bytedance/sonic/internal/rt
+github.com/bytedance/sonic/loader
+github.com/bytedance/sonic/option
+github.com/bytedance/sonic/unquote
+github.com/bytedance/sonic/utf8
+# github.com/casbin/casbin/v2 v2.65.1
 ## explicit; go 1.13
 github.com/casbin/casbin/v2
 github.com/casbin/casbin/v2/config
@@ -40,6 +61,9 @@ github.com/casbin/gorm-adapter/v3
 # github.com/cespare/xxhash/v2 v2.2.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
+# github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311
+## explicit; go 1.15
+github.com/chenzhuoyu/base64x
 # github.com/dustin/go-humanize v1.0.1
 ## explicit; go 1.16
 github.com/dustin/go-humanize
@@ -64,7 +88,7 @@ github.com/gin-contrib/sse
 # github.com/gin-contrib/zap v0.1.0
 ## explicit; go 1.16
 github.com/gin-contrib/zap
-# github.com/gin-gonic/gin v1.8.2
+# github.com/gin-gonic/gin v1.9.0
 ## explicit; go 1.18
 github.com/gin-gonic/gin
 github.com/gin-gonic/gin/binding
@@ -191,6 +215,9 @@ github.com/josharian/intern
 # github.com/json-iterator/go v1.1.12
 ## explicit; go 1.12
 github.com/json-iterator/go
+# github.com/klauspost/cpuid/v2 v2.0.9
+## explicit; go 1.13
+github.com/klauspost/cpuid/v2
 # github.com/konsorten/go-windows-terminal-sequences v1.0.3
 ## explicit
 github.com/konsorten/go-windows-terminal-sequences
@@ -314,10 +341,29 @@ github.com/swaggo/gin-swagger
 # github.com/swaggo/swag v1.8.10
 ## explicit; go 1.18
 github.com/swaggo/swag
-# github.com/ugorji/go/codec v1.2.7
+# github.com/twitchyliquid64/golang-asm v0.15.1
+## explicit; go 1.13
+github.com/twitchyliquid64/golang-asm/asm/arch
+github.com/twitchyliquid64/golang-asm/bio
+github.com/twitchyliquid64/golang-asm/dwarf
+github.com/twitchyliquid64/golang-asm/goobj
+github.com/twitchyliquid64/golang-asm/obj
+github.com/twitchyliquid64/golang-asm/obj/arm
+github.com/twitchyliquid64/golang-asm/obj/arm64
+github.com/twitchyliquid64/golang-asm/obj/mips
+github.com/twitchyliquid64/golang-asm/obj/ppc64
+github.com/twitchyliquid64/golang-asm/obj/riscv
+github.com/twitchyliquid64/golang-asm/obj/s390x
+github.com/twitchyliquid64/golang-asm/obj/wasm
+github.com/twitchyliquid64/golang-asm/obj/x86
+github.com/twitchyliquid64/golang-asm/objabi
+github.com/twitchyliquid64/golang-asm/src
+github.com/twitchyliquid64/golang-asm/sys
+github.com/twitchyliquid64/golang-asm/unsafeheader
+# github.com/ugorji/go/codec v1.2.9
 ## explicit; go 1.11
 github.com/ugorji/go/codec
-# github.com/ulule/limiter/v3 v3.11.0
+# github.com/ulule/limiter/v3 v3.11.1
 ## explicit; go 1.17
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/middleware/gin
@@ -350,12 +396,15 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.5.0
+# golang.org/x/arch v0.0.0-20210923205945-b76863e36670
+## explicit; go 1.17
+golang.org/x/arch/x86/x86asm
+# golang.org/x/crypto v0.7.0
 ## explicit; go 1.17
 golang.org/x/crypto/md4
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/sha3
-# golang.org/x/net v0.5.0
+# golang.org/x/net v0.8.0
 ## explicit; go 1.17
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -365,14 +414,14 @@ golang.org/x/net/idna
 golang.org/x/net/publicsuffix
 golang.org/x/net/webdav
 golang.org/x/net/webdav/internal/xml
-# golang.org/x/sys v0.4.0
+# golang.org/x/sys v0.6.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.6.0
+# golang.org/x/text v0.8.0
 ## explicit; go 1.17
 golang.org/x/text/cases
 golang.org/x/text/internal
@@ -387,7 +436,7 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/tools v0.1.12
+# golang.org/x/tools v0.6.0
 ## explicit; go 1.18
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/buildutil
@@ -435,7 +484,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# gorm.io/driver/mysql v1.4.6
+# gorm.io/driver/mysql v1.4.7
 ## explicit; go 1.14
 gorm.io/driver/mysql
 # gorm.io/driver/postgres v1.4.4
@@ -444,7 +493,7 @@ gorm.io/driver/postgres
 # gorm.io/driver/sqlserver v1.4.1
 ## explicit; go 1.14
 gorm.io/driver/sqlserver
-# gorm.io/gorm v1.24.5
+# gorm.io/gorm v1.24.6
 ## explicit; go 1.16
 gorm.io/gorm
 gorm.io/gorm/callbacks
