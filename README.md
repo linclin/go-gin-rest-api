@@ -3,7 +3,7 @@
 <div align="center">
 gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 <p align="center">
-<img src="https://img.shields.io/badge/Golang-1.20-brightgreen" alt="Go version"/>
+<img src="https://img.shields.io/badge/Golang-1.20.2-brightgreen" alt="Go version"/>
 <img src="https://img.shields.io/badge/Gin-1.9.0-brightgreen" alt="Gin version"/>
 <img src="https://img.shields.io/badge/Gorm-1.24.6-brightgreen" alt="Gorm version"/> 
 </p>
@@ -104,7 +104,6 @@ curl -X 'POST' \
 - [go-cache](https://github.com/patrickmn/go-cache)  缓存库 [教程](https://cloud.tencent.com/developer/article/2176204)
 - [resty](https://github.com/go-resty/resty) Go的简单HTTP和REST请求客户端  [教程](https://darjun.github.io/2021/06/26/godailylib/resty/) 
 - [cron](https://github.com/robfig/cron) 实现了 cron 规范解析器和任务运行器，简单来讲就是包含了定时任务所需的功能  [教程](https://darjun.github.io/2020/06/25/godailylib/cron) 
-- [tunny](https://github.com/Jeffail/tunny) 协程池，支持同步执行汇总结果,支持超时、取消 [教程](https://darjun.github.io/2021/06/10/godailylib/tunny/) 
 
 感谢[Go 每日一库](https://github.com/darjun/go-daily-lib)提供的详细教程 
 

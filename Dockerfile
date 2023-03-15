@@ -1,4 +1,4 @@
-FROM golang:1.20.1-alpine3.17 as golang
+FROM golang:1.20.2-alpine3.17 as golang
 ENV APP go-gin-rest-api
 RUN sed -i 's/https/http/' /etc/apk/repositories && \
     sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
