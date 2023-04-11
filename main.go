@@ -33,6 +33,8 @@ func init() {
 	initialize.Logger()
 	// 初始化数据库
 	initialize.Mysql()
+	// 初始化Sentinel流控规则
+	initialize.InitSentinel()
 	// 初始校验器
 	initialize.Validate("zh")
 	// 初始化jwt的rsa证书

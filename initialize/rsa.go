@@ -17,7 +17,7 @@ func InitRSA() {
 	if err != nil {
 		if !os.IsExist(err) {
 			GenerateRSA()
-			global.Log.Debug("初始化RSA证书供JWT生成Toekn使用完成")
+			global.Log.Info("初始化RSA证书供JWT生成Toekn使用完成")
 		}
 	}
 }

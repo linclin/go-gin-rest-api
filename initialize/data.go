@@ -9,5 +9,5 @@ import (
 func InitData() {
 	go sys.InitSysSystem()
 	go sys.InitSysRole()
-	global.Log.Debug("初始化表数据完成")
+	global.Log.Info("初始化表数据完成")
 }

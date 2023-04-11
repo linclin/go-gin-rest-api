@@ -36,5 +36,5 @@ func Logger() {
 	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	global.Logger = logger
 	global.Log = logger.Sugar()
-	global.Log.Debug("初始化日志完成")
+	global.Log.Info("初始化日志完成")
 }

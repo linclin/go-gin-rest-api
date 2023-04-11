@@ -83,7 +83,7 @@ func Mysql() {
 	global.Mysql.AutoMigrate(&sys.SysCronjobLog{})
 	global.Mysql.AutoMigrate(&sys.SysLock{})
 	global.Mysql.Table("sys_change_logs").AutoMigrate(&loggable.ChangeLog{})
-	global.Log.Debug("初始化mysql完成")
+	global.Log.Info("初始化mysql完成")
 	//初始化数据变更记录插件
 	_, err = loggable.Register(db, "sys_change_logs", loggable.ComputeDiff())
 	if err != nil {

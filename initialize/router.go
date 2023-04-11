@@ -16,6 +16,7 @@ import (
 	"github.com/gin-contrib/requestid"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	sentinelPlugin "github.com/sentinel-group/sentinel-go-adapters/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
@@ -59,8 +60,25 @@ func Routers() *gin.Engine {
 	// zap日志记录插件
 	r.Use(ginzap.Ginzap(global.Logger, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(global.Logger, true))
-	// 添加速率访问中间件
-	r.Use(middleware.RateLimiter())
+	// 添加sentinel中间件
+	r.Use(
+		sentinelPlugin.SentinelMiddleware(
+			// customize resource extractor if required
+			// method_path by default
+			// sentinelPlugin.WithResourceExtractor(func(ctx *gin.Context) string {
+			// 	return ctx.GetHeader("X-Real-IP")
+			// }),
+			// customize block fallback if required
+			// abort with status 429 by default
+			sentinelPlugin.WithBlockFallback(func(ctx *gin.Context) {
+				ctx.AbortWithStatusJSON(429, map[string]interface{}{
+					"code": 429,
+					"data": "",
+					"msg":  "too many request; the quota used up",
+				})
+			}),
+		),
+	)
 	// 初始化pprof
 	pprof.Register(r)
 	// 初始化jwt auth中间件
@@ -68,20 +86,20 @@ func Routers() *gin.Engine {
 	if err != nil {
 		panic(fmt.Sprintf("初始化JWT auth中间件失败: %v", err))
 	}
-	global.Log.Debug("初始化JWT auth中间件完成")
+	global.Log.Info("初始化JWT auth中间件完成")
 	// 初始化Prometheus中间件
 	prome := ginprometheus.NewPrometheus("gin")
 	prome.Use(r)
-	global.Log.Debug("初始化Prometheus中间件完成")
+	global.Log.Info("初始化Prometheus中间件完成")
 	if global.Conf.System.RunMode != "prd" {
 		// 初始化Swagger
 		url := ginSwagger.URL(global.Conf.System.BaseApi + "/swagger/doc.json")
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
-		global.Log.Debug("初始化Swagger完成")
+		global.Log.Info("初始化Swagger完成")
 	}
 	// 初始化健康检查接口
 	r.GET("/heatch_check", api.HeathCheck)
-	global.Log.Debug("初始化健康检查接口完成")
+	global.Log.Info("初始化健康检查接口完成")
 	// 初始化API路由
 	apiGroup := r.Group(global.Conf.System.UrlPathPrefix)
 	// 方便统一添加路由前缀
@@ -94,6 +112,6 @@ func Routers() *gin.Engine {
 	sysRouter.InitApiLogRouter(v1Group, authMiddleware)     // 注册服务接口日志路由
 	sysRouter.InitReqApiLogRouter(v1Group, authMiddleware)  // 注册请求接口日志路由
 	sysRouter.InitCronjobLogRouter(v1Group, authMiddleware) // 注册任务日志路由
-	global.Log.Debug("初始化基础路由完成")
+	global.Log.Info("初始化基础路由完成")
 	return r
 }

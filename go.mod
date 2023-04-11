@@ -23,12 +23,12 @@ require (
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/sentinel-group/sentinel-go-adapters v1.0.1
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/viper v1.15.0
 	github.com/swaggo/files v1.0.0
 	github.com/swaggo/gin-swagger v1.5.3
 	github.com/swaggo/swag v1.8.10
-	github.com/ulule/limiter/v3 v3.11.1
 	github.com/zsais/go-gin-prometheus v0.1.0
 	go.uber.org/zap v1.24.0
 	gorm.io/driver/mysql v1.4.7
@@ -40,6 +40,8 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/alibaba/sentinel-golang v1.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -48,6 +50,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/glebarez/go-sqlite v1.20.3 // indirect
 	github.com/glebarez/sqlite v1.5.0 // indirect
+	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/spec v0.20.4 // indirect
@@ -91,6 +94,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230126093431-47fa9a501578 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/shirou/gopsutil v3.20.11+incompatible // indirect
 	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

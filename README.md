@@ -111,7 +111,7 @@ curl -X 'POST' \
 ## gin中间件
 - [appleboy/gin-jwt](https://github.com/appleboy/gin-jwt)  权限认证中间件 -- 处理登录、登出、无状态token校验
 - [casbin](https://github.com/casbin/casbin/) 和[casbin/gorm-adapter](https://github.com/casbin/gorm-adapter)权限访问中间件 -- 基于Cabin RBAC, 对不同角色访问不同API进行校验
-- [ulule/limiter](https://github.com/ulule/limiter) 访问速率限制中间件 -- 限制api访问流量
+- [sentinel](https://github.com/sentinel-group/sentinel-go-adapters/gin) sentinel流量控制中间件 -- api流量控制和熔断降级
 - [gin-contrib/requestid](https://github.com/gin-contrib/requestid)  requestid中间件 -- 接口trace id，每次api请求均会生成唯一id返回客户端，并保存数据库接口日志表
 - [gin-contrib/cors](https://github.com/gin-contrib/cors)  cors跨域中间件-- 所有请求均可跨域访问  
 - [gin-contrib/gzip](https://github.com/gin-contrib/gzip)  gzip中间件-- 所有API返回均进行压缩 
