@@ -40,9 +40,8 @@ The [standard GORM driver for SQLite](https://github.com/go-gorm/sqlite) has one
 
 ## Is this tested good ?
 Yes, The CI pipeline of this driver employs [whole test base](https://github.com/go-gorm/gorm/tree/master/tests) of GORM, which includes more than **12k** tests (see badge on the page-top). Testing is run against latest major releases of Go:
-- 1.16
-- 1.17
 - 1.18
+- 1.19
 
 In following environments:
 - Linux
@@ -55,4 +54,3 @@ Well, it's slower than CGo implementation, but not terribly. See the [bechmark o
 ## Included features
 -  JSON1 (https://www.sqlite.org/json1.html)
 -  Math functions (https://www.sqlite.org/lang_mathfunc.html)
-
