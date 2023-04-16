@@ -22,7 +22,6 @@ import (
 )
 
 const (
-	StatSlotName  = "sentinel-core-hotspot-concurrency-stat-slot"
 	StatSlotOrder = 4000
 )
 
@@ -34,23 +33,18 @@ var (
 type ConcurrencyStatSlot struct {
 }
 
-func (c *ConcurrencyStatSlot) Name() string {
-	return StatSlotName
-}
-
 func (s *ConcurrencyStatSlot) Order() uint32 {
 	return StatSlotOrder
 }
 
 func (c *ConcurrencyStatSlot) OnEntryPassed(ctx *base.EntryContext) {
 	res := ctx.Resource.Name()
-	args := ctx.Input.Args
 	tcs := getTrafficControllersFor(res)
 	for _, tc := range tcs {
 		if tc.BoundRule().MetricType != Concurrency {
 			continue
 		}
-		arg := matchArg(tc, args)
+		arg := tc.ExtractArgs(ctx)
 		if arg == nil {
 			continue
 		}
@@ -72,13 +66,12 @@ func (c *ConcurrencyStatSlot) OnEntryBlocked(ctx *base.EntryContext, blockError 
 
 func (c *ConcurrencyStatSlot) OnCompleted(ctx *base.EntryContext) {
 	res := ctx.Resource.Name()
-	args := ctx.Input.Args
 	tcs := getTrafficControllersFor(res)
 	for _, tc := range tcs {
 		if tc.BoundRule().MetricType != Concurrency {
 			continue
 		}
-		arg := matchArg(tc, args)
+		arg := tc.ExtractArgs(ctx)
 		if arg == nil {
 			continue
 		}

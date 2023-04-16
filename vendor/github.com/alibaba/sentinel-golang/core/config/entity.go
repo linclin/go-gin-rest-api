@@ -38,12 +38,27 @@ type SentinelConfig struct {
 		// Type indicates the classification of the service (e.g. web service, API gateway).
 		Type int32
 	}
+	// Exporter represents configuration items related to exporter, like metric exporter.
+	Exporter ExporterConfig
 	// Log represents configuration items related to logging.
 	Log LogConfig
 	// Stat represents configuration items related to statistics.
 	Stat StatConfig
 	// UseCacheTime indicates whether to cache time(ms)
 	UseCacheTime bool `yaml:"useCacheTime"`
+}
+
+// ExporterConfig represents configuration items related to exporter, like metric exporter.
+type ExporterConfig struct {
+	Metric MetricExporterConfig
+}
+
+// MetricExporterConfig represents configuration of metric exporter.
+type MetricExporterConfig struct {
+	// HttpAddr is the http server listen address, like ":8080".
+	HttpAddr string `yaml:"http_addr"`
+	// HttpPath is the http request path of access metrics, like "/metrics".
+	HttpPath string `yaml:"http_path"`
 }
 
 // LogConfig represent the configuration of logging in Sentinel.
@@ -83,6 +98,12 @@ type StatConfig struct {
 type SystemStatConfig struct {
 	// CollectIntervalMs represents the collecting interval of the system metrics collector.
 	CollectIntervalMs uint32 `yaml:"collectIntervalMs"`
+	// CollectLoadIntervalMs represents the collecting interval of the system load collector.
+	CollectLoadIntervalMs uint32 `yaml:"collectLoadIntervalMs"`
+	// CollectCpuIntervalMs represents the collecting interval of the system cpu usage collector.
+	CollectCpuIntervalMs uint32 `yaml:"collectCpuIntervalMs"`
+	// CollectMemoryIntervalMs represents the collecting interval of the system memory usage collector.
+	CollectMemoryIntervalMs uint32 `yaml:"collectMemoryIntervalMs"`
 }
 
 // NewDefaultConfig creates a new default config entity.
@@ -113,10 +134,13 @@ func NewDefaultConfig() *Entity {
 				MetricStatisticSampleCount:      base.DefaultSampleCount,
 				MetricStatisticIntervalMs:       base.DefaultIntervalMs,
 				System: SystemStatConfig{
-					CollectIntervalMs: DefaultSystemStatCollectIntervalMs,
+					CollectIntervalMs:       DefaultSystemStatCollectIntervalMs,
+					CollectLoadIntervalMs:   DefaultLoadStatCollectIntervalMs,
+					CollectCpuIntervalMs:    DefaultCpuStatCollectIntervalMs,
+					CollectMemoryIntervalMs: DefaultMemoryStatCollectIntervalMs,
 				},
 			},
-			UseCacheTime: true,
+			UseCacheTime: false,
 		},
 	}
 }
@@ -181,6 +205,14 @@ func (entity *Entity) LogUsePid() bool {
 	return entity.Sentinel.Log.UsePid
 }
 
+func (entity *Entity) MetricExportHTTPAddr() string {
+	return entity.Sentinel.Exporter.Metric.HttpAddr
+}
+
+func (entity *Entity) MetricExportHTTPPath() string {
+	return entity.Sentinel.Exporter.Metric.HttpPath
+}
+
 func (entity *Entity) MetricLogFlushIntervalSec() uint32 {
 	return entity.Sentinel.Log.Metric.FlushIntervalSec
 }
@@ -195,6 +227,18 @@ func (entity *Entity) MetricLogMaxFileAmount() uint32 {
 
 func (entity *Entity) SystemStatCollectIntervalMs() uint32 {
 	return entity.Sentinel.Stat.System.CollectIntervalMs
+}
+
+func (entity *Entity) LoadStatCollectIntervalMs() uint32 {
+	return entity.Sentinel.Stat.System.CollectLoadIntervalMs
+}
+
+func (entity *Entity) CpuStatCollectIntervalMs() uint32 {
+	return entity.Sentinel.Stat.System.CollectCpuIntervalMs
+}
+
+func (entity *Entity) MemoryStatCollectIntervalMs() uint32 {
+	return entity.Sentinel.Stat.System.CollectMemoryIntervalMs
 }
 
 func (entity *Entity) UseCacheTime() bool {

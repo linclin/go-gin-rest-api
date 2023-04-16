@@ -16,7 +16,7 @@ github.com/StackExchange/wmi
 # github.com/a8m/rql v1.3.0
 ## explicit; go 1.16
 github.com/a8m/rql
-# github.com/alibaba/sentinel-golang v1.0.1
+# github.com/alibaba/sentinel-golang v1.0.4
 ## explicit; go 1.13
 github.com/alibaba/sentinel-golang/api
 github.com/alibaba/sentinel-golang/core/base
@@ -28,10 +28,12 @@ github.com/alibaba/sentinel-golang/core/hotspot/cache
 github.com/alibaba/sentinel-golang/core/isolation
 github.com/alibaba/sentinel-golang/core/log
 github.com/alibaba/sentinel-golang/core/log/metric
-github.com/alibaba/sentinel-golang/core/misc
 github.com/alibaba/sentinel-golang/core/stat
 github.com/alibaba/sentinel-golang/core/stat/base
 github.com/alibaba/sentinel-golang/core/system
+github.com/alibaba/sentinel-golang/core/system_metric
+github.com/alibaba/sentinel-golang/exporter/metric
+github.com/alibaba/sentinel-golang/exporter/metric/prometheus
 github.com/alibaba/sentinel-golang/logging
 github.com/alibaba/sentinel-golang/util
 # github.com/appleboy/gin-jwt/v2 v2.9.1
@@ -61,7 +63,7 @@ github.com/bytedance/sonic/loader
 github.com/bytedance/sonic/option
 github.com/bytedance/sonic/unquote
 github.com/bytedance/sonic/utf8
-# github.com/casbin/casbin/v2 v2.66.3
+# github.com/casbin/casbin/v2 v2.68.0
 ## explicit; go 1.13
 github.com/casbin/casbin/v2
 github.com/casbin/casbin/v2/config
@@ -76,7 +78,7 @@ github.com/casbin/casbin/v2/persist/file-adapter
 github.com/casbin/casbin/v2/rbac
 github.com/casbin/casbin/v2/rbac/default-role-manager
 github.com/casbin/casbin/v2/util
-# github.com/casbin/gorm-adapter/v3 v3.15.1
+# github.com/casbin/gorm-adapter/v3 v3.16.1
 ## explicit; go 1.20
 github.com/casbin/gorm-adapter/v3
 # github.com/cespare/xxhash/v2 v2.2.0
@@ -329,11 +331,14 @@ github.com/satori/go.uuid
 # github.com/sentinel-group/sentinel-go-adapters v1.0.1
 ## explicit; go 1.14
 github.com/sentinel-group/sentinel-go-adapters/gin
-# github.com/shirou/gopsutil v3.20.11+incompatible
-## explicit
-github.com/shirou/gopsutil/cpu
-github.com/shirou/gopsutil/internal/common
-github.com/shirou/gopsutil/load
+# github.com/shirou/gopsutil/v3 v3.21.6
+## explicit; go 1.15
+github.com/shirou/gopsutil/v3/cpu
+github.com/shirou/gopsutil/v3/internal/common
+github.com/shirou/gopsutil/v3/load
+github.com/shirou/gopsutil/v3/mem
+github.com/shirou/gopsutil/v3/net
+github.com/shirou/gopsutil/v3/process
 # github.com/sirupsen/logrus v1.6.0
 ## explicit; go 1.13
 github.com/sirupsen/logrus
@@ -374,6 +379,12 @@ github.com/swaggo/gin-swagger
 # github.com/swaggo/swag v1.8.12
 ## explicit; go 1.18
 github.com/swaggo/swag
+# github.com/tklauser/go-sysconf v0.3.6
+## explicit; go 1.13
+github.com/tklauser/go-sysconf
+# github.com/tklauser/numcpus v0.2.2
+## explicit; go 1.11
+github.com/tklauser/numcpus
 # github.com/twitchyliquid64/golang-asm v0.15.1
 ## explicit; go 1.13
 github.com/twitchyliquid64/golang-asm/asm/arch

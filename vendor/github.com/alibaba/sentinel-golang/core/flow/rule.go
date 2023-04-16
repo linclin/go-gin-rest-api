@@ -47,6 +47,7 @@ type TokenCalculateStrategy int32
 const (
 	Direct TokenCalculateStrategy = iota
 	WarmUp
+	MemoryAdaptive
 )
 
 func (s TokenCalculateStrategy) String() string {
@@ -55,15 +56,19 @@ func (s TokenCalculateStrategy) String() string {
 		return "Direct"
 	case WarmUp:
 		return "WarmUp"
+	case MemoryAdaptive:
+		return "MemoryAdaptive"
 	default:
 		return "Undefined"
 	}
 }
 
+// ControlBehavior defines the behavior when requests have reached the capacity of the resource.
 type ControlBehavior int32
 
 const (
 	Reject ControlBehavior = iota
+	// Throttling indicates that pending requests will be throttled, wait in queue (until free capacity is available)
 	Throttling
 )
 
@@ -102,6 +107,16 @@ type Rule struct {
 	// If the StatIntervalInMs user specifies can not reuse the global statistic of resource,
 	// 		sentinel will generate independent statistic structure for this rule.
 	StatIntervalInMs uint32 `json:"statIntervalInMs"`
+
+	// adaptive flow control algorithm related parameters
+	// limitation: LowMemUsageThreshold > HighMemUsageThreshold && MemHighWaterMarkBytes > MemLowWaterMarkBytes
+	// if the current memory usage is less than or equals to MemLowWaterMarkBytes, threshold == LowMemUsageThreshold
+	// if the current memory usage is more than or equals to MemHighWaterMarkBytes, threshold == HighMemUsageThreshold
+	// if  the current memory usage is in (MemLowWaterMarkBytes, MemHighWaterMarkBytes), threshold is in (HighMemUsageThreshold, LowMemUsageThreshold)
+	LowMemUsageThreshold  int64 `json:"lowMemUsageThreshold"`
+	HighMemUsageThreshold int64 `json:"highMemUsageThreshold"`
+	MemLowWaterMarkBytes  int64 `json:"memLowWaterMarkBytes"`
+	MemHighWaterMarkBytes int64 `json:"memHighWaterMarkBytes"`
 }
 
 func (r *Rule) isEqualsTo(newRule *Rule) bool {
@@ -110,8 +125,13 @@ func (r *Rule) isEqualsTo(newRule *Rule) bool {
 	}
 	if !(r.Resource == newRule.Resource && r.RelationStrategy == newRule.RelationStrategy &&
 		r.RefResource == newRule.RefResource && r.StatIntervalInMs == newRule.StatIntervalInMs &&
-		r.TokenCalculateStrategy == newRule.TokenCalculateStrategy && r.ControlBehavior == newRule.ControlBehavior && util.Float64Equals(r.Threshold, newRule.Threshold) &&
-		r.MaxQueueingTimeMs == newRule.MaxQueueingTimeMs && r.WarmUpPeriodSec == newRule.WarmUpPeriodSec && r.WarmUpColdFactor == newRule.WarmUpColdFactor) {
+		r.TokenCalculateStrategy == newRule.TokenCalculateStrategy && r.ControlBehavior == newRule.ControlBehavior &&
+		util.Float64Equals(r.Threshold, newRule.Threshold) &&
+		r.MaxQueueingTimeMs == newRule.MaxQueueingTimeMs && r.WarmUpPeriodSec == newRule.WarmUpPeriodSec &&
+		r.WarmUpColdFactor == newRule.WarmUpColdFactor &&
+		r.LowMemUsageThreshold == newRule.LowMemUsageThreshold && r.HighMemUsageThreshold == newRule.HighMemUsageThreshold &&
+		r.MemLowWaterMarkBytes == newRule.MemLowWaterMarkBytes && r.MemHighWaterMarkBytes == newRule.MemHighWaterMarkBytes) {
+
 		return false
 	}
 	return true
@@ -127,7 +147,7 @@ func (r *Rule) isStatReusable(newRule *Rule) bool {
 }
 
 func (r *Rule) needStatistic() bool {
-	return !(r.TokenCalculateStrategy == Direct && r.ControlBehavior == Throttling)
+	return r.TokenCalculateStrategy == WarmUp || r.ControlBehavior == Reject
 }
 
 func (r *Rule) String() string {
@@ -135,9 +155,11 @@ func (r *Rule) String() string {
 	if err != nil {
 		// Return the fallback string
 		return fmt.Sprintf("Rule{Resource=%s, TokenCalculateStrategy=%s, ControlBehavior=%s, "+
-			"Threshold=%.2f, RelationStrategy=%s, RefResource=%s, MaxQueueingTimeMs=%d, WarmUpPeriodSec=%d, WarmUpColdFactor=%d, StatIntervalInMs=%d}",
+			"Threshold=%.2f, RelationStrategy=%s, RefResource=%s, MaxQueueingTimeMs=%d, WarmUpPeriodSec=%d, WarmUpColdFactor=%d, StatIntervalInMs=%d, "+
+			"LowMemUsageThreshold=%v, HighMemUsageThreshold=%v, MemLowWaterMarkBytes=%v, MemHighWaterMarkBytes=%v}",
 			r.Resource, r.TokenCalculateStrategy, r.ControlBehavior, r.Threshold, r.RelationStrategy, r.RefResource,
-			r.MaxQueueingTimeMs, r.WarmUpPeriodSec, r.WarmUpColdFactor, r.StatIntervalInMs)
+			r.MaxQueueingTimeMs, r.WarmUpPeriodSec, r.WarmUpColdFactor, r.StatIntervalInMs,
+			r.LowMemUsageThreshold, r.HighMemUsageThreshold, r.MemLowWaterMarkBytes, r.MemHighWaterMarkBytes)
 	}
 	return string(b)
 }

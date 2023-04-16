@@ -20,6 +20,7 @@ import (
 
 	"github.com/alibaba/sentinel-golang/core/base"
 	sbase "github.com/alibaba/sentinel-golang/core/stat/base"
+	metric_exporter "github.com/alibaba/sentinel-golang/exporter/metric"
 	"github.com/alibaba/sentinel-golang/logging"
 	"github.com/alibaba/sentinel-golang/util"
 	"github.com/pkg/errors"
@@ -46,6 +47,17 @@ const (
 	HalfOpen
 	Open
 )
+
+var (
+	stateChangedCounter = metric_exporter.NewCounter(
+		"circuit_breaker_state_changed_total",
+		"Circuit breaker total state change count",
+		[]string{"resource", "from_state", "to_state"})
+)
+
+func init() {
+	metric_exporter.Register(stateChangedCounter)
+}
 
 func newState() *State {
 	var state State
@@ -124,6 +136,10 @@ type circuitBreakerBase struct {
 	retryTimeoutMs uint32
 	// nextRetryTimestampMs is the time circuit breaker could probe
 	nextRetryTimestampMs uint64
+	// probeNumber is the number of probe requests that are allowed to pass when the circuit breaker is half open.
+	probeNumber uint64
+	// curProbeNumber is the real-time probe number.
+	curProbeNumber uint64
 	// state is the state machine of circuit breaker
 	state *State
 }
@@ -144,6 +160,14 @@ func (b *circuitBreakerBase) updateNextRetryTimestamp() {
 	atomic.StoreUint64(&b.nextRetryTimestampMs, util.CurrentTimeMillis()+uint64(b.retryTimeoutMs))
 }
 
+func (b *circuitBreakerBase) addCurProbeNum() {
+	atomic.AddUint64(&b.curProbeNumber, 1)
+}
+
+func (b *circuitBreakerBase) resetCurProbeNum() {
+	atomic.StoreUint64(&b.curProbeNumber, 0)
+}
+
 // fromClosedToOpen updates circuit breaker state machine from closed to open.
 // Return true only if current goroutine successfully accomplished the transformation.
 func (b *circuitBreakerBase) fromClosedToOpen(snapshot interface{}) bool {
@@ -152,6 +176,8 @@ func (b *circuitBreakerBase) fromClosedToOpen(snapshot interface{}) bool {
 		for _, listener := range stateChangeListeners {
 			listener.OnTransformToOpen(Closed, *b.rule, snapshot)
 		}
+
+		stateChangedCounter.Add(float64(1), b.BoundRule().Resource, "Closed", "Open")
 		return true
 	}
 	return false
@@ -181,6 +207,8 @@ func (b *circuitBreakerBase) fromOpenToHalfOpen(ctx *base.EntryContext) bool {
 				return nil
 			})
 		}
+
+		stateChangedCounter.Add(float64(1), b.BoundRule().Resource, "Open", "HalfOpen")
 		return true
 	}
 	return false
@@ -190,10 +218,13 @@ func (b *circuitBreakerBase) fromOpenToHalfOpen(ctx *base.EntryContext) bool {
 // Return true only if current goroutine successfully accomplished the transformation.
 func (b *circuitBreakerBase) fromHalfOpenToOpen(snapshot interface{}) bool {
 	if b.state.cas(HalfOpen, Open) {
+		b.resetCurProbeNum()
 		b.updateNextRetryTimestamp()
 		for _, listener := range stateChangeListeners {
 			listener.OnTransformToOpen(HalfOpen, *b.rule, snapshot)
 		}
+
+		stateChangedCounter.Add(float64(1), b.BoundRule().Resource, "HalfOpen", "Open")
 		return true
 	}
 	return false
@@ -203,9 +234,12 @@ func (b *circuitBreakerBase) fromHalfOpenToOpen(snapshot interface{}) bool {
 // Return true only if current goroutine successfully accomplished the transformation.
 func (b *circuitBreakerBase) fromHalfOpenToClosed() bool {
 	if b.state.cas(HalfOpen, Closed) {
+		b.resetCurProbeNum()
 		for _, listener := range stateChangeListeners {
 			listener.OnTransformToClosed(HalfOpen, *b.rule)
 		}
+
+		stateChangedCounter.Add(float64(1), b.BoundRule().Resource, "HalfOpen", "Closed")
 		return true
 	}
 	return false
@@ -227,6 +261,7 @@ func newSlowRtCircuitBreakerWithStat(r *Rule, stat *slowRequestLeapArray) *slowR
 			retryTimeoutMs:       r.RetryTimeoutMs,
 			nextRetryTimestampMs: 0,
 			state:                newState(),
+			probeNumber:          r.ProbeNum,
 		},
 		stat:                stat,
 		maxAllowedRt:        r.MaxAllowedRtMs,
@@ -237,8 +272,9 @@ func newSlowRtCircuitBreakerWithStat(r *Rule, stat *slowRequestLeapArray) *slowR
 
 func newSlowRtCircuitBreaker(r *Rule) (*slowRtCircuitBreaker, error) {
 	interval := r.StatIntervalMs
+	bucketCount := getRuleStatSlidingWindowBucketCount(r)
 	stat := &slowRequestLeapArray{}
-	leapArray, err := sbase.NewLeapArray(1, interval, stat)
+	leapArray, err := sbase.NewLeapArray(bucketCount, interval, stat)
 	if err != nil {
 		return nil, err
 	}
@@ -261,6 +297,8 @@ func (b *slowRtCircuitBreaker) TryPass(ctx *base.EntryContext) bool {
 		if b.retryTimeoutArrived() && b.fromOpenToHalfOpen(ctx) {
 			return true
 		}
+	} else if curStatus == HalfOpen && b.probeNumber > 0 {
+		return true
 	}
 	return false
 }
@@ -297,9 +335,12 @@ func (b *slowRtCircuitBreaker) OnRequestComplete(rt uint64, _ error) {
 			// fail to probe
 			b.fromHalfOpenToOpen(1.0)
 		} else {
-			// succeed to probe
-			b.fromHalfOpenToClosed()
-			b.resetMetric()
+			b.addCurProbeNum()
+			if b.probeNumber == 0 || atomic.LoadUint64(&b.curProbeNumber) >= b.probeNumber {
+				// succeed to probe
+				b.fromHalfOpenToClosed()
+				b.resetMetric()
+			}
 		}
 		return
 	}
@@ -412,6 +453,7 @@ func newErrorRatioCircuitBreakerWithStat(r *Rule, stat *errorCounterLeapArray) *
 			retryTimeoutMs:       r.RetryTimeoutMs,
 			nextRetryTimestampMs: 0,
 			state:                newState(),
+			probeNumber:          r.ProbeNum,
 		},
 		minRequestAmount:    r.MinRequestAmount,
 		errorRatioThreshold: r.Threshold,
@@ -421,8 +463,9 @@ func newErrorRatioCircuitBreakerWithStat(r *Rule, stat *errorCounterLeapArray) *
 
 func newErrorRatioCircuitBreaker(r *Rule) (*errorRatioCircuitBreaker, error) {
 	interval := r.StatIntervalMs
+	bucketCount := getRuleStatSlidingWindowBucketCount(r)
 	stat := &errorCounterLeapArray{}
-	leapArray, err := sbase.NewLeapArray(1, interval, stat)
+	leapArray, err := sbase.NewLeapArray(bucketCount, interval, stat)
 	if err != nil {
 		return nil, err
 	}
@@ -443,6 +486,8 @@ func (b *errorRatioCircuitBreaker) TryPass(ctx *base.EntryContext) bool {
 		if b.retryTimeoutArrived() && b.fromOpenToHalfOpen(ctx) {
 			return true
 		}
+	} else if curStatus == HalfOpen && b.probeNumber > 0 {
+		return true
 	}
 	return false
 }
@@ -476,8 +521,11 @@ func (b *errorRatioCircuitBreaker) OnRequestComplete(_ uint64, err error) {
 	}
 	if curStatus == HalfOpen {
 		if err == nil {
-			b.fromHalfOpenToClosed()
-			b.resetMetric()
+			b.addCurProbeNum()
+			if b.probeNumber == 0 || atomic.LoadUint64(&b.curProbeNumber) >= b.probeNumber {
+				b.fromHalfOpenToClosed()
+				b.resetMetric()
+			}
 		} else {
 			b.fromHalfOpenToOpen(1.0)
 		}
@@ -590,6 +638,7 @@ func newErrorCountCircuitBreakerWithStat(r *Rule, stat *errorCounterLeapArray) *
 			retryTimeoutMs:       r.RetryTimeoutMs,
 			nextRetryTimestampMs: 0,
 			state:                newState(),
+			probeNumber:          r.ProbeNum,
 		},
 		minRequestAmount:    r.MinRequestAmount,
 		errorCountThreshold: uint64(r.Threshold),
@@ -599,8 +648,9 @@ func newErrorCountCircuitBreakerWithStat(r *Rule, stat *errorCounterLeapArray) *
 
 func newErrorCountCircuitBreaker(r *Rule) (*errorCountCircuitBreaker, error) {
 	interval := r.StatIntervalMs
+	bucketCount := getRuleStatSlidingWindowBucketCount(r)
 	stat := &errorCounterLeapArray{}
-	leapArray, err := sbase.NewLeapArray(1, interval, stat)
+	leapArray, err := sbase.NewLeapArray(bucketCount, interval, stat)
 	if err != nil {
 		return nil, err
 	}
@@ -621,6 +671,8 @@ func (b *errorCountCircuitBreaker) TryPass(ctx *base.EntryContext) bool {
 		if b.retryTimeoutArrived() && b.fromOpenToHalfOpen(ctx) {
 			return true
 		}
+	} else if curStatus == HalfOpen && b.probeNumber > 0 {
+		return true
 	}
 	return false
 }
@@ -652,8 +704,11 @@ func (b *errorCountCircuitBreaker) OnRequestComplete(_ uint64, err error) {
 	}
 	if curStatus == HalfOpen {
 		if err == nil {
-			b.fromHalfOpenToClosed()
-			b.resetMetric()
+			b.addCurProbeNum()
+			if b.probeNumber == 0 || atomic.LoadUint64(&b.curProbeNumber) >= b.probeNumber {
+				b.fromHalfOpenToClosed()
+				b.resetMetric()
+			}
 		} else {
 			b.fromHalfOpenToOpen(1)
 		}

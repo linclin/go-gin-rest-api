@@ -15,16 +15,14 @@
 package flow
 
 import (
-	"time"
-
 	"github.com/alibaba/sentinel-golang/core/base"
 	"github.com/alibaba/sentinel-golang/core/stat"
 	"github.com/alibaba/sentinel-golang/logging"
+	"github.com/alibaba/sentinel-golang/util"
 	"github.com/pkg/errors"
 )
 
 const (
-	RuleCheckSlotName  = "sentinel-core-flow-rule-check-slot"
 	RuleCheckSlotOrder = 2000
 )
 
@@ -33,10 +31,6 @@ var (
 )
 
 type Slot struct {
-}
-
-func (s *Slot) Name() string {
-	return RuleCheckSlotName
 }
 
 func (s *Slot) Order() uint32 {
@@ -65,7 +59,7 @@ func (s *Slot) Check(ctx *base.EntryContext) *base.TokenResult {
 		if r.Status() == base.ResultStatusShouldWait {
 			if nanosToWait := r.NanosToWait(); nanosToWait > 0 {
 				// Handle waiting action.
-				time.Sleep(nanosToWait)
+				util.Sleep(nanosToWait)
 			}
 			continue
 		}

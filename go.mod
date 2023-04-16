@@ -4,9 +4,10 @@ go 1.20
 
 require (
 	github.com/a8m/rql v1.3.0
+	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/appleboy/gin-jwt/v2 v2.9.1
-	github.com/casbin/casbin/v2 v2.66.3
-	github.com/casbin/gorm-adapter/v3 v3.15.1
+	github.com/casbin/casbin/v2 v2.68.0
+	github.com/casbin/gorm-adapter/v3 v3.16.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/gzip v0.0.6
@@ -41,7 +42,6 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
-	github.com/alibaba/sentinel-golang v1.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -94,12 +94,14 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230126093431-47fa9a501578 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/shirou/gopsutil v3.20.11+incompatible // indirect
+	github.com/shirou/gopsutil/v3 v3.21.6 // indirect
 	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
+	github.com/tklauser/go-sysconf v0.3.6 // indirect
+	github.com/tklauser/numcpus v0.2.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.9 // indirect
 	go.opentelemetry.io/otel v1.10.0 // indirect

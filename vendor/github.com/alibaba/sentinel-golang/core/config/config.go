@@ -204,6 +204,14 @@ func LogUsePid() bool {
 	return globalCfg.LogUsePid()
 }
 
+func MetricExportHTTPAddr() string {
+	return globalCfg.MetricExportHTTPAddr()
+}
+
+func MetricExportHTTPPath() string {
+	return globalCfg.MetricExportHTTPPath()
+}
+
 func MetricLogFlushIntervalSec() uint32 {
 	return globalCfg.MetricLogFlushIntervalSec()
 }
@@ -218,6 +226,18 @@ func MetricLogMaxFileAmount() uint32 {
 
 func SystemStatCollectIntervalMs() uint32 {
 	return globalCfg.SystemStatCollectIntervalMs()
+}
+
+func LoadStatCollectIntervalMs() uint32 {
+	return globalCfg.LoadStatCollectIntervalMs()
+}
+
+func CpuStatCollectIntervalMs() uint32 {
+	return globalCfg.CpuStatCollectIntervalMs()
+}
+
+func MemoryStatCollectIntervalMs() uint32 {
+	return globalCfg.MemoryStatCollectIntervalMs()
 }
 
 func UseCacheTime() bool {

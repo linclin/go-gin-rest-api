@@ -17,10 +17,10 @@ package system
 import (
 	"github.com/alibaba/sentinel-golang/core/base"
 	"github.com/alibaba/sentinel-golang/core/stat"
+	"github.com/alibaba/sentinel-golang/core/system_metric"
 )
 
 const (
-	RuleCheckSlotName  = "sentinel-core-system-adaptive-rule-check-slot"
 	RuleCheckSlotOrder = 1000
 )
 
@@ -29,10 +29,6 @@ var (
 )
 
 type AdaptiveSlot struct {
-}
-
-func (s *AdaptiveSlot) Name() string {
-	return RuleCheckSlotName
 }
 
 func (s *AdaptiveSlot) Order() uint32 {
@@ -87,7 +83,7 @@ func (s *AdaptiveSlot) doCheckRule(rule *Rule) (bool, string, float64) {
 		}
 		return res, msg, rt
 	case Load:
-		l := CurrentLoad()
+		l := system_metric.CurrentLoad()
 		if l > threshold {
 			if rule.Strategy != BBR || !checkBbrSimple() {
 				msg = "system load check blocked"
@@ -96,7 +92,7 @@ func (s *AdaptiveSlot) doCheckRule(rule *Rule) (bool, string, float64) {
 		}
 		return true, "", l
 	case CpuUsage:
-		c := CurrentCpuUsage()
+		c := system_metric.CurrentCpuUsage()
 		if c > threshold {
 			if rule.Strategy != BBR || !checkBbrSimple() {
 				msg = "system cpu usage check blocked"

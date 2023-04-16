@@ -16,7 +16,19 @@ package flow
 
 import (
 	"github.com/alibaba/sentinel-golang/core/base"
+	metric_exporter "github.com/alibaba/sentinel-golang/exporter/metric"
 )
+
+var (
+	resourceFlowThresholdGauge = metric_exporter.NewGauge(
+		"resource_flow_threshold",
+		"Resource flow threshold",
+		[]string{"resource"})
+)
+
+func init() {
+	metric_exporter.Register(resourceFlowThresholdGauge)
+}
 
 // TrafficShapingCalculator calculates the actual traffic shaping threshold
 // based on the threshold of rule and the traffic shaping strategy.
@@ -73,5 +85,8 @@ func (t *TrafficShapingController) FlowCalculator() TrafficShapingCalculator {
 
 func (t *TrafficShapingController) PerformChecking(resStat base.StatNode, batchCount uint32, flag int32) *base.TokenResult {
 	allowedTokens := t.flowCalculator.CalculateAllowedTokens(batchCount, flag)
+
+	resourceFlowThresholdGauge.Set(float64(allowedTokens), t.rule.Resource)
+
 	return t.flowChecker.DoCheck(resStat, batchCount, allowedTokens)
 }

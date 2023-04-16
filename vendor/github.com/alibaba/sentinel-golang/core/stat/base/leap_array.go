@@ -26,10 +26,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	PtrSize = int(8)
-)
-
 // BucketWrap represent a slot to record metrics
 // In order to reduce the usage of memory, BucketWrap don't hold length of BucketWrap
 // The length of BucketWrap could be seen in LeapArray.
@@ -70,8 +66,7 @@ func NewAtomicBucketWrapArrayWithTime(len int, bucketLengthInMs uint32, now uint
 		data:   make([]*BucketWrap, len),
 	}
 
-	timeId := now / uint64(bucketLengthInMs)
-	idx := int(timeId) % len
+	idx := int((now / uint64(bucketLengthInMs)) % uint64(len))
 	startTime := calculateStartTime(now, bucketLengthInMs)
 
 	for i := idx; i <= len-1; i++ {
@@ -116,7 +111,7 @@ func (aa *AtomicBucketWrapArray) elementOffset(idx int) (unsafe.Pointer, bool) {
 		return nil, false
 	}
 	basePtr := aa.base
-	return unsafe.Pointer(uintptr(basePtr) + uintptr(idx*PtrSize)), true
+	return unsafe.Pointer(uintptr(basePtr) + uintptr(idx)*unsafe.Sizeof(basePtr)), true
 }
 
 func (aa *AtomicBucketWrapArray) get(idx int) *BucketWrap {
@@ -159,7 +154,7 @@ type LeapArray struct {
 }
 
 func NewLeapArray(sampleCount uint32, intervalInMs uint32, generator BucketGenerator) (*LeapArray, error) {
-	if intervalInMs%sampleCount != 0 {
+	if sampleCount == 0 || intervalInMs%sampleCount != 0 {
 		return nil, errors.Errorf("Invalid parameters, intervalInMs is %d, sampleCount is %d", intervalInMs, sampleCount)
 	}
 	if generator == nil {
