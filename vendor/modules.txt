@@ -78,7 +78,7 @@ github.com/casbin/casbin/v2/persist/file-adapter
 github.com/casbin/casbin/v2/rbac
 github.com/casbin/casbin/v2/rbac/default-role-manager
 github.com/casbin/casbin/v2/util
-# github.com/casbin/gorm-adapter/v3 v3.16.1
+# github.com/casbin/gorm-adapter/v3 v3.17.0
 ## explicit; go 1.20
 github.com/casbin/gorm-adapter/v3
 # github.com/cespare/xxhash/v2 v2.2.0
@@ -149,7 +149,7 @@ github.com/go-playground/locales/zh
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.12.0
+# github.com/go-playground/validator/v10 v10.13.0
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
 github.com/go-playground/validator/v10/translations/en
@@ -157,7 +157,7 @@ github.com/go-playground/validator/v10/translations/zh
 # github.com/go-resty/resty/v2 v2.7.0
 ## explicit; go 1.11
 github.com/go-resty/resty/v2
-# github.com/go-sql-driver/mysql v1.7.0
+# github.com/go-sql-driver/mysql v1.7.1
 ## explicit; go 1.13
 github.com/go-sql-driver/mysql
 # github.com/goccy/go-json v0.10.0
@@ -248,7 +248,7 @@ github.com/klauspost/cpuid/v2
 # github.com/konsorten/go-windows-terminal-sequences v1.0.3
 ## explicit
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/leodido/go-urn v1.2.2
+# github.com/leodido/go-urn v1.2.3
 ## explicit; go 1.16
 github.com/leodido/go-urn
 # github.com/linclin/gorm2-loggable v1.0.0
@@ -376,7 +376,7 @@ github.com/swaggo/files
 # github.com/swaggo/gin-swagger v1.6.0
 ## explicit; go 1.17
 github.com/swaggo/gin-swagger
-# github.com/swaggo/swag v1.8.12
+# github.com/swaggo/swag v1.16.1
 ## explicit; go 1.18
 github.com/swaggo/swag
 # github.com/tklauser/go-sysconf v0.3.6
