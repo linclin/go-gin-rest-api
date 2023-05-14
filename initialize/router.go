@@ -42,6 +42,7 @@ func Routers() *gin.Engine {
 	if global.Conf.System.RunMode == "prd" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+	gin.ForceConsoleColor()
 	// 创建带有默认中间件的路由:
 	// 日志与恢复中间件
 	// r := gin.Default()

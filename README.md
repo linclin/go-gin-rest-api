@@ -17,7 +17,37 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 - 配置文件管理使用`Viper`进行，配置文件变更热加载，无需重启应用(框架基础http服务、日志、数据库不变，仅针对业务配置生效) 
 - 日志输出使用`Zap`，搭配`lumberjack`日志文件切割
 - 定时任务使用`robfig/cron`运行,使用基于MySQL唯一索引的分布式锁避免多副本重复执行，并记录任务执行状态到数据表
+## 使用golang大众开源类库
+- [gin](https://github.com/gin-gonic/gin) 一款高效的golang web框架 [教程](https://gin-gonic.com/zh-cn/docs/)
+- [gorm](https://gorm.io/gorm) 数据库ORM管理框架, 可自行扩展多种数据库类型 [教程](https://gorm.io/zh_CN/)
+- [rql](https://github.com/a8m/rql) 用于REST的资源查询语言，作为http请求和orm之间的连接器，gin和gorm的连接器
+- [viper](https://github.com/spf13/viper)  配置管理工具, 支持多种配置文件类型.[教程](https://darjun.github.io/2020/01/18/godailylib/viper/)
+- [jwt](https://github.com/appleboy/gin-jwt) JWT token中间件
+- [casbin](https://github.com/casbin/casbin) 基于角色的访问控制模型(RBAC) [教程](https://darjun.github.io/2020/06/12/godailylib/casbin/)
+- [validator](https://github.com/go-playground/validator) 请求参数校验, 版本V10.  [教程](https://darjun.github.io/2020/04/04/godailylib/validator/)
+- [zap](https://github.com/uber-go/zap): uber开源的日志库zap，对性能和内存分配做了极致的优化.  [教程](https://darjun.github.io/2020/04/23/godailylib/zap/)
+- [lumberjack](https://github.com/natefinch/lumberjack) 日志切割工具, 高效分离大日志文件, 按日期保存文件
+- [cast](https://github.com/spf13/cast) 一个小巧、实用的类型转换库，用于将一个类型转为另一个类型 [教程](https://darjun.github.io/2020/01/20/godailylib/cast/)
+- [go-cache](https://github.com/patrickmn/go-cache)  缓存库 [教程](https://cloud.tencent.com/developer/article/2176204)
+- [resty](https://github.com/go-resty/resty) Go的简单HTTP和REST请求客户端  [教程](https://darjun.github.io/2021/06/26/godailylib/resty/) 
+- [cron](https://github.com/robfig/cron) 实现了 cron 规范解析器和任务运行器，简单来讲就是包含了定时任务所需的功能  [教程](https://darjun.github.io/2020/06/25/godailylib/cron) 
 
+感谢[Go 每日一库](https://github.com/darjun/go-daily-lib)提供的详细教程 
+
+
+## gin中间件
+- [appleboy/gin-jwt](https://github.com/appleboy/gin-jwt)  权限认证中间件 -- 处理登录、登出、无状态token校验
+- [casbin](https://github.com/casbin/casbin/) 和[casbin/gorm-adapter](https://github.com/casbin/gorm-adapter)权限访问中间件 -- 基于Cabin RBAC, 对不同角色访问不同API进行校验
+- [sentinel](https://github.com/sentinel-group/sentinel-go-adapters/gin) sentinel流量控制中间件 -- api流量控制和熔断降级
+- [gin-contrib/requestid](https://github.com/gin-contrib/requestid)  requestid中间件 -- 接口trace id，每次api请求均会生成唯一id返回客户端，并保存数据库接口日志表
+- [gin-contrib/cors](https://github.com/gin-contrib/cors)  cors跨域中间件-- 所有请求均可跨域访问  
+- [gin-contrib/gzip](https://github.com/gin-contrib/gzip)  gzip中间件-- 所有API返回均进行压缩 
+- [gin-contrib/zap](https://github.com/gin-contrib/zap)  zap日志中间件-- 使用zap打印gin日志 
+- [gin-contrib/pprof](https://github.com/gin-contrib/pprof)  pprof中间件 
+- [zsais/go-gin-prometheus](https://github.com/zsais/go-gin-prometheus)  prometheus中间件  
+- [swaggo/gin-swagger](https://github.com/swaggo/gin-swagger)  swagger中间件 
+- `Exception` 全局异常处理中间件 -- 使用golang recover特性, 捕获所有异常, 保存到日志, 方便追溯  
+- `AccessLog` 请求日志中间件 -- 每次请求的路由、IP自动写入日志
 
 ## 接口使用指南  
 - golang客户端示例代码参见client目录，使用`resty`和`go-cache`编写
@@ -89,40 +119,6 @@ curl -X 'POST' \
   "msg": "操作成功"
 }
 ```
-
-## 使用golang大众开源类库
-- [gin](https://github.com/gin-gonic/gin) 一款高效的golang web框架 [教程](https://gin-gonic.com/zh-cn/docs/)
-- [gorm](https://gorm.io/gorm) 数据库ORM管理框架, 可自行扩展多种数据库类型 [教程](https://gorm.io/zh_CN/)
-- [rql](https://github.com/a8m/rql) 用于REST的资源查询语言，作为http请求和orm之间的连接器，gin和gorm的连接器
-- [viper](https://github.com/spf13/viper)  配置管理工具, 支持多种配置文件类型.[教程](https://darjun.github.io/2020/01/18/godailylib/viper/)
-- [jwt](https://github.com/appleboy/gin-jwt) JWT token中间件
-- [casbin](https://github.com/casbin/casbin) 基于角色的访问控制模型(RBAC) [教程](https://darjun.github.io/2020/06/12/godailylib/casbin/)
-- [validator](https://github.com/go-playground/validator) 请求参数校验, 版本V10.  [教程](https://darjun.github.io/2020/04/04/godailylib/validator/)
-- [zap](https://github.com/uber-go/zap): uber开源的日志库zap，对性能和内存分配做了极致的优化.  [教程](https://darjun.github.io/2020/04/23/godailylib/zap/)
-- [lumberjack](https://github.com/natefinch/lumberjack) 日志切割工具, 高效分离大日志文件, 按日期保存文件
-- [cast](https://github.com/spf13/cast) 一个小巧、实用的类型转换库，用于将一个类型转为另一个类型 [教程](https://darjun.github.io/2020/01/20/godailylib/cast/)
-- [go-cache](https://github.com/patrickmn/go-cache)  缓存库 [教程](https://cloud.tencent.com/developer/article/2176204)
-- [resty](https://github.com/go-resty/resty) Go的简单HTTP和REST请求客户端  [教程](https://darjun.github.io/2021/06/26/godailylib/resty/) 
-- [cron](https://github.com/robfig/cron) 实现了 cron 规范解析器和任务运行器，简单来讲就是包含了定时任务所需的功能  [教程](https://darjun.github.io/2020/06/25/godailylib/cron) 
-
-感谢[Go 每日一库](https://github.com/darjun/go-daily-lib)提供的详细教程 
-
-
-## gin中间件
-- [appleboy/gin-jwt](https://github.com/appleboy/gin-jwt)  权限认证中间件 -- 处理登录、登出、无状态token校验
-- [casbin](https://github.com/casbin/casbin/) 和[casbin/gorm-adapter](https://github.com/casbin/gorm-adapter)权限访问中间件 -- 基于Cabin RBAC, 对不同角色访问不同API进行校验
-- [sentinel](https://github.com/sentinel-group/sentinel-go-adapters/gin) sentinel流量控制中间件 -- api流量控制和熔断降级
-- [gin-contrib/requestid](https://github.com/gin-contrib/requestid)  requestid中间件 -- 接口trace id，每次api请求均会生成唯一id返回客户端，并保存数据库接口日志表
-- [gin-contrib/cors](https://github.com/gin-contrib/cors)  cors跨域中间件-- 所有请求均可跨域访问  
-- [gin-contrib/gzip](https://github.com/gin-contrib/gzip)  gzip中间件-- 所有API返回均进行压缩 
-- [gin-contrib/zap](https://github.com/gin-contrib/zap)  zap日志中间件-- 使用zap打印gin日志 
-- [gin-contrib/pprof](https://github.com/gin-contrib/pprof)  pprof中间件 
-- [zsais/go-gin-prometheus](https://github.com/zsais/go-gin-prometheus)  prometheus中间件  
-- [swaggo/gin-swagger](https://github.com/swaggo/gin-swagger)  swagger中间件 
-- `Exception` 全局异常处理中间件 -- 使用golang recover特性, 捕获所有异常, 保存到日志, 方便追溯  
-- `AccessLog` 请求日志中间件 -- 每次请求的路由、IP自动写入日志
-
-
 
 ## 项目结构概览
 

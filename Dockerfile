@@ -15,7 +15,7 @@ RUN GitBranch=$(git name-rev --name-only HEAD) && \
     BuildTime=`date +'%Y.%m.%d.%H%M%S'`  && \ 
     BuildGoVersion=`go version`  && \ 
     LDFlags="-w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"  && \
-    go build -ldflags="$LDFlags" -o  ./${APP} 
+    go build -tags=jsoniter -ldflags="$LDFlags" -o  ./${APP} 
 
 FROM alpine:3.17.2
 LABEL MAINTAINER="13579443@qq.com"

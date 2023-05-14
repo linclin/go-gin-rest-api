@@ -13,6 +13,9 @@ import (
 	"runtime/debug"
 	"syscall"
 	"time"
+
+	"github.com/gin-gonic/autotls"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
@@ -86,7 +89,14 @@ func main() {
 			global.Log.Error("listen error: ", err)
 		}
 	}()
-	global.Log.Info(fmt.Sprintf("Server is running at %s:%d/%s", host, port, global.Conf.System.UrlPathPrefix))
+	global.Log.Info(fmt.Sprintf("HTTP Server is running at %s:%d/%s", host, port, global.Conf.System.UrlPathPrefix))
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(global.Conf.System.BaseApi),
+		Cache:      autocert.DirCache("./cache"),
+	}
+	global.Log.Info(fmt.Sprintf("HTTPS Server is running at %s:%d/%s", host, 443, global.Conf.System.UrlPathPrefix))
+	autotls.RunWithManager(r, &certManager)
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
 	quit := make(chan os.Signal)
