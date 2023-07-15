@@ -1,0 +1,131 @@
+# kubectl -n argo create secret generic rsa-secret --from-file=id_rsa=/home/lc/.ssh/id_rsa --from-file=id_rsa.pub=/home/lc/.ssh/id_rsa.pub
+# kubectl -n argo create secret docker-registry acr-regcred  --docker-email=xxxx --docker-username=xxxx  --docker-password=Lin13579443  --docker-server=registry.cn-shenzhen.aliyuncs.com
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: buildkit
+spec:
+  arguments:
+    parameters:
+      - name: repo
+        value: https://lc13579443:Lin13579443@gitee.com/dev-ops/go-gin-rest-api.git
+      - name: branch
+        value: main
+      - name: path
+        value: go-gin-rest-api
+      - name: image
+        value: registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api 
+      - name: version
+        value: 1.0.1
+  entrypoint: main 
+  volumes:
+  - name: workspace
+    hostPath:
+      path: /mnt/d/project/backup/workspace
+      type: Directory
+  - name: cache
+    hostPath:
+      path: /mnt/d/project/backup/cache
+      type: Directory
+  - name: rsa-secret 
+    secret:
+      secretName: rsa-secret
+  - name: docker-secret
+    secret:
+      secretName: acr-regcred
+      items:
+      - key: .dockerconfigjson
+        path: config.json
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: git-clone
+            template: git-clone
+            arguments:
+              parameters:
+                - name: repo
+                  value: "{{workflow.parameters.repo}}"
+                - name: branch
+                  value: "{{workflow.parameters.branch}}" 
+                - name: path
+                  value: "{{workflow.parameters.path}}"
+          - name: build-image
+            template: build-image
+            arguments:
+              parameters:
+                - name: path
+                  value: "{{workflow.parameters.path}}"
+                - name: image
+                  value: "{{workflow.parameters.image}}"
+                - name: version
+                  value: "{{workflow.parameters.version}}"
+            depends: "git-clone"
+    - name: git-clone
+      inputs:
+        parameters:
+          - name: repo
+          - name: branch
+          - name: path
+      container:
+        volumeMounts:
+          - name: rsa-secret 
+            readOnly: true
+            mountPath: "~/.ssh"
+          - mountPath: /workspace
+            name: workspace
+        image: alpine/git:v2.30.2
+        workingDir: /workspace 
+        command:
+          - sh 
+          - ./git-clone-pull.sh
+        args:
+          - "{{inputs.parameters.repo}}"
+          - "{{inputs.parameters.branch}}"
+          - "{{inputs.parameters.path}}"
+    - name: build-image
+      inputs:
+        parameters:
+          - name: path
+          - name: image 
+          - name: version 
+      container:
+        image: moby/buildkit:v0.11.6-rootless
+        volumeMounts:
+          - name: workspace 
+            mountPath: /workspace
+          - name: cache
+            mountPath: /cache
+          - name: docker-secret 
+            mountPath: /home/user/.docker
+        workingDir: /workspace/{{inputs.parameters.path}}
+        env:
+          - name: BUILDKITD_FLAGS
+            value: --oci-worker-no-process-sandbox 
+        command:
+          - buildctl-daemonless.sh
+        args: 
+          - build
+          - --frontend
+          - dockerfile.v0
+          - --local
+          - context=.
+          - --local
+          - dockerfile=.
+          - --output
+          - type=image,name={{inputs.parameters.image}}:{{inputs.parameters.version}},push=true
+          - --export-cache
+          - type=local,mode=max,dest=/cache
+          - --import-cache
+          - type=local,src=/cache
+          - --export-cache
+          - type=registry,mode=max,ref={{inputs.parameters.image}}:buildkit-cache
+          - --import-cache
+          - type=registry,ref={{inputs.parameters.image}}:buildkit-cache
+          - --opt
+          - build-arg:GOPROXY=http://goproxy.goproxy.svc:8081,direct
+        securityContext: 
+            seccompProfile:
+              type: Unconfined 
+            runAsUser: 1000
+            runAsGroup: 1000

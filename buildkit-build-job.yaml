@@ -1,0 +1,83 @@
+# kubectl create secret generic rsa-secret --from-file=id_rsa=/home/lc/.ssh/id_rsa --from-file=id_rsa.pub=/home/lc/.ssh/id_rsa.pub
+# kubectl create secret docker-registry acr-regcred  --docker-email=lc13579443@qq.com  --docker-username=lc13579443@qq.com  --docker-password=Lin13579443  --docker-server=registry.cn-shenzhen.aliyuncs.com
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: buildkit-build-job-20230705161240
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 120
+  template:
+    metadata:
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/buildkit-build-job: unconfined
+    spec:
+      initContainers:
+        - name: git
+          image: alpine/git:v2.26.2
+          workingDir: /workspace
+          command:
+          - sh 
+          - ./git-clone-pull.sh
+          args:
+          - https://lc13579443:Lin13579443@gitee.com/dev-ops/go-gin-rest-api.git
+          - main
+          - go-gin-rest-api
+          volumeMounts:
+            - name: rsa-secret 
+              readOnly: true
+              mountPath: "~/.ssh"
+            - name: workspace
+              mountPath: /workspace
+      containers:
+      - name: buildkit-build-job
+        image: moby/buildkit:v0.11.6-rootless
+        env:
+          - name: BUILDKITD_FLAGS
+            value: --oci-worker-no-process-sandbox
+        command:
+          - buildctl-daemonless.sh
+        args: ["build",
+                "--frontend","dockerfile.v0",
+                "--local","context=/workspace/go-gin-rest-api",
+                "--local","dockerfile=/workspace/go-gin-rest-api",
+                "--output","type=image,name=registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.0,push=true",
+                "--export-cache","type=local,mode=max,dest=/cache",
+                "--import-cache","type=local,src=/cache",
+                "--export-cache","type=registry,mode=max,ref=registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:buildkitcache",
+                "--import-cache","type=registry,ref=registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:buildkitcache",
+                "--opt","build-arg:GOPROXY=http://goproxy.goproxy.svc:8081,direct"]
+        securityContext:
+            # Needs Kubernetes >= 1.19
+            seccompProfile:
+              type: Unconfined
+            # To change UID/GID, you need to rebuild the image
+            runAsUser: 1000
+            runAsGroup: 1000
+        volumeMounts:
+          - name: workspace 
+            mountPath: /workspace
+          - name: cache
+            mountPath: /cache
+          - name: docker-secret 
+            mountPath: /home/user/.docker
+      restartPolicy: Never
+      volumes:
+        - name: workspace
+          hostPath:
+            path: /mnt/d/project/backup/workspace
+            type: Directory
+        - name: cache
+          hostPath:
+            path: /mnt/d/project/backup/cache
+            type: Directory
+        - name: rsa-secret 
+          secret:
+            secretName: rsa-secret
+        - name: docker-secret
+          secret:
+            secretName: acr-regcred
+            items:
+              - key: .dockerconfigjson
+                path: config.json
