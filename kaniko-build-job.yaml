@@ -1,0 +1,56 @@
+# kubectl create secret generic rsa-secret --from-file=id_rsa=/root/.ssh/id_rsa --from-file=id_rsa.pub=/root/.ssh/id_rsa.pub
+# kubectl create secret docker-registry acr-regcred  --docker-email=xxx  --docker-username=xxxxx  --docker-password=xxxxxxxx --docker-server=registry.cn-shenzhen.aliyuncs.com
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-build-job-20230705161233
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 120
+  template:
+    spec:
+      containers:
+      - name: kaniko-build-job
+        image: registry.cn-shenzhen.aliyuncs.com/dev-ops/kaniko-executor:v1.13.0
+        args: ["--context=git://gitee.com/dev-ops/go-gin-rest-api.git#refs/heads/main",
+              #"--context=/workspace/",
+              #"--dockerfile=/workspace/Dockerfile",  
+              "--destination=registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.1",
+              "--cache",
+              "--cache-dir=/cache",
+              #"--cache-repo=registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api-build-cache",
+              "--cache-copy-layers",
+              "--cache-run-layers",
+              "--push-retry=2",
+              "--verbosity=debug"]
+        volumeMounts:
+          - name: rsa-secret 
+            readOnly: true
+            mountPath: "~/.ssh"
+          - name: kaniko-secret
+            mountPath: /kaniko/.docker
+          # - name: workspace
+          #   mountPath: /workspace
+          - name: cache
+            mountPath: /cache
+      restartPolicy: Never
+      volumes:
+        # - name: workspace
+        #   hostPath:
+        #     path: /mnt/d/Kubernetes/kaniko/workspace/
+        #     type: Directory
+        - name: cache
+          hostPath:
+            path: /mnt/d/project/workspace/cache
+            type: Directory
+        - name: rsa-secret 
+          secret:
+            defaultMode: 0600
+            secretName: rsa-secret
+        - name: kaniko-secret
+          secret:
+            secretName: acr-regcred
+            items:
+              - key: .dockerconfigjson
+                path: config.json
