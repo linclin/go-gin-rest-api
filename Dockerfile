@@ -1,4 +1,4 @@
-FROM golang:1.20.5-alpine3.18 as golang
+FROM golang:1.20.7-alpine3.18 as golang
 ENV APP go-gin-rest-api
 RUN sed -i 's/https/http/' /etc/apk/repositories && \
     sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
@@ -14,7 +14,7 @@ RUN GitBranch=$(git name-rev --name-only HEAD) && \
     GitCommitLog=${GitCommitLog//\'/\"}  && \ 
     BuildTime=`date +'%Y.%m.%d.%H%M%S'`  && \ 
     BuildGoVersion=`go version`  && \ 
-    LDFlags="-w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"  && \
+    LDFlags="-s -w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"  && \
     go build -tags=jsoniter -ldflags="$LDFlags" -o  ./${APP} 
 
 FROM alpine:3.18.2
