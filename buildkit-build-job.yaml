@@ -1,5 +1,5 @@
 # kubectl create secret generic rsa-secret --from-file=id_rsa=/home/lc/.ssh/id_rsa --from-file=id_rsa.pub=/home/lc/.ssh/id_rsa.pub
-# kubectl create secret docker-registry acr-regcred  --docker-email=lc13579443@qq.com  --docker-username=lc13579443@qq.com  --docker-password=Lin13579443  --docker-server=registry.cn-shenzhen.aliyuncs.com
+# kubectl create secret docker-registry acr-regcred  --docker-email=xxxxxxxxxx  --docker-username=xxxxxxxx  --docker-password=xxxxxx  --docker-server=registry.cn-shenzhen.aliyuncs.com
 apiVersion: batch/v1
 kind: Job
 metadata:

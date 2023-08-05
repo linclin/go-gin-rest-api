@@ -1,5 +1,5 @@
 # kubectl -n argo create secret generic rsa-secret --from-file=id_rsa=/home/lc/.ssh/id_rsa --from-file=id_rsa.pub=/home/lc/.ssh/id_rsa.pub
-# kubectl -n argo create secret docker-registry acr-regcred  --docker-email=xxxx --docker-username=xxxx  --docker-password=Lin13579443  --docker-server=registry.cn-shenzhen.aliyuncs.com
+# kubectl -n argo create secret docker-registry acr-regcred  --docker-email=xxxx --docker-username=xxxx  --docker-password=xxxxxx  --docker-server=registry.cn-shenzhen.aliyuncs.com
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
