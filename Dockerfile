@@ -1,8 +1,8 @@
 FROM registry.cn-shenzhen.aliyuncs.com/dev-ops/golang:1.20.7-alpine3.18 as golang
 ENV APP go-gin-rest-api   
-ADD ./ /data/${APP}/${APP}
-ADD .git/ /data/${APP}/${APP}/.git
-WORKDIR /data/${APP}/${APP} 
+ADD ./ /data/${APP}/
+ADD .git/ /data/${APP}/.git
+WORKDIR /data/${APP}/
 RUN export GitBranch=$(git name-rev --name-only HEAD) && \
     export GitRevision=$(git rev-parse --short HEAD)  && \ 
     export GitCommitLog=`git log --pretty=oneline -n 1`  && \
@@ -17,6 +17,6 @@ ENV APP go-gin-rest-api
 ENV TZ='Asia/Shanghai' 
 RUN TERM=linux && export TERM
 WORKDIR /data/${APP}/
-COPY --from=golang /data/${APP}/${APP}/${APP} /data/${APP}/${APP}/${APP} 
-COPY --from=golang /data/${APP}/${APP}/conf /data/${APP}/${APP}/conf   
-CMD ["./go-gin-rest-api"]
+COPY --from=golang /data/${APP}/${APP} /data/${APP}/${APP} 
+COPY --from=golang /data/${APP}/conf /data/${APP}/conf   
+CMD ["./${APP}"]
