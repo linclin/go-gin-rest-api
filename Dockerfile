@@ -19,4 +19,4 @@ RUN TERM=linux && export TERM
 WORKDIR /data/${APP}/
 COPY --from=golang /data/${APP}/${APP}/${APP} /data/${APP}/${APP}/${APP} 
 COPY --from=golang /data/${APP}/${APP}/conf /data/${APP}/${APP}/conf   
-CMD ["./${APP}"]
+CMD ["./go-gin-rest-api"]

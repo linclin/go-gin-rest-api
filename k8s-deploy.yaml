@@ -23,7 +23,7 @@ spec:
       restartPolicy: Always   
       containers: 
         - name: go-gin-rest-api 
-          image: "lc13579443/go-gin-rest-api:1.0.0"
+          image: "registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.1"
           imagePullPolicy: Always
           securityContext:
             privileged: true   
