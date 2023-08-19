@@ -15,13 +15,13 @@ spec:
     spec:
       initContainers:
         - name: git
-          image: alpine/git:v2.26.2
+          image: registry.cn-shenzhen.aliyuncs.com/dev-ops/git:v2.26.2
           workingDir: /workspace
           command:
           - sh 
           - ./git-clone-pull.sh
           args:
-          - https://lc13579443:Lin13579443@gitee.com/dev-ops/go-gin-rest-api.git
+          - https://gitee.com/dev-ops/go-gin-rest-api.git
           - main
           - go-gin-rest-api
           volumeMounts:
@@ -32,7 +32,7 @@ spec:
               mountPath: /workspace
       containers:
       - name: buildkit-build-job
-        image: moby/buildkit:v0.11.6-rootless
+        image: registry.cn-shenzhen.aliyuncs.com/dev-ops/buildkit:v0.12.1-rootless
         env:
           - name: BUILDKITD_FLAGS
             value: --oci-worker-no-process-sandbox

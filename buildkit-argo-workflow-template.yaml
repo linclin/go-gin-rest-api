@@ -8,7 +8,7 @@ spec:
   arguments:
     parameters:
       - name: repo
-        value: https://lc13579443:Lin13579443@gitee.com/dev-ops/go-gin-rest-api.git
+        value: https://gitee.com/dev-ops/go-gin-rest-api.git
       - name: branch
         value: main
       - name: path
@@ -74,7 +74,7 @@ spec:
             mountPath: "~/.ssh"
           - mountPath: /workspace
             name: workspace
-        image: alpine/git:v2.30.2
+        image: registry.cn-shenzhen.aliyuncs.com/dev-ops/git:v2.30.2
         workingDir: /workspace 
         command:
           - sh 
@@ -90,7 +90,7 @@ spec:
           - name: image 
           - name: version 
       container:
-        image: moby/buildkit:v0.11.6-rootless
+        image: registry.cn-shenzhen.aliyuncs.com/dev-ops/buildkit:v0.12.1-rootless
         volumeMounts:
           - name: workspace 
             mountPath: /workspace

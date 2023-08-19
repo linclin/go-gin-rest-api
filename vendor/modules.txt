@@ -65,7 +65,7 @@ github.com/bytedance/sonic/loader
 github.com/bytedance/sonic/option
 github.com/bytedance/sonic/unquote
 github.com/bytedance/sonic/utf8
-# github.com/casbin/casbin/v2 v2.73.0
+# github.com/casbin/casbin/v2 v2.75.0
 ## explicit; go 1.13
 github.com/casbin/casbin/v2
 github.com/casbin/casbin/v2/config
@@ -80,7 +80,7 @@ github.com/casbin/casbin/v2/persist/file-adapter
 github.com/casbin/casbin/v2/rbac
 github.com/casbin/casbin/v2/rbac/default-role-manager
 github.com/casbin/casbin/v2/util
-# github.com/casbin/gorm-adapter/v3 v3.18.0
+# github.com/casbin/gorm-adapter/v3 v3.18.1
 ## explicit; go 1.20
 github.com/casbin/gorm-adapter/v3
 # github.com/cespare/xxhash/v2 v2.2.0
@@ -160,7 +160,7 @@ github.com/go-playground/locales/zh
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.14.1
+# github.com/go-playground/validator/v10 v10.15.1
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
 github.com/go-playground/validator/v10/translations/en
@@ -557,7 +557,7 @@ gorm.io/driver/postgres
 # gorm.io/driver/sqlserver v1.4.1
 ## explicit; go 1.14
 gorm.io/driver/sqlserver
-# gorm.io/gorm v1.25.2
+# gorm.io/gorm v1.25.4
 ## explicit; go 1.16
 gorm.io/gorm
 gorm.io/gorm/callbacks
