@@ -18,8 +18,7 @@ spec:
           image: registry.cn-shenzhen.aliyuncs.com/dev-ops/git:v2.26.2
           workingDir: /workspace
           command:
-          - sh 
-          - ./git-clone-pull.sh
+          - git-clone-pull.sh
           args:
           - https://gitee.com/dev-ops/go-gin-rest-api.git
           - main

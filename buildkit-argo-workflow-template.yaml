@@ -77,8 +77,7 @@ spec:
         image: registry.cn-shenzhen.aliyuncs.com/dev-ops/git:v2.30.2
         workingDir: /workspace 
         command:
-          - sh 
-          - ./git-clone-pull.sh
+          - git-clone-pull.sh
         args:
           - "{{inputs.parameters.repo}}"
           - "{{inputs.parameters.branch}}"
