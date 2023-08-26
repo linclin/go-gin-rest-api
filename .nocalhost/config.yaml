@@ -1,0 +1,33 @@
+name: "go-gin-rest-api"
+serviceType: "deployment"
+containers: 
+  - 
+    name: "go-gin-rest-api"
+    dev: 
+      #gitUrl: "https://gitee.com/dev-ops/go-gin-rest-api.git"
+      image: "registry.cn-shenzhen.aliyuncs.com/dev-ops/golang:1.21.0-alpine3.18" 
+      sidecarImage: "registry.cn-shenzhen.aliyuncs.com/dev-ops/nocalhost-sidecar:syncthing" 
+      workDir: "/data/go-gin-rest-api"
+      shell: "bash"
+      command: 
+        run: 
+          - "go"
+          - "run"
+          - "main.go"
+      env: 
+        - 
+          name: "RunMode"
+          value: "se"
+      resources:
+        limits:
+          memory: 4Gi
+          cpu: "2"
+        requests:
+          memory: 2Gi
+          cpu: "1"
+      portForward: 
+        - "8080:8080"
+      patches:  
+        - patch: '{"spec":{"template":{"spec":{"containers":[{"name":"nocalhost-sidecar","securityContext":{"privileged":"false","runAsUser":"1000","runAsGroup":"1000"}}],"hostAliases":[{"hostnames":["dev.mucfc.com"],"ip":"10.75.88.4"}]}}}}'
+          type: strategic
+        

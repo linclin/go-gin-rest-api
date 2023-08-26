@@ -132,6 +132,8 @@ github.com/casbin/casbin/v2 v2.75.0 h1:vSgtloFgyijYrFAoMKH1u9vdT7R55WDU74hJDDWT+
 github.com/casbin/casbin/v2 v2.75.0/go.mod h1:mzGx0hYW9/ksOSpw3wNjk3NRAroq5VMFYUQ6G43iGPk=
 github.com/casbin/casbin/v2 v2.75.1 h1:TZpaeiIgS5jl6zhtwBCcYwpsSGdV63JbKiXsRE8b0k4=
 github.com/casbin/casbin/v2 v2.75.1/go.mod h1:mzGx0hYW9/ksOSpw3wNjk3NRAroq5VMFYUQ6G43iGPk=
+github.com/casbin/casbin/v2 v2.75.2 h1:6lwlNbl4P6Y9tWcUTC6xndEKlOgucjinLYgj9DHQmqc=
+github.com/casbin/casbin/v2 v2.75.2/go.mod h1:mzGx0hYW9/ksOSpw3wNjk3NRAroq5VMFYUQ6G43iGPk=
 github.com/casbin/gorm-adapter/v3 v3.18.1 h1:M+l2EbmUkfvXc7ptbM+Bz+Jo3OZu4qNUmOYLp7KiNUM=
 github.com/casbin/gorm-adapter/v3 v3.18.1/go.mod h1:ekufPNBgVIQvv9JffVGsg7KUv4DjnevTh6AQnBNkoK8=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=

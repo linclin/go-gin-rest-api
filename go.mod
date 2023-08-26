@@ -6,7 +6,7 @@ require (
 	github.com/a8m/rql v1.3.0
 	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/appleboy/gin-jwt/v2 v2.9.1
-	github.com/casbin/casbin/v2 v2.75.1
+	github.com/casbin/casbin/v2 v2.75.2
 	github.com/casbin/gorm-adapter/v3 v3.18.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-contrib/cors v1.4.0

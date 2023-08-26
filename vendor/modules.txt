@@ -65,7 +65,7 @@ github.com/bytedance/sonic/loader
 github.com/bytedance/sonic/option
 github.com/bytedance/sonic/unquote
 github.com/bytedance/sonic/utf8
-# github.com/casbin/casbin/v2 v2.75.1
+# github.com/casbin/casbin/v2 v2.75.2
 ## explicit; go 1.13
 github.com/casbin/casbin/v2
 github.com/casbin/casbin/v2/config
