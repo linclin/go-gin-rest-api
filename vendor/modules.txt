@@ -65,7 +65,7 @@ github.com/bytedance/sonic/loader
 github.com/bytedance/sonic/option
 github.com/bytedance/sonic/unquote
 github.com/bytedance/sonic/utf8
-# github.com/casbin/casbin/v2 v2.75.2
+# github.com/casbin/casbin/v2 v2.77.1
 ## explicit; go 1.13
 github.com/casbin/casbin/v2
 github.com/casbin/casbin/v2/config
@@ -160,7 +160,7 @@ github.com/go-playground/locales/zh
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.15.1
+# github.com/go-playground/validator/v10 v10.15.3
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
 github.com/go-playground/validator/v10/translations/en
@@ -387,7 +387,7 @@ github.com/swaggo/files
 # github.com/swaggo/gin-swagger v1.6.0
 ## explicit; go 1.17
 github.com/swaggo/gin-swagger
-# github.com/swaggo/swag v1.16.1
+# github.com/swaggo/swag v1.16.2
 ## explicit; go 1.18
 github.com/swaggo/swag
 # github.com/tidwall/gjson v1.14.4
