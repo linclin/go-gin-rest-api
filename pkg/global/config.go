@@ -1,6 +1,6 @@
 package global
 
-import "go.uber.org/zap/zapcore"
+import "log/slog"
 
 // Configuration 系统配置, 配置字段可参见yml注释
 // viper内置了mapstructure, yml文件用"-"区分单词, 转为驼峰方便
@@ -24,12 +24,12 @@ type SystemConfiguration struct {
 }
 
 type LogsConfiguration struct {
-	Level      zapcore.Level `mapstructure:"level" json:"level"`
-	Path       string        `mapstructure:"path" json:"path"`
-	MaxSize    int           `mapstructure:"max-size" json:"maxSize"`
-	MaxBackups int           `mapstructure:"max-backups" json:"maxBackups"`
-	MaxAge     int           `mapstructure:"max-age" json:"maxAge"`
-	Compress   bool          `mapstructure:"compress" json:"compress"`
+	Level      slog.Level `mapstructure:"level" json:"level"`
+	Path       string     `mapstructure:"path" json:"path"`
+	MaxSize    int        `mapstructure:"max-size" json:"maxSize"`
+	MaxBackups int        `mapstructure:"max-backups" json:"maxBackups"`
+	MaxAge     int        `mapstructure:"max-age" json:"maxAge"`
+	Compress   bool       `mapstructure:"compress" json:"compress"`
 }
 
 type MysqlConfiguration struct {

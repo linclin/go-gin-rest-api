@@ -24,7 +24,7 @@ func Logger() {
 	}
 	logOpts := slog.HandlerOptions{
 		AddSource: true,
-		Level:     slog.LevelInfo,
+		Level:     global.Conf.Logs.Level,
 	}
 	logger := slog.New(slog.NewJSONHandler(io.MultiWriter(os.Stdout, logFile), &logOpts))
 	slog.SetDefault(logger)
