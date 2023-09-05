@@ -6,11 +6,11 @@ sed -i 's/https/http/' /etc/apk/repositories
 sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 apk update --no-cache
 apk add --no-cache ca-certificates git bash openssh gcc musl-dev
-rm -rf /var/cache/apk/*   /tmp/*  
-EOT   
+rm -rf /var/cache/apk/*   /tmp/*
+EOT
 ADD ./ /app/${APP}/${APP}
 ADD .git/ /app/${APP}/${APP}/.git
-WORKDIR /app/${APP}/${APP} 
+WORKDIR /app/${APP}/${APP}
 RUN <<EOT
 export GitBranch=$(git name-rev --name-only HEAD)
 export GitRevision=$(git rev-parse --short HEAD)
@@ -25,12 +25,12 @@ FROM alpine:3.18.3
 LABEL MAINTAINER="13579443@qq.com"
 ENV APP go-gin-rest-api
 ENV TZ='Asia/Shanghai' 
-RUN TERM=linux && export TERM 
+RUN TERM=linux && export TERM
 RUN <<EOT
 sed -i 's/https/http/' /etc/apk/repositories
 sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 apk update --no-cache
-apk add  --no-cache  ca-certificates bash tzdata sudo busybox-extras curl net-tools
+apk add  --no-cache  ca-certificates tzdata  bash  sudo busybox-extras curl net-tools
 echo "Asia/Shanghai" > /etc/timezone
 cp -r -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 rm -rf /var/cache/apk/*   /tmp/*
