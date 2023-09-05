@@ -6,16 +6,14 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
-	"go.uber.org/zap"
 )
 
 // 初始化定时任务
 func Cron() {
 	nyc, _ := time.LoadLocation("Asia/Shanghai")
-	zapLogger, _ := zap.NewStdLogAt(global.Logger, zap.InfoLevel)
-	c := cron.New(cron.WithLocation(nyc), cron.WithSeconds(), cron.WithLogger(cron.VerbosePrintfLogger(zapLogger)))
+	c := cron.New(cron.WithLocation(nyc), cron.WithSeconds(), cron.WithLogger(cron.VerbosePrintfLogger(global.Logger)))
 	//清理超过一周的日志表数据
-	c.AddJob("@every 1d", cron.NewChain(cron.Recover(cron.VerbosePrintfLogger(zapLogger)), cron.SkipIfStillRunning(cron.VerbosePrintfLogger(zapLogger))).Then(&cronjob.CleanLog{}))
+	c.AddJob("@every 1d", cron.NewChain(cron.Recover(cron.VerbosePrintfLogger(global.Logger)), cron.SkipIfStillRunning(cron.VerbosePrintfLogger(global.Logger))).Then(&cronjob.CleanLog{}))
 	c.Start()
 	global.Log.Info("初始化定时任务完成")
 }

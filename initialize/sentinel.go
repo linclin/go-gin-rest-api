@@ -1,6 +1,8 @@
 package initialize
 
 import (
+	"fmt"
+
 	sentinel "github.com/alibaba/sentinel-golang/api"
 	"github.com/alibaba/sentinel-golang/core/config"
 	"github.com/alibaba/sentinel-golang/core/flow"
@@ -25,7 +27,7 @@ func InitSentinel() {
 			ControlBehavior:        flow.Reject,
 		},
 	}); err != nil {
-		global.Log.Errorf("初始化Sentinel流控规则出错: %+v", err)
+		global.Log.Error(fmt.Sprintf("初始化Sentinel流控规则出错: %+v", err))
 		return
 	}
 }

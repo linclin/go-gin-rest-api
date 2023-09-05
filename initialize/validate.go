@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"fmt"
 	"go-gin-rest-api/pkg/global"
 	"reflect"
 	"strings"
@@ -37,7 +38,7 @@ func Validate(locale string) {
 		var ok bool
 		global.Translator, ok = uni.GetTranslator(locale)
 		if !ok {
-			global.Log.Errorf("初始化validator.v10校验器 uni.GetTranslator(%s) 失败", locale)
+			global.Log.Error(fmt.Sprintf("初始化validator.v10校验器 uni.GetTranslator(%s) 失败", locale))
 		}
 		var err error
 		// 注册翻译器
