@@ -6,6 +6,7 @@ import (
 	_ "go-gin-rest-api/docs"
 	"go-gin-rest-api/initialize"
 	"go-gin-rest-api/pkg/global"
+	"go-gin-rest-api/pkg/paniclog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -72,6 +73,13 @@ func main() {
 			global.Log.Error(fmt.Sprintf("项目启动失败: %v\n堆栈信息: %v", err, string(debug.Stack())))
 		}
 	}()
+	// panic信息写入日志文件
+	panicFile, err := os.OpenFile("./logs/panic.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+	defer panicFile.Close()
+	paniclog.RedirectStderr(panicFile)
 	// 初始化路由
 	r := initialize.Routers()
 	host := "0.0.0.0"
