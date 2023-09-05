@@ -1,34 +1,46 @@
+# syntax=docker/dockerfile:1.6
 FROM golang:1.21.0-alpine3.18 as golang
-ENV APP go-gin-rest-api
-RUN sed -i 's/https/http/' /etc/apk/repositories && \
-    sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    apk update --no-cache && \
-    apk add --no-cache ca-certificates git bash gcc musl-dev openssh && \ 
-    rm -rf /var/cache/apk/*   /tmp/*     
+ENV APP go-gin-rest-api  
+RUN <<EOT
+sed -i 's/https/http/' /etc/apk/repositories
+sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+apk update --no-cache
+apk add --no-cache ca-certificates git bash openssh gcc musl-dev
+rm -rf /var/cache/apk/*   /tmp/*  
+EOT   
 ADD ./ /app/${APP}/${APP}
 ADD .git/ /app/${APP}/${APP}/.git
 WORKDIR /app/${APP}/${APP} 
-RUN GitBranch=$(git name-rev --name-only HEAD) && \
-    GitRevision=$(git rev-parse --short HEAD)  && \ 
-    GitCommitLog=`git log --pretty=oneline -n 1`  && \ 
-    GitCommitLog=${GitCommitLog//\'/\"}  && \ 
-    BuildTime=`date +'%Y.%m.%d.%H%M%S'`  && \ 
-    BuildGoVersion=`go version`  && \ 
-    LDFlags="-s -w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"  && \
-    go build -tags=jsoniter -ldflags="$LDFlags" -o  ./${APP} 
+RUN <<EOT
+export GitBranch=$(git name-rev --name-only HEAD)
+export GitRevision=$(git rev-parse --short HEAD)
+export GitCommitLog=`git log --pretty=oneline -n 1`
+export BuildTime=`date +'%Y.%m.%d.%H%M%S'`
+export BuildGoVersion=`go version`
+export LDFlags="-s -w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"
+go build -tags=jsoniter -ldflags="$LDFlags" -o  ./${APP}
+EOT
 
 FROM alpine:3.18.3
 LABEL MAINTAINER="13579443@qq.com"
 ENV APP go-gin-rest-api
 ENV TZ='Asia/Shanghai' 
-RUN TERM=linux && export TERM
-RUN sed -i 's/https/http/' /etc/apk/repositories && \
-    sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    apk update --no-cache && \
-    apk add  --no-cache  ca-certificates bash tzdata sudo busybox-extras curl net-tools && \ 
-    echo "Asia/Shanghai" > /etc/timezone && \
-    cp -r -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    rm -rf /var/cache/apk/*   /tmp/*   
+RUN TERM=linux && export TERM 
+RUN <<EOT
+sed -i 's/https/http/' /etc/apk/repositories
+sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+apk update --no-cache
+apk add  --no-cache  ca-certificates bash tzdata sudo busybox-extras curl net-tools
+echo "Asia/Shanghai" > /etc/timezone
+cp -r -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+rm -rf /var/cache/apk/*   /tmp/*
+addgroup -g 1000 app
+adduser -u 1000 -G app -D app
+sudo chmod +w /etc/sudoers
+echo "app ALL=(ALL) NOPASSWD: NOPASSWD: ALL " >> /etc/sudoers
+mkdir -p /app
+chown -R app:app /app
+EOT
 WORKDIR /app/${APP}/
 COPY --from=golang /app/${APP}/${APP}/${APP} /app/${APP}/${APP}/${APP} 
 COPY --from=golang /app/${APP}/${APP}/conf /app/${APP}/${APP}/conf   

@@ -205,6 +205,7 @@ go build -ldflags="$LDFlags" -o  ./go-gin-rest-api
 ``` shell
 # 使用multi-stage(多阶段构建)需要docker 17.05+版本支持
 DOCKER_BUILDKIT=1 docker build  --network=host --no-cache --force-rm -t lc13579443/go-gin-rest-api:1.0.0 .
+DOCKER_BUILDKIT=1 docker build -f ./Dockerfile_base --network=host --no-cache --force-rm -t lc13579443/go-gin-rest-api:1.0.0 .
 docker push  lc13579443/go-gin-rest-api
 docker save -o go-gin-rest-api-1.0.0.tar  go-gin-rest-api:1.0.0
 docker load -i go-gin-rest-api-1.0.0.tar
