@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.6
-FROM registry.cn-shenzhen.aliyuncs.com/dev-ops/golang:1.21.0-alpine3.18-run as golang
+FROM registry.cn-shenzhen.aliyuncs.com/dev-ops/golang:1.21.1-alpine3.18-run as golang
 ENV APP go-gin-rest-api   
 ADD ./ /app/${APP}/
 ADD .git/ /app/${APP}/.git
