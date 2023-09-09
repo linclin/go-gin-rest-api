@@ -6,8 +6,8 @@ require (
 	github.com/a8m/rql v1.3.0
 	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/appleboy/gin-jwt/v2 v2.9.1
-	github.com/casbin/casbin/v2 v2.77.1
-	github.com/casbin/gorm-adapter/v3 v3.18.1
+	github.com/casbin/casbin/v2 v2.77.2
+	github.com/casbin/gorm-adapter/v3 v3.19.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/gzip v0.0.6
@@ -31,7 +31,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.2
 	github.com/zsais/go-gin-prometheus v0.1.0
-	golang.org/x/crypto v0.12.0
+	golang.org/x/crypto v0.13.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.4
 )
@@ -111,8 +111,8 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
