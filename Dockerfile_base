@@ -25,6 +25,9 @@ FROM alpine:3.18.3
 LABEL MAINTAINER="13579443@qq.com"
 ENV APP go-gin-rest-api
 ENV TZ='Asia/Shanghai' 
+ENV LANG UTF-8
+ENV LC_ALL zh_CN.UTF-8
+ENV LC_CTYPE zh_CN.UTF-8
 RUN TERM=linux && export TERM
 RUN <<EOT
 sed -i 's/https/http/' /etc/apk/repositories
