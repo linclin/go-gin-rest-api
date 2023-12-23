@@ -13,6 +13,7 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
+	sloggin "github.com/samber/slog-gin"
 	sentinelPlugin "github.com/sentinel-group/sentinel-go-adapters/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -47,6 +48,8 @@ func Routers() *gin.Engine {
 	r := gin.New()
 	// 初始化Trace中间件
 	r.Use(requestid.New())
+	// slog日志
+	r.Use(sloggin.New(global.Logger))
 	// 添加访问记录
 	r.Use(middleware.AccessLog)
 	// 添加全局异常处理中间件
