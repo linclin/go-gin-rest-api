@@ -49,7 +49,7 @@ func Routers() *gin.Engine {
 	// 初始化Trace中间件
 	r.Use(requestid.New())
 	// slog日志
-	r.Use(sloggin.New(global.Logger))
+	r.Use(sloggin.New(global.Log))
 	// 添加访问记录
 	r.Use(middleware.AccessLog)
 	// 添加全局异常处理中间件
