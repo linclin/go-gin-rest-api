@@ -17,18 +17,33 @@
 - [slog-multi](https://github.com/samber/slog-multi): `slog.Handler` chaining, fanout, routing, failover, load balancing...
 - [slog-formatter](https://github.com/samber/slog-formatter): `slog` attribute formatting
 - [slog-sampling](https://github.com/samber/slog-sampling): `slog` sampling policy
+
+**HTTP middlewares:**
+
 - [slog-gin](https://github.com/samber/slog-gin): Gin middleware for `slog` logger
 - [slog-echo](https://github.com/samber/slog-echo): Echo middleware for `slog` logger
 - [slog-fiber](https://github.com/samber/slog-fiber): Fiber middleware for `slog` logger
 - [slog-chi](https://github.com/samber/slog-chi): Chi middleware for `slog` logger
+- [slog-http](https://github.com/samber/slog-http): `net/http` middleware for `slog` logger
+
+**Loggers:**
+
+- [slog-zap](https://github.com/samber/slog-zap): A `slog` handler for `Zap`
+- [slog-zerolog](https://github.com/samber/slog-zerolog): A `slog` handler for `Zerolog`
+- [slog-logrus](https://github.com/samber/slog-logrus): A `slog` handler for `Logrus`
+
+**Log sinks:**
+
 - [slog-datadog](https://github.com/samber/slog-datadog): A `slog` handler for `Datadog`
+- [slog-betterstack](https://github.com/samber/slog-betterstack): A `slog` handler for `Betterstack`
 - [slog-rollbar](https://github.com/samber/slog-rollbar): A `slog` handler for `Rollbar`
+- [slog-loki](https://github.com/samber/slog-loki): A `slog` handler for `Loki`
 - [slog-sentry](https://github.com/samber/slog-sentry): A `slog` handler for `Sentry`
 - [slog-syslog](https://github.com/samber/slog-syslog): A `slog` handler for `Syslog`
 - [slog-logstash](https://github.com/samber/slog-logstash): A `slog` handler for `Logstash`
 - [slog-fluentd](https://github.com/samber/slog-fluentd): A `slog` handler for `Fluentd`
 - [slog-graylog](https://github.com/samber/slog-graylog): A `slog` handler for `Graylog`
-- [slog-loki](https://github.com/samber/slog-loki): A `slog` handler for `Loki`
+- [slog-quickwit](https://github.com/samber/slog-quickwit): A `slog` handler for `Quickwit`
 - [slog-slack](https://github.com/samber/slog-slack): A `slog` handler for `Slack`
 - [slog-telegram](https://github.com/samber/slog-telegram): A `slog` handler for `Telegram`
 - [slog-mattermost](https://github.com/samber/slog-mattermost): A `slog` handler for `Mattermost`
@@ -37,9 +52,7 @@
 - [slog-kafka](https://github.com/samber/slog-kafka): A `slog` handler for `Kafka`
 - [slog-nats](https://github.com/samber/slog-nats): A `slog` handler for `NATS`
 - [slog-parquet](https://github.com/samber/slog-parquet): A `slog` handler for `Parquet` + `Object Storage`
-- [slog-zap](https://github.com/samber/slog-zap): A `slog` handler for `Zap`
-- [slog-zerolog](https://github.com/samber/slog-zerolog): A `slog` handler for `Zerolog`
-- [slog-logrus](https://github.com/samber/slog-logrus): A `slog` handler for `Logrus`
+- [slog-channel](https://github.com/samber/slog-channel): A `slog` handler for Go channels
 
 ## 🚀 Install
 
@@ -52,6 +65,41 @@ go get github.com/samber/slog-gin
 No breaking changes will be made to exported APIs before v2.0.0.
 
 ## 💡 Usage
+
+### Handler options
+
+```go
+type Config struct {
+	DefaultLevel     slog.Level
+	ClientErrorLevel slog.Level
+	ServerErrorLevel slog.Level
+
+	WithUserAgent      bool
+	WithRequestID      bool
+	WithRequestBody    bool
+	WithRequestHeader  bool
+	WithResponseBody   bool
+	WithResponseHeader bool
+	WithSpanID         bool
+	WithTraceID        bool
+
+	Filters []Filter
+}
+```
+
+Attributes will be injected in log payload.
+
+Other global parameters:
+
+```go
+sloggin.TraceIDKey = "trace-id"
+sloggin.SpanIDKey = "span-id"
+sloggin.RequestBodyMaxSize  = 64 * 1024 // 64KB
+sloggin.ResponseBodyMaxSize = 64 * 1024 // 64KB
+sloggin.HiddenRequestHeaders = map[string]struct{}{ ... }
+sloggin.HiddenResponseHeaders = map[string]struct{}{ ... }
+sloggin.RequestIDHeaderKey = "X-Request-Id"
+```
 
 ### Minimal
 
@@ -81,7 +129,7 @@ router.GET("/pong", func(c *gin.Context) {
 router.Run(":1234")
 
 // output:
-// time=2023-04-10T14:00:0.000000Z level=INFO msg="Incoming request" status=200 method=GET path=/pong route=/pong ip=127.0.0.1 latency=25.5µs user-agent=curl/7.77.0 time=2023-04-10T14:00:00.000Z
+// time=2023-10-15T20:32:58.926+02:00 level=INFO msg="Incoming request" env=production request.time=2023-10-15T20:32:58.626+02:00 request.method=GET request.path=/ request.query="" request.route="" request.ip=127.0.0.1:63932 request.length=0 response.time=2023-10-15T20:32:58.926+02:00 response.latency=100ms response.status=200 response.length=7 id=""
 ```
 
 ### OTEL
@@ -94,7 +142,22 @@ config := sloggin.Config{
 	WithTraceID: true,
 }
 
-router := chi.NewRouter()
+router := gin.New()
+router.Use(sloggin.NewWithConfig(logger, config))
+```
+
+### Custom log levels
+
+```go
+logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+config := sloggin.Config{
+	DefaultLevel:     slog.LevelInfo,
+	ClientErrorLevel: slog.LevelWarn,
+	ServerErrorLevel: slog.LevelError,
+}
+
+router := gin.New()
 router.Use(sloggin.NewWithConfig(logger, config))
 ```
 
@@ -110,7 +173,7 @@ config := sloggin.Config{
 	WithResponseHeader: true,
 }
 
-router := chi.NewRouter()
+router := gin.New()
 router.Use(sloggin.NewWithConfig(logger, config))
 ```
 
@@ -129,7 +192,6 @@ router.Use(
 		sloggin.IgnoreStatus(401, 404),
 	),
 )
-router.Use(gin.Recovery())
 ```
 
 Available filters:
@@ -186,7 +248,7 @@ router.GET("/pong", func(c *gin.Context) {
 router.Run(":1234")
 
 // output:
-// time="2023-04-10 14:00:00" level=INFO msg="Incoming request" status=200 method=GET path=/pong route=/pong ip=127.0.0.1 latency=25.5µs user-agent=curl/7.77.0 time="2023-04-10 14:00:00"
+// time=2023-10-15T20:32:58.926+02:00 level=INFO msg="Incoming request" env=production request.time=2023-10-15T20:32:58Z request.method=GET request.path=/ request.query="" request.route="" request.ip=127.0.0.1:63932 request.length=0 response.time=2023-10-15T20:32:58Z response.latency=100ms response.status=200 response.length=7 id=""
 ```
 
 ### Using custom logger sub-group
@@ -209,7 +271,7 @@ router.GET("/pong", func(c *gin.Context) {
 router.Run(":1234")
 
 // output:
-// time=2023-04-10T14:00:0.000000+02:00 level=INFO msg="Incoming request" http.status=200 http.method=GET http.path=/pong http.route=/pong http.ip=127.0.0.1 http.latency=20.125µs http.user-agent=curl/7.77.0 time=2023-04-10T14:00:00.000+02:00
+// time=2023-10-15T20:32:58.926+02:00 level=INFO msg="Incoming request" env=production http.request.time=2023-10-15T20:32:58.626+02:00 http.request.method=GET http.request.path=/ request.query="" http.request.route="" http.request.ip=127.0.0.1:63932 http.request.length=0 http.response.time=2023-10-15T20:32:58.926+02:00 http.response.latency=100ms http.response.status=200 http.response.length=7 http.id=""
 ```
 
 ### Add logger to a single route
@@ -227,9 +289,6 @@ router.GET("/pong", sloggin.New(logger), func(c *gin.Context) {
 })
 
 router.Run(":1234")
-
-// output:
-// time="2023-04-10 14:00:00" level=INFO msg="Incoming request" status=200 method=GET path=/pong route=/pong ip=127.0.0.1 latency=25.5µs user-agent=curl/7.77.0 time="2023-04-10 14:00:00"
 ```
 
 ### Adding custom attributes
@@ -258,7 +317,7 @@ router.GET("/pong", func(c *gin.Context) {
 router.Run(":1234")
 
 // output:
-// time=2023-04-10T14:00:0.000000+02:00 level=INFO msg="Incoming request" environment=production server=gin/1.9.0 gin_mode=release server_start_time=2023-04-10T10:00:00.000+02:00 status=200 method=GET path=/pong route=/pong ip=127.0.0.1 latency=25.5µs user-agent=curl/7.77.0 time=2023-04-10T14:00:00.000+02:00 foo=bar
+// time=2023-10-15T20:32:58.926+02:00 level=INFO msg="Incoming request" environment=production server=gin/1.9.0 gin_mode=release request.time=2023-10-15T20:32:58.626+02:00 request.method=GET request.path=/ request.query="" request.route="" request.ip=127.0.0.1:63932 request.length=0 response.time=2023-10-15T20:32:58.926+02:00 response.latency=100ms response.status=200 response.length=7 id="" foo=bar
 ```
 
 ### JSON output
@@ -281,7 +340,7 @@ router.GET("/pong", func(c *gin.Context) {
 router.Run(":1234")
 
 // output:
-// {"time":"2023-04-10T14:00:0.000000+02:00","level":"INFO","msg":"Incoming request","gin_mode":"GIN_MODE","status":200,"method":"GET","path":"/pong","ip":"127.0.0.1","latency":15542,"user-agent":"curl/7.77.0","time":"2023-04-10T14:00:0.000000+02:00"}
+// {"time":"2023-10-15T20:32:58.926+02:00","level":"INFO","msg":"Incoming request","gin_mode":"GIN_MODE","env":"production","http":{"request":{"time":"2023-10-15T20:32:58.626+02:00","method":"GET","path":"/","query":"","route":"","ip":"127.0.0.1:55296","length":0},"response":{"time":"2023-10-15T20:32:58.926+02:00","latency":100000,"status":200,"length":7},"id":""}}
 ```
 
 ## 🤝 Contributing

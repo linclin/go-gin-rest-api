@@ -17,19 +17,21 @@ import (
 	"unicode"
 
 	"github.com/golang-sql/sqlexp"
+	"github.com/microsoft/go-mssqldb/aecmk"
 	"github.com/microsoft/go-mssqldb/internal/querytext"
 	"github.com/microsoft/go-mssqldb/msdsn"
 )
 
 // ReturnStatus may be used to return the return value from a proc.
 //
-//   var rs mssql.ReturnStatus
-//   _, err := db.Exec("theproc", &rs)
-//   log.Printf("return status = %d", rs)
+//	var rs mssql.ReturnStatus
+//	_, err := db.Exec("theproc", &rs)
+//	log.Printf("return status = %d", rs)
 type ReturnStatus int32
 
 var driverInstance = &Driver{processQueryText: true}
 var driverInstanceNoProcess = &Driver{processQueryText: false}
+var tcpDialerInstance *tcpDialer = &tcpDialer{}
 
 func init() {
 	sql.Register("mssql", driverInstance)
@@ -41,6 +43,8 @@ func init() {
 		}
 		return netDialer{&net.Dialer{KeepAlive: ka}}
 	}
+	msdsn.ProtocolDialers["tcp"] = *tcpDialerInstance
+	msdsn.ProtocolDialers["admin"] = *tcpDialerInstance
 }
 
 var createDialer func(p *msdsn.Config) Dialer
@@ -61,15 +65,12 @@ type Driver struct {
 
 // OpenConnector opens a new connector. Useful to dial with a context.
 func (d *Driver) OpenConnector(dsn string) (*Connector, error) {
-	params, _, err := msdsn.Parse(dsn)
+	params, err := msdsn.Parse(dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Connector{
-		params: params,
-		driver: d,
-	}, nil
+	return newConnector(params, d), nil
 }
 
 func (d *Driver) Open(dsn string) (driver.Conn, error) {
@@ -115,21 +116,19 @@ func (d *Driver) SetContextLogger(ctxLogger ContextLogger) {
 // NewConnector creates a new connector from a DSN.
 // The returned connector may be used with sql.OpenDB.
 func NewConnector(dsn string) (*Connector, error) {
-	params, _, err := msdsn.Parse(dsn)
+	params, err := msdsn.Parse(dsn)
 	if err != nil {
 		return nil, err
 	}
-	c := &Connector{
-		params: params,
-		driver: driverInstanceNoProcess,
-	}
+	c := newConnector(params, driverInstanceNoProcess)
+
 	return c, nil
 }
 
 // NewConnectorWithAccessTokenProvider creates a new connector from a DSN using the given
 // access token provider. The returned connector may be used with sql.OpenDB.
 func NewConnectorWithAccessTokenProvider(dsn string, tokenProvider func(ctx context.Context) (string, error)) (*Connector, error) {
-	params, _, err := msdsn.Parse(dsn)
+	params, err := msdsn.Parse(dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -143,9 +142,14 @@ func NewConnectorWithAccessTokenProvider(dsn string, tokenProvider func(ctx cont
 // NewConnectorConfig creates a new Connector for a DSN Config struct.
 // The returned connector may be used with sql.OpenDB.
 func NewConnectorConfig(config msdsn.Config) *Connector {
+	return newConnector(config, driverInstanceNoProcess)
+}
+
+func newConnector(config msdsn.Config, driver *Driver) *Connector {
 	return &Connector{
-		params: config,
-		driver: driverInstanceNoProcess,
+		params:       config,
+		driver:       driver,
+		keyProviders: make(aecmk.ColumnEncryptionKeyProviderMap),
 	}
 }
 
@@ -191,13 +195,24 @@ type Connector struct {
 	// SessionInitSQL is empty.
 	SessionInitSQL string
 
-	// Dialer sets a custom dialer for all network operations.
+	// Dialer sets a custom dialer for all network operations, except DNS resolution unless
+	// the dialer implements the HostDialer.
+	//
 	// If Dialer is not set, normal net dialers are used.
 	Dialer Dialer
+
+	keyProviders aecmk.ColumnEncryptionKeyProviderMap
 }
 
 type Dialer interface {
 	DialContext(ctx context.Context, network string, addr string) (net.Conn, error)
+}
+
+// HostDialer should be used if the dialer is proxying requests to a different network
+// and DNS should be resolved in that other network
+type HostDialer interface {
+	Dialer
+	HostName() string
 }
 
 func (c *Connector) getDialer(p *msdsn.Config) Dialer {
@@ -205,6 +220,11 @@ func (c *Connector) getDialer(p *msdsn.Config) Dialer {
 		return c.Dialer
 	}
 	return createDialer(p)
+}
+
+// RegisterCekProvider associates the given provider with the named key store. If an entry of the given name already exists, that entry is overwritten
+func (c *Connector) RegisterCekProvider(name string, provider aecmk.ColumnEncryptionKeyProvider) {
+	c.keyProviders[name] = aecmk.NewCekProvider(provider)
 }
 
 type Conn struct {
@@ -387,11 +407,11 @@ func (c *Conn) processBeginResponse(ctx context.Context) (driver.Tx, error) {
 }
 
 func (d *Driver) open(ctx context.Context, dsn string) (*Conn, error) {
-	params, _, err := msdsn.Parse(dsn)
+	params, err := msdsn.Parse(dsn)
 	if err != nil {
 		return nil, err
 	}
-	c := &Connector{params: params}
+	c := newConnector(params, nil)
 	return d.connect(ctx, c, params)
 }
 
@@ -433,10 +453,11 @@ func (c *Conn) Close() error {
 }
 
 type Stmt struct {
-	c          *Conn
-	query      string
-	paramCount int
-	notifSub   *queryNotifSub
+	c              *Conn
+	query          string
+	paramCount     int
+	notifSub       *queryNotifSub
+	skipEncryption bool
 }
 
 type queryNotifSub struct {
@@ -460,7 +481,7 @@ func (c *Conn) prepareContext(ctx context.Context, query string) (*Stmt, error) 
 	if c.processQueryText {
 		query, paramCount = querytext.ParseParams(query)
 	}
-	return &Stmt{c, query, paramCount, nil}, nil
+	return &Stmt{c, query, paramCount, nil, false}, nil
 }
 
 func (s *Stmt) Close() error {
@@ -642,16 +663,38 @@ func (s *Stmt) makeRPCParams(args []namedValue, isProc bool) ([]param, []string,
 		if isOutputValue(val.Value) {
 			output = outputSuffix
 		}
-		decls[i] = fmt.Sprintf("%s %s%s", name, makeDecl(params[i+offset].ti), output)
+		tiDecl := params[i+offset].ti
+		if val.encrypt != nil {
+			// Encrypted parameters have a few requirements:
+			// 1. Copy original typeinfo to a block after the data
+			// 2. Set the parameter type to varbinary(max)
+			// 3. Append the crypto metadata bytes
+			params[i+offset].tiOriginal = params[i+offset].ti
+			params[i+offset].Flags |= fEncrypted
+			encryptedBytes, metadata, err := val.encrypt(params[i+offset].buffer)
+			if err != nil {
+				return nil, nil, err
+			}
+			params[i+offset].cipherInfo = metadata
+			params[i+offset].ti.TypeId = typeBigVarBin
+			params[i+offset].buffer = encryptedBytes
+			params[i+offset].ti.Size = 0
+		}
+
+		decls[i] = fmt.Sprintf("%s %s%s", name, makeDecl(tiDecl), output)
 
 	}
 	return params, decls, nil
 }
 
+// Encrypts the input bytes. Returns the encrypted bytes followed by the encryption metadata to append to the packet.
+type valueEncryptor func(bytes []byte) ([]byte, []byte, error)
+
 type namedValue struct {
 	Name    string
 	Ordinal int
 	Value   driver.Value
+	encrypt valueEncryptor
 }
 
 func convertOldArgs(args []driver.Value) []namedValue {
@@ -665,6 +708,10 @@ func convertOldArgs(args []driver.Value) []namedValue {
 	return list
 }
 
+func (s *Stmt) doEncryption() bool {
+	return !s.skipEncryption && s.c.sess.alwaysEncrypted
+}
+
 func (s *Stmt) Query(args []driver.Value) (driver.Rows, error) {
 	defer s.c.clearOuts()
 
@@ -674,6 +721,12 @@ func (s *Stmt) Query(args []driver.Value) (driver.Rows, error) {
 func (s *Stmt) queryContext(ctx context.Context, args []namedValue) (rows driver.Rows, err error) {
 	if !s.c.connectionGood {
 		return nil, driver.ErrBadConn
+	}
+	if s.doEncryption() && len(args) > 0 {
+		args, err = s.encryptArgs(ctx, args)
+	}
+	if err != nil {
+		return nil, err
 	}
 	if err = s.sendQuery(ctx, args); err != nil {
 		return nil, s.c.checkBadConn(ctx, err, true)
@@ -741,6 +794,12 @@ func (s *Stmt) Exec(args []driver.Value) (driver.Result, error) {
 func (s *Stmt) exec(ctx context.Context, args []namedValue) (res driver.Result, err error) {
 	if !s.c.connectionGood {
 		return nil, driver.ErrBadConn
+	}
+	if s.doEncryption() && len(args) > 0 {
+		args, err = s.encryptArgs(ctx, args)
+	}
+	if err != nil {
+		return nil, err
 	}
 	if err = s.sendQuery(ctx, args); err != nil {
 		return nil, s.c.checkBadConn(ctx, err, true)
@@ -860,7 +919,7 @@ func (rc *Rows) NextResultSet() error {
 // the value type that can be used to scan types into. For example, the database
 // column type "bigint" this should return "reflect.TypeOf(int64(0))".
 func (r *Rows) ColumnTypeScanType(index int) reflect.Type {
-	return makeGoLangScanType(r.cols[index].ti)
+	return makeGoLangScanType(r.cols[index].originalTypeInfo())
 }
 
 // RowsColumnTypeDatabaseTypeName may be implemented by Rows. It should return the
@@ -869,7 +928,7 @@ func (r *Rows) ColumnTypeScanType(index int) reflect.Type {
 // "DECIMAL", "SMALLINT", "INT", "BIGINT", "BOOL", "[]BIGINT", "JSONB", "XML",
 // "TIMESTAMP".
 func (r *Rows) ColumnTypeDatabaseTypeName(index int) string {
-	return makeGoLangTypeName(r.cols[index].ti)
+	return makeGoLangTypeName(r.cols[index].originalTypeInfo())
 }
 
 // RowsColumnTypeLength may be implemented by Rows. It should return the length
@@ -877,24 +936,26 @@ func (r *Rows) ColumnTypeDatabaseTypeName(index int) string {
 // not a variable length type ok should return false.
 // If length is not limited other than system limits, it should return math.MaxInt64.
 // The following are examples of returned values for various types:
-//   TEXT          (math.MaxInt64, true)
-//   varchar(10)   (10, true)
-//   nvarchar(10)  (10, true)
-//   decimal       (0, false)
-//   int           (0, false)
-//   bytea(30)     (30, true)
+//
+//	TEXT          (math.MaxInt64, true)
+//	varchar(10)   (10, true)
+//	nvarchar(10)  (10, true)
+//	decimal       (0, false)
+//	int           (0, false)
+//	bytea(30)     (30, true)
 func (r *Rows) ColumnTypeLength(index int) (int64, bool) {
-	return makeGoLangTypeLength(r.cols[index].ti)
+	return makeGoLangTypeLength(r.cols[index].originalTypeInfo())
 }
 
 // It should return
 // the precision and scale for decimal types. If not applicable, ok should be false.
 // The following are examples of returned values for various types:
-//   decimal(38, 4)    (38, 4, true)
-//   int               (0, 0, false)
-//   decimal           (math.MaxInt64, math.MaxInt64, true)
+//
+//	decimal(38, 4)    (38, 4, true)
+//	int               (0, 0, false)
+//	decimal           (math.MaxInt64, math.MaxInt64, true)
 func (r *Rows) ColumnTypePrecisionScale(index int) (int64, int64, bool) {
-	return makeGoLangTypePrecisionScale(r.cols[index].ti)
+	return makeGoLangTypePrecisionScale(r.cols[index].originalTypeInfo())
 }
 
 // The nullable value should
@@ -960,12 +1021,20 @@ func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 		res.ti.TypeId = typeIntN
 		res.ti.Size = 8
 		res.buffer = []byte{}
-
+	case byte:
+		res.ti.TypeId = typeIntN
+		res.buffer = []byte{val}
+		res.ti.Size = 1
 	case float64:
 		res.ti.TypeId = typeFltN
 		res.ti.Size = 8
 		res.buffer = make([]byte, 8)
 		binary.LittleEndian.PutUint64(res.buffer, math.Float64bits(val))
+	case float32:
+		res.ti.TypeId = typeFltN
+		res.ti.Size = 4
+		res.buffer = make([]byte, 4)
+		binary.LittleEndian.PutUint32(res.buffer, math.Float32bits(val))
 	case sql.NullFloat64:
 		// only null values should be getting here
 		res.ti.TypeId = typeFltN
@@ -1029,7 +1098,7 @@ func (c *Conn) Ping(ctx context.Context) error {
 	if !c.connectionGood {
 		return driver.ErrBadConn
 	}
-	stmt := &Stmt{c, `select 1;`, 0, nil}
+	stmt := &Stmt{c, `select 1;`, 0, nil, true}
 	_, err := stmt.ExecContext(ctx, nil)
 	return err
 }
@@ -1094,7 +1163,7 @@ func (s *Stmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driv
 	}
 	list := make([]namedValue, len(args))
 	for i, nv := range args {
-		list[i] = namedValue(nv)
+		list[i] = namedValueFromDriverNamedValue(nv)
 	}
 	return s.queryContext(ctx, list)
 }
@@ -1107,9 +1176,13 @@ func (s *Stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (drive
 	}
 	list := make([]namedValue, len(args))
 	for i, nv := range args {
-		list[i] = namedValue(nv)
+		list[i] = namedValueFromDriverNamedValue(nv)
 	}
 	return s.exec(ctx, list)
+}
+
+func namedValueFromDriverNamedValue(v driver.NamedValue) namedValue {
+	return namedValue{Name: v.Name, Ordinal: v.Ordinal, Value: v.Value, encrypt: nil}
 }
 
 // Rowsq implements the sqlexp messages model for Query and QueryContext
@@ -1302,7 +1375,7 @@ scan:
 // the value type that can be used to scan types into. For example, the database
 // column type "bigint" this should return "reflect.TypeOf(int64(0))".
 func (r *Rowsq) ColumnTypeScanType(index int) reflect.Type {
-	return makeGoLangScanType(r.cols[index].ti)
+	return makeGoLangScanType(r.cols[index].originalTypeInfo())
 }
 
 // RowsColumnTypeDatabaseTypeName may be implemented by Rows. It should return the
@@ -1311,7 +1384,7 @@ func (r *Rowsq) ColumnTypeScanType(index int) reflect.Type {
 // "DECIMAL", "SMALLINT", "INT", "BIGINT", "BOOL", "[]BIGINT", "JSONB", "XML",
 // "TIMESTAMP".
 func (r *Rowsq) ColumnTypeDatabaseTypeName(index int) string {
-	return makeGoLangTypeName(r.cols[index].ti)
+	return makeGoLangTypeName(r.cols[index].originalTypeInfo())
 }
 
 // RowsColumnTypeLength may be implemented by Rows. It should return the length
@@ -1319,24 +1392,26 @@ func (r *Rowsq) ColumnTypeDatabaseTypeName(index int) string {
 // not a variable length type ok should return false.
 // If length is not limited other than system limits, it should return math.MaxInt64.
 // The following are examples of returned values for various types:
-//   TEXT          (math.MaxInt64, true)
-//   varchar(10)   (10, true)
-//   nvarchar(10)  (10, true)
-//   decimal       (0, false)
-//   int           (0, false)
-//   bytea(30)     (30, true)
+//
+//	TEXT          (math.MaxInt64, true)
+//	varchar(10)   (10, true)
+//	nvarchar(10)  (10, true)
+//	decimal       (0, false)
+//	int           (0, false)
+//	bytea(30)     (30, true)
 func (r *Rowsq) ColumnTypeLength(index int) (int64, bool) {
-	return makeGoLangTypeLength(r.cols[index].ti)
+	return makeGoLangTypeLength(r.cols[index].originalTypeInfo())
 }
 
 // It should return
 // the precision and scale for decimal types. If not applicable, ok should be false.
 // The following are examples of returned values for various types:
-//   decimal(38, 4)    (38, 4, true)
-//   int               (0, 0, false)
-//   decimal           (math.MaxInt64, math.MaxInt64, true)
+//
+//	decimal(38, 4)    (38, 4, true)
+//	int               (0, 0, false)
+//	decimal           (math.MaxInt64, math.MaxInt64, true)
 func (r *Rowsq) ColumnTypePrecisionScale(index int) (int64, int64, bool) {
-	return makeGoLangTypePrecisionScale(r.cols[index].ti)
+	return makeGoLangTypePrecisionScale(r.cols[index].originalTypeInfo())
 }
 
 // The nullable value should

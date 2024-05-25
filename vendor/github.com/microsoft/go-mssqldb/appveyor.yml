@@ -11,66 +11,64 @@ environment:
   SQLUSER: sa
   SQLPASSWORD: Password12!
   DATABASE: test
-  GOVERSION: 113
+  GOVERSION: 117
+  COLUMNENCRYPTION:
+  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   RACE: -race -cpu 4
+  TAGS:
   matrix:
-    - GOVERSION: 110
-      SQLINSTANCE: SQL2017
-    - GOVERSION: 111
-      SQLINSTANCE: SQL2017
-    - GOVERSION: 112
-      SQLINSTANCE: SQL2017
     - SQLINSTANCE: SQL2017
-    - SQLINSTANCE: SQL2016
-    - SQLINSTANCE: SQL2014
-    - SQLINSTANCE: SQL2012SP1
-    - SQLINSTANCE: SQL2008R2SP2
-
-    #  Go 1.14+ and SQL2019 are available on the Visual Studio 2019 image only
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GOVERSION: 114
+    - GOVERSION: 118
+      SQLINSTANCE: SQL2017
+    - GOVERSION: 120
+      RACE:
       SQLINSTANCE: SQL2019
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GOVERSION: 115
-      SQLINSTANCE: SQL2019
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GOVERSION: 115
-      SQLINSTANCE: SQL2017
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GOVERSION: 116
-      SQLINSTANCE: SQL2017
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GOVERSION: 117
-      SQLINSTANCE: SQL2017
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GOVERSION: 118
-      SQLINSTANCE: SQL2017
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GOVERSION: 118-x86
+      COLUMNENCRYPTION: 1
+      # Cover 32bit and named pipes protocol
+    - GOVERSION: 119-x86
       SQLINSTANCE: SQL2017
       GOARCH: 386
       RACE:
+      PROTOCOL: np
+      TAGS: -tags np
+      # Cover SSPI and lpc protocol
+    - GOVERSION: 120
+      RACE:
+      SQLINSTANCE: SQL2019
+      PROTOCOL: lpc
+      TAGS: -tags sm
+      SQLUSER:
+      SQLPASSWORD:
 install:
   - set GOROOT=c:\go%GOVERSION%
   - set PATH=%GOPATH%\bin;%GOROOT%\bin;%PATH%
   - go version
   - go env
-  - go get -u github.com/golang-sql/civil
-  - go get -u github.com/golang-sql/sqlexp
-  
+
 build_script:
   - go build
 
 before_test:
   # setup SQL Server
   - ps: |
+      [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo") | Out-Null
+      [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement") | Out-Null
+      $smo = 'Microsoft.SqlServer.Management.Smo.'
+      $wmi = new-object ($smo + 'Wmi.ManagedComputer')
+      $serverName = $env:COMPUTERNAME
       $instanceName = $env:SQLINSTANCE
-      Start-Service "MSSQL`$$instanceName"
+      # Enable named pipes
+      $uri = "ManagedComputer[@Name='$serverName']/ServerInstance[@Name='$instanceName']/ServerProtocol[@Name='Np']"
+      $Np = $wmi.GetSmoObject($uri)
+      $Np.IsEnabled = $true
+      $Np.Alter()
       Start-Service "SQLBrowser"
+      Start-Service "MSSQL`$$instanceName"
+      Start-Sleep -Seconds 10
   - sqlcmd -S "(local)\%SQLINSTANCE%" -Q "Use [master]; CREATE DATABASE test;"
-  - sqlcmd -S "(local)\%SQLINSTANCE%" -h -1 -Q "set nocount on; Select @@version"
+  - sqlcmd -S "np:.\%SQLINSTANCE%" -h -1 -Q "set nocount on; Select @@version"
   - pip install codecov
 
 test_script:
-  - go test %RACE% -coverprofile=coverage.txt -covermode=atomic
+  - go test %RACE% -coverprofile=coverage.txt -covermode=atomic %TAGS%
   - codecov -f coverage.txt

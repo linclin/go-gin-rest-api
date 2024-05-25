@@ -14,17 +14,27 @@
 
 package casbin
 
-import "github.com/casbin/casbin/v2/constant"
+import (
+	"fmt"
 
-// GetUsersForRoleInDomain gets the users that has a role inside a domain. Add by Gordon
+	"github.com/casbin/casbin/v2/constant"
+)
+
+// GetUsersForRoleInDomain gets the users that has a role inside a domain. Add by Gordon.
 func (e *Enforcer) GetUsersForRoleInDomain(name string, domain string) []string {
-	res, _ := e.model["g"]["g"].RM.GetUsers(name, domain)
+	if e.GetRoleManager() == nil {
+		return nil
+	}
+	res, _ := e.GetRoleManager().GetUsers(name, domain)
 	return res
 }
 
 // GetRolesForUserInDomain gets the roles that a user has inside a domain.
 func (e *Enforcer) GetRolesForUserInDomain(name string, domain string) []string {
-	res, _ := e.model["g"]["g"].RM.GetRoles(name, domain)
+	if e.GetRoleManager() == nil {
+		return nil
+	}
+	res, _ := e.GetRoleManager().GetRoles(name, domain)
 	return res
 }
 
@@ -49,7 +59,10 @@ func (e *Enforcer) DeleteRoleForUserInDomain(user string, role string, domain st
 // DeleteRolesForUserInDomain deletes all roles for a user inside a domain.
 // Returns false if the user does not have any roles (aka not affected).
 func (e *Enforcer) DeleteRolesForUserInDomain(user string, domain string) (bool, error) {
-	roles, err := e.model["g"]["g"].RM.GetRoles(user, domain)
+	if e.GetRoleManager() == nil {
+		return false, fmt.Errorf("role manager is not initialized")
+	}
+	roles, err := e.GetRoleManager().GetRoles(user, domain)
 	if err != nil {
 		return false, err
 	}
@@ -63,14 +76,17 @@ func (e *Enforcer) DeleteRolesForUserInDomain(user string, domain string) (bool,
 }
 
 // GetAllUsersByDomain would get all users associated with the domain.
-func (e *Enforcer) GetAllUsersByDomain(domain string) []string {
+func (e *Enforcer) GetAllUsersByDomain(domain string) ([]string, error) {
 	m := make(map[string]struct{})
-	g := e.model["g"]["g"]
+	g, err := e.model.GetAssertion("g", "g")
+	if err != nil {
+		return []string{}, err
+	}
 	p := e.model["p"]["p"]
 	users := make([]string, 0)
 	index, err := e.GetFieldIndex("p", constant.DomainIndex)
 	if err != nil {
-		return []string{}
+		return []string{}, err
 	}
 
 	getUser := func(index int, policies [][]string, domain string, m map[string]struct{}) []string {
@@ -89,12 +105,15 @@ func (e *Enforcer) GetAllUsersByDomain(domain string) []string {
 
 	users = append(users, getUser(2, g.Policy, domain, m)...)
 	users = append(users, getUser(index, p.Policy, domain, m)...)
-	return users
+	return users, nil
 }
 
 // DeleteAllUsersByDomain would delete all users associated with the domain.
 func (e *Enforcer) DeleteAllUsersByDomain(domain string) (bool, error) {
-	g := e.model["g"]["g"]
+	g, err := e.model.GetAssertion("g", "g")
+	if err != nil {
+		return false, err
+	}
 	p := e.model["p"]["p"]
 	index, err := e.GetFieldIndex("p", constant.DomainIndex)
 	if err != nil {
@@ -115,11 +134,11 @@ func (e *Enforcer) DeleteAllUsersByDomain(domain string) (bool, error) {
 	}
 
 	users := getUser(2, g.Policy, domain)
-	if _, err := e.RemoveGroupingPolicies(users); err != nil {
+	if _, err = e.RemoveGroupingPolicies(users); err != nil {
 		return false, err
 	}
 	users = getUser(index, p.Policy, domain)
-	if _, err := e.RemovePolicies(users); err != nil {
+	if _, err = e.RemovePolicies(users); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -142,13 +161,19 @@ func (e *Enforcer) DeleteDomains(domains ...string) (bool, error) {
 
 // GetAllDomains would get all domains.
 func (e *Enforcer) GetAllDomains() ([]string, error) {
-	return e.model["g"]["g"].RM.GetAllDomains()
+	if e.GetRoleManager() == nil {
+		return nil, fmt.Errorf("role manager is not initialized")
+	}
+	return e.GetRoleManager().GetAllDomains()
 }
 
 // GetAllRolesByDomain would get all roles associated with the domain.
 // note: Not applicable to Domains with inheritance relationship  (implicit roles)
-func (e *Enforcer) GetAllRolesByDomain(domain string) []string {
-	g := e.model["g"]["g"]
+func (e *Enforcer) GetAllRolesByDomain(domain string) ([]string, error) {
+	g, err := e.model.GetAssertion("g", "g")
+	if err != nil {
+		return []string{}, err
+	}
 	policies := g.Policy
 	roles := make([]string, 0)
 	existMap := make(map[string]bool) // remove duplicates
@@ -163,5 +188,5 @@ func (e *Enforcer) GetAllRolesByDomain(domain string) []string {
 		}
 	}
 
-	return roles
+	return roles, nil
 }

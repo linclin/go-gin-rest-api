@@ -124,21 +124,21 @@ func (e *SyncedEnforcer) DeletePermissionsForUser(user string) (bool, error) {
 }
 
 // GetPermissionsForUser gets permissions for a user or role.
-func (e *SyncedEnforcer) GetPermissionsForUser(user string, domain ...string) [][]string {
+func (e *SyncedEnforcer) GetPermissionsForUser(user string, domain ...string) ([][]string, error) {
 	e.m.RLock()
 	defer e.m.RUnlock()
 	return e.Enforcer.GetPermissionsForUser(user, domain...)
 }
 
 // GetNamedPermissionsForUser gets permissions for a user or role by named policy.
-func (e *SyncedEnforcer) GetNamedPermissionsForUser(ptype string, user string, domain ...string) [][]string {
+func (e *SyncedEnforcer) GetNamedPermissionsForUser(ptype string, user string, domain ...string) ([][]string, error) {
 	e.m.RLock()
 	defer e.m.RUnlock()
 	return e.Enforcer.GetNamedPermissionsForUser(ptype, user, domain...)
 }
 
 // HasPermissionForUser determines whether a user has a permission.
-func (e *SyncedEnforcer) HasPermissionForUser(user string, permission ...string) bool {
+func (e *SyncedEnforcer) HasPermissionForUser(user string, permission ...string) (bool, error) {
 	e.m.RLock()
 	defer e.m.RUnlock()
 	return e.Enforcer.HasPermissionForUser(user, permission...)
@@ -181,7 +181,7 @@ func (e *SyncedEnforcer) GetImplicitPermissionsForUser(user string, domain ...st
 // g, alice, admin
 //
 // GetImplicitPermissionsForUser("alice") can only get: [["admin", "data1", "read"]], whose policy is default policy "p"
-// But you can specify the named policy "p2" to get: [["admin", "create"]] by    GetNamedImplicitPermissionsForUser("p2","alice")
+// But you can specify the named policy "p2" to get: [["admin", "create"]] by    GetNamedImplicitPermissionsForUser("p2","alice").
 func (e *SyncedEnforcer) GetNamedImplicitPermissionsForUser(ptype string, user string, domain ...string) ([][]string, error) {
 	e.m.RLock()
 	defer e.m.RUnlock()

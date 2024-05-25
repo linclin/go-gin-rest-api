@@ -1,5 +1,4 @@
-//go:build go1.17 && !go1.22
-// +build go1.17,!go1.22
+// +build go1.17,!go1.23
 
 /*
  * Copyright 2021 ByteDance Inc.
@@ -135,6 +134,7 @@ var (
     _R9 = jit.Reg("R9")
     _X0 = jit.Reg("X0")
     _X1 = jit.Reg("X1")
+    _X15 = jit.Reg("X15")
 )
 
 var (
@@ -420,9 +420,10 @@ func (self *_Assembler) call_go(fn obj.Addr) {
 }
 
 func (self *_Assembler) callc(fn obj.Addr) {
-    self.Emit("XCHGQ", _IP, _BP)
+    self.save(_IP)
     self.call(fn)
-    self.Emit("XCHGQ", _IP, _BP)
+    self.Emit("XORPS", _X15, _X15)
+    self.load(_IP)
 }
 
 func (self *_Assembler) call_c(fn obj.Addr) {
@@ -606,7 +607,6 @@ func (self *_Assembler) skip_one() {
     self.Emit("TESTQ", _AX, _AX)                // TESTQ   AX, AX
     self.Sjmp("JS"   , _LB_parsing_error_v)     // JS      _parse_error_v
     self.Emit("MOVQ" , _VAR_pc, _R9)            // MOVQ    pc, R9
-    // self.Byte(0xcc)
     self.Rjmp("JMP"  , _R9)                     // JMP     (R9)
 }
 
@@ -1164,7 +1164,7 @@ var (
 
 var (
     _F_FieldMap_GetCaseInsensitive obj.Addr
-    _Empty_Slice = make([]byte, 0)
+    _Empty_Slice = []byte{}
     _Zero_Base = int64(uintptr(((*rt.GoSlice)(unsafe.Pointer(&_Empty_Slice))).Ptr))
 )
 
@@ -1641,7 +1641,8 @@ func (self *_Assembler) _asm_OP_check_empty(p *_Instr) {
         self.Emit("CMPB", jit.Sib(_IP, _IC, 1, 0), jit.Imm(int64(rbracket))) // CMPB    (IP)(IC), ']'
         self.Sjmp("JNE" , "_not_empty_array_{n}")                            // JNE     _not_empty_array_{n}
         self.Emit("MOVQ", _AX, _IC)                                          // MOVQ    AX, IC
-        self.StorePtr(_Zero_Base, jit.Ptr(_VP, 0), _AX)                      // MOVQ    $zerobase, (VP)
+        self.Emit("MOVQ", jit.Imm(_Zero_Base), _AX)
+        self.WritePtrAX(9, jit.Ptr(_VP, 0), false)
         self.Emit("PXOR", _X0, _X0)                                          // PXOR    X0, X0
         self.Emit("MOVOU", _X0, jit.Ptr(_VP, 8))                             // MOVOU   X0, 8(VP)
         self.Xjmp("JMP" , p.vi())                                            // JMP     {p.vi()}

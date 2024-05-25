@@ -1,5 +1,4 @@
-//go:build go1.17 && !go1.22
-// +build go1.17,!go1.22
+// +build go1.17,!go1.23
 
 /*
  * Copyright 2021 ByteDance Inc.
@@ -129,6 +128,7 @@ var (
 
 var (
     _X0 = jit.Reg("X0")
+    _X15 = jit.Reg("X15")
     _Y0 = jit.Reg("Y0")
 )
 
@@ -171,7 +171,7 @@ var (
 )
 
 var (
-    _REG_ffi = []obj.Addr{ _RP, _RL, _RC}
+    _REG_ffi = []obj.Addr{ _RP, _RL, _RC, _SP_q}
     _REG_b64 = []obj.Addr{_SP_p, _SP_q}
 
     _REG_all = []obj.Addr{_ST, _SP_x, _SP_f, _SP_p, _SP_q, _RP, _RL, _RC}
@@ -510,11 +510,10 @@ func (self *_Assembler) call_b64(pc obj.Addr) {
 
 func (self *_Assembler) call_c(pc obj.Addr) {
     self.Emit("XCHGQ", _SP_p, _BX)
-    self.Emit("XCHGQ", _SP_q, _BP)
     self.call(pc)               // CALL $pc
     self.xload(_REG_ffi...)     // LOAD $REG_ffi
     self.Emit("XCHGQ", _SP_p, _BX)
-    self.Emit("XCHGQ", _SP_q, _BP)
+    self.Emit("XORPS", _X15, _X15)
 }
 
 func (self *_Assembler) call_go(pc obj.Addr) {
