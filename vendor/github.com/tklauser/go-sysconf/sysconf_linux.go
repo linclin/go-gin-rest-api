@@ -6,7 +6,6 @@ package sysconf
 
 import (
 	"bufio"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"strconv"
@@ -17,14 +16,16 @@ import (
 )
 
 const (
-	// CLK_TCK is a constant on Linux, see e.g.
-	// https://git.musl-libc.org/cgit/musl/tree/src/conf/sysconf.c#n30 and
+	// CLK_TCK is a constant on Linux for all architectures except alpha and ia64.
+	// See e.g.
+	// https://git.musl-libc.org/cgit/musl/tree/src/conf/sysconf.c#n30
 	// https://github.com/containerd/cgroups/pull/12
+	// https://lore.kernel.org/lkml/agtlq6$iht$1@penguin.transmeta.com/
 	_SYSTEM_CLK_TCK = 100
 )
 
 func readProcFsInt64(path string, fallback int64) int64 {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return fallback
 	}
@@ -84,10 +85,16 @@ func getNprocsProcStat() (int64, error) {
 	s := bufio.NewScanner(f)
 	for s.Scan() {
 		if line := strings.TrimSpace(s.Text()); strings.HasPrefix(line, "cpu") {
-			l := strings.SplitN(line, " ", 2)
-			_, err := strconv.ParseInt(l[0][3:], 10, 64)
-			if err == nil {
-				count++
+			cpu, _, found := strings.Cut(line, " ")
+			if found {
+				// skip first line with accumulated values
+				if cpu == "cpu" {
+					continue
+				}
+				_, err := strconv.ParseInt(cpu[len("cpu"):], 10, 64)
+				if err == nil {
+					count++
+				}
 			}
 		} else {
 			// The current format of /proc/stat has all the
@@ -95,6 +102,9 @@ func getNprocsProcStat() (int64, error) {
 			// stays this way.
 			break
 		}
+	}
+	if err := s.Err(); err != nil {
+		return -1, err
 	}
 	return count, nil
 }
@@ -115,23 +125,9 @@ func getNprocs() int64 {
 }
 
 func getNprocsConf() int64 {
-	// TODO(tk): read /sys/devices/system/cpu/present instead?
-	d, err := os.Open("/sys/devices/system/cpu")
+	count, err := numcpus.GetConfigured()
 	if err == nil {
-		defer d.Close()
-		fis, err := d.Readdir(-1)
-		if err == nil {
-			count := int64(0)
-			for _, fi := range fis {
-				if name := fi.Name(); fi.IsDir() && strings.HasPrefix(name, "cpu") {
-					_, err := strconv.ParseInt(name[3:], 10, 64)
-					if err == nil {
-						count++
-					}
-				}
-			}
-			return count
-		}
+		return int64(count)
 	}
 
 	// TODO(tk): fall back to reading /proc/cpuinfo on legacy systems

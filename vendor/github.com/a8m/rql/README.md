@@ -7,8 +7,8 @@
 	<a href="LICENSE">
 		<img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="LICENSE">
 	</a>
-	<a href="https://travis-ci.org/a8m/rql">
-		<img src="https://img.shields.io/travis/a8m/rql.svg?style=flat-square" alt="Build Status">
+	<a href="https://app.circleci.com/pipelines/github/a8m/rql?branch=master">
+		<img src="https://img.shields.io/circleci/build/github/a8m/rql?style=flat-square" alt="Build Status">
 	</a>
 </p>
 
@@ -150,7 +150,7 @@ The top-level query accepts JSON with 4 fields: `offset`, `limit`, `filter` and 
 #### `offset` and `limit`
 These two fields are useful for paging and they are equivalent to `OFFSET` and `LIMIT` in a standard SQL syntax.
 - `offset` must be greater than or equal to 0 and its default value is 0
-- `limit` must be greater than   and less than or equal to the configured `LimitMaxValue`.
+- `limit` must be greater than 0 and less than or equal to the configured `LimitMaxValue`.
    The default value for `LimitMaxValue` is 100
 
 #### `sort`

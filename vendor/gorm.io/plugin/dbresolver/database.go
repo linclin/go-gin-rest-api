@@ -48,6 +48,7 @@ func (dr *DBResolver) SetMaxIdleConns(n int) *DBResolver {
 
 func (dr *DBResolver) SetMaxOpenConns(n int) *DBResolver {
 	dr.Call(func(connPool gorm.ConnPool) error {
+
 		if conn, ok := connPool.(interface{ SetMaxOpenConns(int) }); ok {
 			conn.SetMaxOpenConns(n)
 		} else {

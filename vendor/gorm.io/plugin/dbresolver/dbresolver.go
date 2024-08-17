@@ -22,10 +22,11 @@ type DBResolver struct {
 }
 
 type Config struct {
-	Sources  []gorm.Dialector
-	Replicas []gorm.Dialector
-	Policy   Policy
-	datas    []interface{}
+	Sources           []gorm.Dialector
+	Replicas          []gorm.Dialector
+	Policy            Policy
+	datas             []interface{}
+	TraceResolverMode bool
 }
 
 func Register(config Config, datas ...interface{}) *DBResolver {
@@ -76,8 +77,9 @@ func (dr *DBResolver) compileConfig(config Config) (err error) {
 	var (
 		connPool = dr.DB.Config.ConnPool
 		r        = resolver{
-			dbResolver: dr,
-			policy:     config.Policy,
+			dbResolver:        dr,
+			policy:            config.Policy,
+			traceResolverMode: config.TraceResolverMode,
 		}
 	)
 
@@ -122,6 +124,10 @@ func (dr *DBResolver) compileConfig(config Config) (err error) {
 		}
 	}
 
+	if config.TraceResolverMode {
+		dr.Logger = NewResolverModeLogger(dr.Logger)
+	}
+
 	return nil
 }
 
@@ -151,35 +157,46 @@ func (dr *DBResolver) convertToConnPool(dialectors []gorm.Dialector) (connPools 
 }
 
 func (dr *DBResolver) resolve(stmt *gorm.Statement, op Operation) gorm.ConnPool {
+	if r := dr.getResolver(stmt); r != nil {
+		return r.resolve(stmt, op)
+	}
+	return stmt.ConnPool
+}
+
+func (dr *DBResolver) getResolver(stmt *gorm.Statement) *resolver {
 	if len(dr.resolvers) > 0 {
 		if u, ok := stmt.Clauses[usingName].Expression.(using); ok && u.Use != "" {
 			if r, ok := dr.resolvers[u.Use]; ok {
-				return r.resolve(stmt, op)
+				return r
 			}
 		}
 
 		if stmt.Table != "" {
 			if r, ok := dr.resolvers[stmt.Table]; ok {
-				return r.resolve(stmt, op)
+				return r
+			}
+		}
+
+		if stmt.Model != nil {
+			if err := stmt.Parse(stmt.Model); err == nil {
+				if r, ok := dr.resolvers[stmt.Table]; ok {
+					return r
+				}
 			}
 		}
 
 		if stmt.Schema != nil {
 			if r, ok := dr.resolvers[stmt.Schema.Table]; ok {
-				return r.resolve(stmt, op)
+				return r
 			}
 		}
 
 		if rawSQL := stmt.SQL.String(); rawSQL != "" {
 			if r, ok := dr.resolvers[getTableFromRawSQL(rawSQL)]; ok {
-				return r.resolve(stmt, op)
+				return r
 			}
 		}
 	}
 
-	if dr.global != nil {
-		return dr.global.resolve(stmt, op)
-	}
-
-	return stmt.ConnPool
+	return dr.global
 }

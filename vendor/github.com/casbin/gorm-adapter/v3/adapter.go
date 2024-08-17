@@ -22,7 +22,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
@@ -32,6 +31,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
 )
@@ -84,7 +84,7 @@ type Adapter struct {
 	db             *gorm.DB
 	isFiltered     bool
 	transactionMu  *sync.Mutex
-	muInitialize   atomic.Bool
+	muInitialize   sync.Once
 }
 
 // finalizer is the destructor for Adapter.
@@ -200,8 +200,9 @@ func NewAdapterByDBUseTableName(db *gorm.DB, prefix string, tableName string) (*
 	}
 
 	a := &Adapter{
-		tablePrefix: prefix,
-		tableName:   tableName,
+		tablePrefix:   prefix,
+		tableName:     tableName,
+		transactionMu: &sync.Mutex{},
 	}
 
 	a.db = db.Scopes(a.casbinRuleTable()).Session(&gorm.Session{Context: db.Statement.Context})
@@ -259,9 +260,10 @@ func NewFilteredAdapter(driverName string, dataSourceName string, params ...inte
 // Casbin will not automatically call LoadPolicy() for a filtered adapter.
 func NewFilteredAdapterByDB(db *gorm.DB, prefix string, tableName string) (*Adapter, error) {
 	adapter := &Adapter{
-		tablePrefix: prefix,
-		tableName:   tableName,
-		isFiltered:  true,
+		tablePrefix:   prefix,
+		tableName:     tableName,
+		isFiltered:    true,
+		transactionMu: &sync.Mutex{},
 	}
 	adapter.db = db.Scopes(adapter.casbinRuleTable()).Session(&gorm.Session{Context: db.Statement.Context})
 
@@ -390,6 +392,9 @@ func (a *Adapter) getTableInstance() *CasbinRule {
 
 func (a *Adapter) getFullTableName() string {
 	if a.tablePrefix != "" {
+		if strings.HasSuffix(a.tablePrefix, "_") {
+			return a.tablePrefix + a.tableName
+		}
 		return a.tablePrefix + "_" + a.tableName
 	}
 	return a.tableName
@@ -622,7 +627,7 @@ func (a *Adapter) SavePolicyCtx(ctx context.Context, model model.Model) error {
 		for _, rule := range ast.Policy {
 			lines = append(lines, a.savePolicyLine(ptype, rule))
 			if len(lines) > flushEvery {
-				if err := tx.Create(&lines).Error; err != nil {
+				if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&lines).Error; err != nil {
 					tx.Rollback()
 					return err
 				}
@@ -635,7 +640,7 @@ func (a *Adapter) SavePolicyCtx(ctx context.Context, model model.Model) error {
 		for _, rule := range ast.Policy {
 			lines = append(lines, a.savePolicyLine(ptype, rule))
 			if len(lines) > flushEvery {
-				if err := tx.Create(&lines).Error; err != nil {
+				if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&lines).Error; err != nil {
 					tx.Rollback()
 					return err
 				}
@@ -644,7 +649,7 @@ func (a *Adapter) SavePolicyCtx(ctx context.Context, model model.Model) error {
 		}
 	}
 	if len(lines) > 0 {
-		if err := tx.Create(&lines).Error; err != nil {
+		if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&lines).Error; err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -662,7 +667,7 @@ func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
 // AddPolicyCtx adds a policy rule to the storage.
 func (a *Adapter) AddPolicyCtx(ctx context.Context, sec string, ptype string, rule []string) error {
 	line := a.savePolicyLine(ptype, rule)
-	err := a.db.WithContext(ctx).Create(&line).Error
+	err := a.db.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&line).Error
 	return err
 }
 
@@ -685,19 +690,18 @@ func (a *Adapter) AddPolicies(sec string, ptype string, rules [][]string) error 
 		line := a.savePolicyLine(ptype, rule)
 		lines = append(lines, line)
 	}
-	return a.db.Create(&lines).Error
+	return a.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&lines).Error
 }
 
 // Transaction perform a set of operations within a transaction
 func (a *Adapter) Transaction(e casbin.IEnforcer, fc func(casbin.IEnforcer) error, opts ...*sql.TxOptions) error {
 	// ensure the transactionMu is initialized
 	if a.transactionMu == nil {
-		for a.muInitialize.CompareAndSwap(false, true) {
+		a.muInitialize.Do(func() {
 			if a.transactionMu == nil {
 				a.transactionMu = &sync.Mutex{}
 			}
-			a.muInitialize.Store(false)
-		}
+		})
 	}
 	// lock the transactionMu to ensure the transaction is thread-safe
 	a.transactionMu.Lock()
@@ -706,7 +710,7 @@ func (a *Adapter) Transaction(e casbin.IEnforcer, fc func(casbin.IEnforcer) erro
 	oriAdapter := a.db
 	// reload policy from database to sync with the transaction
 	defer func() {
-		e.SetAdapter(&Adapter{db: oriAdapter})
+		e.SetAdapter(&Adapter{db: oriAdapter, transactionMu: a.transactionMu})
 		err = e.LoadPolicy()
 		if err != nil {
 			panic(err)
@@ -714,7 +718,7 @@ func (a *Adapter) Transaction(e casbin.IEnforcer, fc func(casbin.IEnforcer) erro
 	}()
 	copyDB := *a.db
 	tx := copyDB.Begin(opts...)
-	b := &Adapter{db: tx}
+	b := &Adapter{db: tx, transactionMu: a.transactionMu}
 	// copy enforcer to set the new adapter with transaction tx
 	copyEnforcer := e
 	copyEnforcer.SetAdapter(b)
@@ -927,7 +931,7 @@ func (a *Adapter) UpdateFilteredPolicies(sec string, ptype string, newPolicies [
 		return nil, err
 	}
 	for i := range newP {
-		if err := tx.Create(&newP[i]).Error; err != nil {
+		if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&newP[i]).Error; err != nil {
 			tx.Rollback()
 			return nil, err
 		}

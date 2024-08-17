@@ -3,8 +3,8 @@
 <div align="center">
 gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 <p align="center">
-<img src="https://img.shields.io/badge/Golang-1.21-brightgreen" alt="Go version"/>
-<img src="https://img.shields.io/badge/Gin-1.9-brightgreen" alt="Gin version"/>
+<img src="https://img.shields.io/badge/Golang-1.23-brightgreen" alt="Go version"/>
+<img src="https://img.shields.io/badge/Gin-1.10-brightgreen" alt="Gin version"/>
 <img src="https://img.shields.io/badge/Gorm-1.25-brightgreen" alt="Gorm version"/> 
 </p>
 </div>
@@ -181,6 +181,8 @@ wget http://localhost:8080/debug/pprof/trace?seconds=5
 ```  
 go install github.com/oligot/go-mod-upgrade@latest
 go-mod-upgrade
+或
+go get -u && go mod tidy
 ```
 
 ## 编译

@@ -1,10 +1,10 @@
+//go:build darwin
 // +build darwin
 
 package load
 
 import (
 	"context"
-	"os/exec"
 	"strings"
 	"unsafe"
 
@@ -38,7 +38,7 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 	return ret, nil
 }
 
-// Misc returnes miscellaneous host-wide statistics.
+// Misc returns miscellaneous host-wide statistics.
 // darwin use ps command to get process running/blocked count.
 // Almost same as FreeBSD implementation, but state is different.
 // U means 'Uninterruptible Sleep'.
@@ -47,11 +47,7 @@ func Misc() (*MiscStat, error) {
 }
 
 func MiscWithContext(ctx context.Context) (*MiscStat, error) {
-	bin, err := exec.LookPath("ps")
-	if err != nil {
-		return nil, err
-	}
-	out, err := invoke.CommandWithContext(ctx, bin, "axo", "state")
+	out, err := invoke.CommandWithContext(ctx, "ps", "axo", "state")
 	if err != nil {
 		return nil, err
 	}

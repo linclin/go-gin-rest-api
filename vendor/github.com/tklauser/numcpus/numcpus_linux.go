@@ -15,16 +15,26 @@
 package numcpus
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/sys/unix"
 )
 
 const sysfsCPUBasePath = "/sys/devices/system/cpu"
 
+func getFromCPUAffinity() (int, error) {
+	var cpuSet unix.CPUSet
+	if err := unix.SchedGetaffinity(0, &cpuSet); err != nil {
+		return 0, err
+	}
+	return cpuSet.Count(), nil
+}
+
 func readCPURange(file string) (int, error) {
-	buf, err := ioutil.ReadFile(filepath.Join(sysfsCPUBasePath, file))
+	buf, err := os.ReadFile(filepath.Join(sysfsCPUBasePath, file))
 	if err != nil {
 		return 0, err
 	}
@@ -37,16 +47,16 @@ func parseCPURange(cpus string) (int, error) {
 		if len(cpuRange) == 0 {
 			continue
 		}
-		rangeOp := strings.SplitN(cpuRange, "-", 2)
-		first, err := strconv.ParseUint(rangeOp[0], 10, 32)
+		from, to, found := strings.Cut(cpuRange, "-")
+		first, err := strconv.ParseUint(from, 10, 32)
 		if err != nil {
 			return 0, err
 		}
-		if len(rangeOp) == 1 {
+		if !found {
 			n++
 			continue
 		}
-		last, err := strconv.ParseUint(rangeOp[1], 10, 32)
+		last, err := strconv.ParseUint(to, 10, 32)
 		if err != nil {
 			return 0, err
 		}
@@ -55,8 +65,30 @@ func parseCPURange(cpus string) (int, error) {
 	return n, nil
 }
 
+func getConfigured() (int, error) {
+	d, err := os.Open(sysfsCPUBasePath)
+	if err != nil {
+		return 0, err
+	}
+	defer d.Close()
+	fis, err := d.Readdir(-1)
+	if err != nil {
+		return 0, err
+	}
+	count := 0
+	for _, fi := range fis {
+		if name := fi.Name(); fi.IsDir() && strings.HasPrefix(name, "cpu") {
+			_, err := strconv.ParseInt(name[3:], 10, 64)
+			if err == nil {
+				count++
+			}
+		}
+	}
+	return count, nil
+}
+
 func getKernelMax() (int, error) {
-	buf, err := ioutil.ReadFile(filepath.Join(sysfsCPUBasePath, "kernel_max"))
+	buf, err := os.ReadFile(filepath.Join(sysfsCPUBasePath, "kernel_max"))
 	if err != nil {
 		return 0, err
 	}
@@ -72,6 +104,9 @@ func getOffline() (int, error) {
 }
 
 func getOnline() (int, error) {
+	if n, err := getFromCPUAffinity(); err == nil {
+		return n, nil
+	}
 	return readCPURange("online")
 }
 
