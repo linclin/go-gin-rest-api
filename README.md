@@ -15,8 +15,10 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 - 使用`rql`资源查询语言,支持功能更丰富的数据查询接口
 - MySQL数据库使用`Gorm`支持，使用`gorm2-loggable`插件实现数据变更记录表
 - 配置文件管理使用`Viper`进行，配置文件变更热加载，无需重启应用(框架基础http服务、日志、数据库不变，仅针对业务配置生效) 
-- 日志输出使用Golang 1.21版本日志库`slog`，搭配`lumberjack`日志文件切割
 - 定时任务使用`robfig/cron`运行,使用基于MySQL唯一索引的分布式锁避免多副本重复执行，并记录任务执行状态到数据表
+- 日志输出使用Golang 1.21版本日志库`slog`，搭配`lumberjack`日志文件切割
+- 全局panic日志输出设置使用Golang 1.23版本`debug.SetCrashOutput`，最低运行版本为1.23
+
 ## 使用golang大众开源类库
 - [gin](https://github.com/gin-gonic/gin) 一款高效的golang web框架 [教程](https://gin-gonic.com/zh-cn/docs/)
 - [gorm](https://gorm.io/gorm) 数据库ORM管理框架, 可自行扩展多种数据库类型 [教程](https://gorm.io/zh_CN/)

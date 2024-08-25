@@ -6,15 +6,14 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"time"
+	"runtime/debug"
 
 	"github.com/natefinch/lumberjack"
 )
 
 // 初始化日志
 func Logger() {
-	now := time.Now()
-	fileName := fmt.Sprintf("%s/%04d-%02d-%02d.log", global.Conf.Logs.Path, now.Year(), now.Month(), now.Day())
+	fileName := fmt.Sprintf("%s/go-gin-rest-api.log", global.Conf.Logs.Path)
 	logFile := &lumberjack.Logger{
 		Filename:   fileName,                    // 日志文件路径
 		MaxSize:    global.Conf.Logs.MaxSize,    // 最大尺寸, M
@@ -31,4 +30,10 @@ func Logger() {
 	global.Log = logger
 	global.Logger = slog.NewLogLogger(slog.NewJSONHandler(io.MultiWriter(os.Stdout, logFile), &logOpts), slog.LevelInfo)
 	global.Log.Info("初始化日志完成")
+	panicFile, err := os.Create(fmt.Sprintf("%s/panic.log", global.Conf.Logs.Path))
+	if err != nil {
+		panic(err)
+	}
+	debug.SetCrashOutput(panicFile, debug.CrashOptions{})
+	global.Log.Info("初始化panic日志完成")
 }
