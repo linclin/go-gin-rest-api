@@ -201,7 +201,10 @@ func GetRolePermById(c *gin.Context) {
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
-		filteredNamedPolicy := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, "group_"+role.Name)
+		filteredNamedPolicy, err := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, "group_"+role.Name)
+		if err != nil {
+			models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		}
 		models.OkWithData(filteredNamedPolicy, c)
 	}
 }

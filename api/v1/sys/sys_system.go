@@ -206,7 +206,10 @@ func DeleteSystemById(c *gin.Context) {
 		})
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
-		filteredNamedPolicy := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, system.AppId)
+		filteredNamedPolicy, err := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, system.AppId)
+		if err != nil {
+			models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		}
 		if len(filteredNamedPolicy) > 0 {
 			for _, p := range filteredNamedPolicy {
 				if _, err := global.CasbinACLEnforcer.RemoveNamedPolicy("p", system.AppId, p[1], p[2]); err != nil {
@@ -236,7 +239,10 @@ func GetSystemPermById(c *gin.Context) {
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
-		filteredNamedPolicy := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, system.AppId)
+		filteredNamedPolicy, err := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, system.AppId)
+		if err != nil {
+			models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		}
 		models.OkWithData(filteredNamedPolicy, c)
 	}
 }
