@@ -1,6 +1,7 @@
 package sys
 
 import (
+	"fmt"
 	"go-gin-rest-api/pkg/global"
 
 	loggable "github.com/linclin/gorm2-loggable"
@@ -27,7 +28,7 @@ func (system SysSystem) Meta() interface{} {
 }
 
 // 权限
-type RbacRolePerm struct {
+type SystemPermission struct {
 	HttpMethod   string `validate:"required"` // HTTP方法
 	AbsolutePath string `validate:"required"` // 路由地址
 }
@@ -38,7 +39,7 @@ func InitSysSystem() {
 			Model: gorm.Model{
 				ID: 1,
 			},
-			AppId:      "2023012801",
+			AppId:      "api-00000001",
 			AppSecret:  "fa2e25cb060c8d748fd16ac5210581f41",
 			SystemName: "api",
 			IP:         "",
@@ -48,7 +49,7 @@ func InitSysSystem() {
 			Model: gorm.Model{
 				ID: 2,
 			},
-			AppId:      "2023012802",
+			AppId:      "api-00000002",
 			AppSecret:  "61c94399f47c485334b48f8f340bc07b2",
 			SystemName: "UI",
 			IP:         "",
@@ -58,7 +59,9 @@ func InitSysSystem() {
 	for _, system := range systems {
 		err := global.Mysql.Where(&system).FirstOrCreate(&system).Error
 		if err != nil {
-			global.Log.Error("InitSysSystem 数据初始化失败", err.Error())
+			global.Log.Error(fmt.Sprint("InitSysSystem 数据初始化失败", err.Error()))
+			continue
 		}
 	}
+	return
 }

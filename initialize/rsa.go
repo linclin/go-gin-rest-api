@@ -7,6 +7,7 @@ import (
 	"encoding/asn1"
 	"encoding/gob"
 	"encoding/pem"
+	"fmt"
 	"os"
 
 	"go-gin-rest-api/pkg/global"
@@ -83,7 +84,7 @@ func savePublicPEMKey(fileName string, pubkey *rsa.PublicKey) {
 
 func checkError(err error) {
 	if err != nil {
-		global.Log.Debug("Fatal error:GenerateRSA", err.Error())
+		global.Log.Debug(fmt.Sprint("Fatal error:GenerateRSA", err.Error()))
 		os.Exit(1)
 	}
 }

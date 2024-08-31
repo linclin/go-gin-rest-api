@@ -51,7 +51,7 @@ func Validate(locale string) {
 			err = zhTranslations.RegisterDefaultTranslations(v, global.Translator)
 		}
 		if err != nil {
-			global.Log.Error("初始化validator.v10校验器失败", err)
+			global.Log.Error(fmt.Sprint("初始化validator.v10校验器失败", err))
 		}
 	}
 	global.Log.Info("初始化validator.v10校验器完成")

@@ -1,6 +1,7 @@
 package sys
 
 import (
+	"fmt"
 	"go-gin-rest-api/pkg/global"
 	"strings"
 	"time"
@@ -24,7 +25,7 @@ func NewLock(lockMethod string, expireTime int64) *SysLock {
 
 func (lock *SysLock) TryLock() bool {
 	if err := lock.deleteExpiredLock(); err != nil {
-		global.Log.Error("清理过期任务锁失败", lock.LockMethod, err.Error())
+		global.Log.Error(fmt.Sprint("清理过期任务锁失败", lock.LockMethod, err.Error()))
 		return false
 	}
 	var newlock = SysLock{
@@ -40,7 +41,7 @@ func (lock *SysLock) TryLock() bool {
 		if strings.Contains(err.Error(), "Duplicate entry") {
 			return false
 		}
-		global.Log.Error("获取任务锁失败", err.Error())
+		global.Log.Error(fmt.Sprint("获取任务锁失败", err.Error()))
 		return false
 	}
 	return true

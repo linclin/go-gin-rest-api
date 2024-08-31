@@ -39,7 +39,7 @@ mysql:
   # 主机地址
   host: 172.31.116.212
   # 端口
-  port: 32427
+  port: 3306
   # 连接字符串查询参数
   query: charset=utf8mb4&parseTime=True&loc=Local&timeout=10000ms
 

@@ -36,10 +36,6 @@ func InitAuth() (*jwt.GinJWTMiddleware, error) {
 
 func payloadFunc(data interface{}) jwt.MapClaims {
 	if v, ok := data.(map[string]interface{}); ok {
-		global.Log.Debug("payloadFunc", jwt.MapClaims{
-			jwt.IdentityKey: v["AppId"],
-			"AppId":         v["AppId"],
-		})
 		return jwt.MapClaims{
 			jwt.IdentityKey: v["AppId"],
 			"AppId":         v["AppId"],

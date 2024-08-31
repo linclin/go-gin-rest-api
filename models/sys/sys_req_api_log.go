@@ -1,6 +1,7 @@
 package sys
 
 import (
+	"fmt"
 	"go-gin-rest-api/pkg/global"
 	"time"
 
@@ -37,7 +38,7 @@ func AddReqApi(c *gin.Context, RequestMethod, RequestURI, RequestBody, RespBody,
 	}
 	err = global.Mysql.Create(&reqapilog).Error
 	if err != nil {
-		global.Log.Error("AddReqApi 写入请求日志数据初始化失败", err.Error())
+		global.Log.Error(fmt.Sprint("AddReqApi 写入请求日志数据初始化失败", err.Error()))
 	}
 	return
 }

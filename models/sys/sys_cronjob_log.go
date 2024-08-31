@@ -1,6 +1,7 @@
 package sys
 
 import (
+	"fmt"
 	"go-gin-rest-api/pkg/global"
 	"time"
 
@@ -31,7 +32,7 @@ func AddSysCronjobLog(cronMethod, cronParam, status, errMsg string, startTime, e
 	}
 	err := global.Mysql.Create(&cronjoblog).Error
 	if err != nil {
-		global.Log.Error("AddSysCronjobLog写入定时任务日志表失败", err.Error())
+		global.Log.Error(fmt.Sprint("AddSysCronjobLog写入定时任务日志表失败", err.Error()))
 		return err
 	}
 	return nil

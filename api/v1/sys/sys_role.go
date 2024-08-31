@@ -176,10 +176,17 @@ func UpdateRoleById(c *gin.Context) {
 // @Router /api/v1/role/delete/{id} [delete]
 func DeleteRoleById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
-	err := global.Mysql.Where("id = ?", id).Delete(&sys.SysRole{}).Error
+	var sysrole sys.SysRole
+	err := global.Mysql.Where("id = ?", id).First(&sysrole).Error
+	if err != nil {
+		models.FailWithMessage(err.Error(), c)
+		return
+	}
+	err = global.Mysql.Where("id = ?", id).Delete(&sys.SysRole{}).Error
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
+		global.CasbinACLEnforcer.DeleteRole("group_" + sysrole.Name)
 		models.OkResult(c)
 	}
 }
@@ -201,7 +208,7 @@ func GetRolePermById(c *gin.Context) {
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
-		filteredNamedPolicy, err := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, "group_"+role.Name)
+		filteredNamedPolicy, err := global.CasbinACLEnforcer.GetPermissionsForUser("group_" + role.Name)
 		if err != nil {
 			models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 		}
@@ -215,14 +222,14 @@ func GetRolePermById(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	id		path 	string	true "角色ID"
-// @Param	body	body 	[]sys.RbacRolePerm	true "角色权限"
+// @Param	body	body 	[]sys.RolePermission	true "角色权限"
 // @Success 200 object models.Resp 返回创建
 // @Failure 500 object models.Resp 创建失败
 // @Security ApiKeyAuth
 // @Router /api/v1/role/perm/create/{id} [post]
 func CreateRolePerm(c *gin.Context) {
 	var role sys.SysRole
-	var role_perms []sys.RbacRolePerm
+	var role_perms []sys.RolePermission
 	id := cast.ToInt(c.Param("id"))
 	query := global.Mysql.Where("id = ?", id).First(&role)
 	if query.Error != nil {
@@ -246,8 +253,8 @@ func CreateRolePerm(c *gin.Context) {
 		return
 	}
 	for _, perm := range role_perms {
-		if _, err := global.CasbinACLEnforcer.AddPolicy("group_"+role.Name, perm.AbsolutePath, perm.HttpMethod); err != nil {
-			models.FailWithDetailed("授权错误:"+"group_"+role.Name+" "+perm.AbsolutePath+" "+perm.HttpMethod+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
+		if _, err := global.CasbinACLEnforcer.AddPolicy("group_"+role.Name, perm.Obj, perm.Obj1, perm.Obj2, perm.Action, "allow"); err != nil {
+			models.FailWithDetailed("授权错误:"+"group_"+role.Name+" "+perm.Obj+" "+" "+perm.Obj1+" "+" "+perm.Obj2+" "+perm.Action+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
 			return
 		}
 	}
@@ -260,7 +267,7 @@ func CreateRolePerm(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	id		path 	string	true		"角色ID"
-// @Param	body	body 	[]sys.RbacRolePerm	 true "角色权限"
+// @Param	body	body 	[]sys.RolePermission	 true "角色权限"
 // @Success 204 object models.Resp 返回创建
 // @Failure 500 object models.Resp 创建失败
 // @Security ApiKeyAuth
@@ -268,7 +275,7 @@ func CreateRolePerm(c *gin.Context) {
 func DeleteRolePermById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var role sys.SysRole
-	var role_perms []sys.RbacRolePerm
+	var role_perms []sys.RolePermission
 	query := global.Mysql.Where("id = ?", id).First(&role)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
@@ -291,8 +298,8 @@ func DeleteRolePermById(c *gin.Context) {
 		return
 	}
 	for _, perm := range role_perms {
-		if _, err := global.CasbinACLEnforcer.RemoveNamedPolicy("p", "group_"+role.Name, perm.AbsolutePath, perm.HttpMethod); err != nil {
-			models.FailWithDetailed("删除API系统授权错误:"+"group_"+role.Name+" "+perm.AbsolutePath+" "+perm.HttpMethod+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
+		if _, err := global.CasbinACLEnforcer.RemoveNamedPolicy("p", "group_"+role.Name, perm.Obj, perm.Obj1, perm.Obj2, perm.Action, "allow"); err != nil {
+			models.FailWithDetailed("删除API系统授权错误:"+"group_"+role.Name+role.Name+" "+perm.Obj+" "+" "+perm.Obj1+" "+" "+perm.Obj2+" "+perm.Action+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
 			return
 		}
 	}

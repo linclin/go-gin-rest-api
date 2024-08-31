@@ -16,7 +16,7 @@ func CasbinMiddleware(c *gin.Context) {
 	// 请求方式作为casbin访问动作act
 	act := c.Request.Method
 	// 检查策略
-	permResult, err := global.CasbinACLEnforcer.Enforce(AppId, obj, act)
+	permResult, err := global.CasbinACLEnforcer.Enforce(AppId, obj, "*", "*", act)
 	if err != nil || !permResult {
 		c.JSON(http.StatusForbidden, models.Resp{
 			Code: models.Forbidden,

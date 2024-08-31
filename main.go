@@ -6,7 +6,6 @@ import (
 	_ "go-gin-rest-api/docs"
 	"go-gin-rest-api/initialize"
 	"go-gin-rest-api/pkg/global"
-	"go-gin-rest-api/pkg/paniclog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -73,13 +72,6 @@ func main() {
 			global.Log.Error(fmt.Sprintf("项目启动失败: %v\n堆栈信息: %v", err, string(debug.Stack())))
 		}
 	}()
-	// panic信息写入日志文件
-	panicFile, err := os.OpenFile("./logs/panic.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-	defer panicFile.Close()
-	paniclog.RedirectStderr(panicFile)
 	// 初始化路由
 	r := initialize.Routers()
 	host := "0.0.0.0"
@@ -94,7 +86,7 @@ func main() {
 	// it won't block the graceful shutdown handling below
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			global.Log.Error("listen error: ", err)
+			global.Log.Error(fmt.Sprint("listen error: ", err))
 		}
 	}()
 	global.Log.Info(fmt.Sprintf("HTTP Server is running at %s:%d/%s", host, port, global.Conf.System.UrlPathPrefix))
@@ -107,7 +99,7 @@ func main() {
 	autotls.RunWithManager(r, &certManager)
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	// kill (no param) default send syscall.SIGTERM
 	// kill -2 is syscall.SIGINT
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
@@ -119,7 +111,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		global.Log.Error("Server forced to shutdown: ", err)
+		global.Log.Error(fmt.Sprint("Server forced to shutdown: ", err))
 	}
 	global.Log.Info("Server exiting")
 }

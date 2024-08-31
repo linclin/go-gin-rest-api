@@ -74,17 +74,16 @@ definitions:
         description: token
         type: string
     type: object
-  sys.RbacRolePerm:
+  sys.RolePermission:
     properties:
-      absolutePath:
-        description: 路由地址
+      action:
         type: string
-      httpMethod:
-        description: HTTP方法
+      obj:
         type: string
-    required:
-    - absolutePath
-    - httpMethod
+      obj1:
+        type: string
+      obj2:
+        type: string
     type: object
   sys.SysRole:
     properties:
@@ -143,6 +142,18 @@ definitions:
     required:
     - AppId
     - AppSecret
+    type: object
+  sys.SystemPermission:
+    properties:
+      absolutePath:
+        description: 路由地址
+        type: string
+      httpMethod:
+        description: HTTP方法
+        type: string
+    required:
+    - absolutePath
+    - httpMethod
     type: object
 info:
   contact:
@@ -284,6 +295,64 @@ paths:
       summary: '[系统内部]获取定时任务日志'
       tags:
       - '[系统内部]日志'
+  /api/v1/permission/auth/{user}:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: AuthPermission
+      parameters:
+      - description: 用户名
+        in: path
+        name: user
+        required: true
+        type: string
+      - description: 权限
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/sys.RolePermission'
+          type: array
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]用户操作鉴权'
+      tags:
+      - '[系统内部]系统'
+  /api/v1/permission/get/{casbin_subject}:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: GetPermission
+      parameters:
+      - description: 用户名
+        in: path
+        name: casbin_subject
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取指定用户全部权限'
+      tags:
+      - '[系统内部]系统'
   /api/v1/reqapilog/get/{requestid}:
     get:
       consumes:
@@ -454,7 +523,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/sys.RbacRolePerm'
+            $ref: '#/definitions/sys.RolePermission'
           type: array
       responses:
         "200":
@@ -487,7 +556,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/sys.RbacRolePerm'
+            $ref: '#/definitions/sys.RolePermission'
           type: array
       responses:
         "204":
@@ -795,7 +864,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/sys.RbacRolePerm'
+            $ref: '#/definitions/sys.SystemPermission'
           type: array
       responses:
         "201":
@@ -828,7 +897,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/sys.RbacRolePerm'
+            $ref: '#/definitions/sys.SystemPermission'
           type: array
       responses:
         "204":

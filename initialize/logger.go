@@ -32,6 +32,7 @@ func Logger() {
 	global.Log.Info("初始化日志完成")
 	panicFile, err := os.Create(fmt.Sprintf("%s/panic.log", global.Conf.Logs.Path))
 	if err != nil {
+		global.Log.Info(fmt.Sprint("初始化panic日志完成错误", err.Error()))
 		panic(err)
 	}
 	debug.SetCrashOutput(panicFile, debug.CrashOptions{})

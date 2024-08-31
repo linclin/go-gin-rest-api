@@ -1,6 +1,7 @@
 package sys
 
 import (
+	"fmt"
 	"go-gin-rest-api/pkg/global"
 
 	"gorm.io/gorm"
@@ -14,6 +15,12 @@ type SysRole struct {
 	Desc     string `gorm:"column:Desc;comment:角色说明" json:"Desc" rql:"filter,sort,column=Desc"`                                                    // 角色说明
 	Status   *bool  `gorm:"column:Status;index;type:tinyint(1);default:1;comment:角色状态(正常/禁用, 默认正常)" json:"Status" rql:"filter,sort,column=Status"` // 角色状态(正常/禁用, 默认正常)
 	Operator string `gorm:"column:Operator;comment:操作人" json:"Operator"`
+}
+type RolePermission struct {
+	Obj    string
+	Obj1   string
+	Obj2   string
+	Action string
 }
 
 func InitSysRole() {
@@ -54,7 +61,7 @@ func InitSysRole() {
 	for _, role := range roles {
 		err := global.Mysql.Where(&role).FirstOrCreate(&role).Error
 		if err != nil {
-			global.Log.Error("InitSysRole 数据初始化失败", err.Error())
+			global.Log.Error(fmt.Sprint("InitSysRole 数据初始化失败", err.Error()))
 		}
 	}
 }

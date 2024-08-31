@@ -24,7 +24,7 @@ import (
 func Routers() *gin.Engine {
 	// 初始化路由接口到数据库表中
 	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
-		//global.Log.Debug("router %v %v %v %v\n", httpMethod, absolutePath, handlerName, nuHandlers)
+		//global.Log.Debug(fmt.Sprint("router %v %v %v %v\n", httpMethod, absolutePath, handlerName, nuHandlers))
 		go func(httpMethod, absolutePath, handlerName string) {
 			sys_router := sys.SysRouter{
 				HttpMethod:   httpMethod,
@@ -33,7 +33,7 @@ func Routers() *gin.Engine {
 			}
 			err := global.Mysql.Where(&sys_router).FirstOrCreate(&sys_router).Error
 			if err != nil {
-				global.Log.Error("SysRouter 数据初始化失败", err.Error())
+				global.Log.Error(fmt.Sprint("SysRouter 数据初始化失败", err.Error()))
 			}
 		}(httpMethod, absolutePath, handlerName)
 	}
@@ -110,6 +110,7 @@ func Routers() *gin.Engine {
 	sysRouter.InitApiLogRouter(v1Group, authMiddleware)     // 注册服务接口日志路由
 	sysRouter.InitReqApiLogRouter(v1Group, authMiddleware)  // 注册请求接口日志路由
 	sysRouter.InitCronjobLogRouter(v1Group, authMiddleware) // 注册任务日志路由
+	sysRouter.InitPermission(v1Group, authMiddleware)       // 注册任务日志路由
 	global.Log.Info("初始化基础路由完成")
 	return r
 }

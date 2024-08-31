@@ -219,6 +219,98 @@
                 }
             }
         },
+        "/api/v1/permission/auth/{user}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/x-json-stream"
+                ],
+                "tags": [
+                    "[系统内部]系统"
+                ],
+                "summary": "[系统内部]用户操作鉴权",
+                "operationId": "AuthPermission",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "user",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "权限",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/sys.RolePermission"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resp"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/permission/get/{casbin_subject}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/x-json-stream"
+                ],
+                "tags": [
+                    "[系统内部]系统"
+                ],
+                "summary": "[系统内部]获取指定用户全部权限",
+                "operationId": "GetPermission",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "casbin_subject",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resp"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/reqapilog/get/{requestid}": {
             "get": {
                 "security": [
@@ -496,7 +588,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/sys.RbacRolePerm"
+                                "$ref": "#/definitions/sys.RolePermission"
                             }
                         }
                     }
@@ -548,7 +640,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/sys.RbacRolePerm"
+                                "$ref": "#/definitions/sys.RolePermission"
                             }
                         }
                     }
@@ -1039,7 +1131,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/sys.RbacRolePerm"
+                                "$ref": "#/definitions/sys.SystemPermission"
                             }
                         }
                     }
@@ -1091,7 +1183,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/sys.RbacRolePerm"
+                                "$ref": "#/definitions/sys.SystemPermission"
                             }
                         }
                     }
@@ -1323,19 +1415,19 @@
                 }
             }
         },
-        "sys.RbacRolePerm": {
+        "sys.RolePermission": {
             "type": "object",
-            "required": [
-                "absolutePath",
-                "httpMethod"
-            ],
             "properties": {
-                "absolutePath": {
-                    "description": "路由地址",
+                "action": {
                     "type": "string"
                 },
-                "httpMethod": {
-                    "description": "HTTP方法",
+                "obj": {
+                    "type": "string"
+                },
+                "obj1": {
+                    "type": "string"
+                },
+                "obj2": {
                     "type": "string"
                 }
             }
@@ -1419,6 +1511,23 @@
                     "type": "integer"
                 },
                 "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "sys.SystemPermission": {
+            "type": "object",
+            "required": [
+                "absolutePath",
+                "httpMethod"
+            ],
+            "properties": {
+                "absolutePath": {
+                    "description": "路由地址",
+                    "type": "string"
+                },
+                "httpMethod": {
+                    "description": "HTTP方法",
                     "type": "string"
                 }
             }

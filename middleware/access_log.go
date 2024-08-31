@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"fmt"
 	"go-gin-rest-api/models/sys"
 	"go-gin-rest-api/pkg/global"
 	"io/ioutil"
@@ -18,7 +19,7 @@ type AccessLogWriter struct {
 
 func (w AccessLogWriter) Write(p []byte) (int, error) {
 	if n, err := w.body.Write(p); err != nil {
-		global.Log.Info("AccessLogWriter Write", err.Error())
+		global.Log.Info(fmt.Sprint("AccessLogWriter Write", err.Error()))
 		return n, err
 	}
 	return w.ResponseWriter.Write(p)
@@ -26,7 +27,7 @@ func (w AccessLogWriter) Write(p []byte) (int, error) {
 
 func (w AccessLogWriter) WriteString(p string) (int, error) {
 	if n, err := w.body.WriteString(p); err != nil {
-		global.Log.Info("AccessLogWriter WriteString", err.Error())
+		global.Log.Info(fmt.Sprint("AccessLogWriter WriteString", err.Error()))
 		return n, err
 	}
 	return w.ResponseWriter.WriteString(p)
@@ -40,7 +41,7 @@ func AccessLog(c *gin.Context) {
 	// 从原有Request.Body读取
 	bodyBytes, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		global.Log.Info("请求体获取错误", err)
+		global.Log.Info(fmt.Sprint("请求体获取错误", err))
 	}
 	// 新建缓冲区并替换原有Request.body
 	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
