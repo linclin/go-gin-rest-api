@@ -5,7 +5,7 @@ containers:
     name: "go-gin-rest-api"
     dev: 
       #gitUrl: "https://gitee.com/dev-ops/go-gin-rest-api.git"
-      image: "registry.cn-shenzhen.aliyuncs.com/dev-ops/golang:1.21.0-alpine3.18" 
+      image: "registry.cn-shenzhen.aliyuncs.com/dev-ops/golang:1.23.0-alpine3.20" 
       sidecarImage: "registry.cn-shenzhen.aliyuncs.com/dev-ops/nocalhost-sidecar:syncthing" 
       workDir: "/data/go-gin-rest-api"
       shell: "bash"
