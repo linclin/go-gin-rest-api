@@ -140,9 +140,9 @@ curl -X 'POST' \
 ## MySQL数据库准备
 ```  
 #启动mysql linux
-docker run -d --name mysql -h mysql   --network=host --restart=always  -v /data/mysql:/var/lib/mysql -v /etc/localtime:/etc/localtime -v /etc/resolv.conf:/etc/resolv.conf -e MYSQL_ROOT_PASSWORD=mysql   --restart always   mysql:8.0.32 --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --default-authentication-plugin=mysql_native_password
+docker run -d --name mysql -h mysql   --network=host --restart=always  -v /data/mysql:/var/lib/mysql -v /etc/localtime:/etc/localtime -v /etc/resolv.conf:/etc/resolv.conf -e MYSQL_ROOT_PASSWORD=mysql   --restart always   registry.cn-shenzhen.aliyuncs.com/dev-ops/mysql:8.4.2 --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --default-authentication-plugin=mysql_native_password
 #启动mysql windows
-docker run -d --name mysql -h mysql -p 3306:3306 --restart=always -v D:\MySQL:/var/lib/mysql   -e MYSQL_ROOT_PASSWORD=mysql  --restart always   mysql:8.0.32 --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --default-authentication-plugin=mysql_native_password
+docker run -d --name mysql -h mysql -p 3306:3306 --restart=always -v D:\MySQL:/var/lib/mysql   -e MYSQL_ROOT_PASSWORD=mysql  --restart always   registry.cn-shenzhen.aliyuncs.com/dev-ops/mysql:8.4.2 --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --default-authentication-plugin=mysql_native_password
 
 ```
 
