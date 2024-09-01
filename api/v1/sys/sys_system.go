@@ -43,7 +43,9 @@ func GetSystems(c *gin.Context) {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 		return
 	}
-
+	if rqlParams.Sort == "" {
+		rqlParams.Sort = "id desc"
+	}
 	list := make([]sys.SysSystem, 0)
 	query := global.Mysql
 	count := int64(0)

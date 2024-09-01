@@ -74,7 +74,7 @@ func AccessLog(c *gin.Context) {
 			RequestURI:    reqUri,
 			RequestBody:   reqBody,
 			StatusCode:    statusCode,
-			//RespBody:      respBody,  使用gzip插件不记录返回体，会导致保存数据库失败
+			//RespBody:      respBody, //使用gzip插件不记录返回体，会导致保存数据库失败
 			ClientIP:  clientIP,
 			StartTime: startTime,
 			ExecTime:  execTime.String(),

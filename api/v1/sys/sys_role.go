@@ -41,7 +41,9 @@ func GetRoles(c *gin.Context) {
 		models.FailWithMessage(err.Error(), c)
 		return
 	}
-
+	if rqlParams.Sort == "" {
+		rqlParams.Sort = "id desc"
+	}
 	list := make([]sys.SysRole, 0)
 	query := global.Mysql
 	count := int64(0)

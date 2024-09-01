@@ -39,7 +39,9 @@ func GetChangeLog(c *gin.Context) {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 		return
 	}
-
+	if rqlParams.Sort == "" {
+		rqlParams.Sort = "id desc"
+	}
 	list := make([]loggable.ChangeLog, 0)
 	query := global.Mysql.Table("sys_change_logs")
 	count := int64(0)
