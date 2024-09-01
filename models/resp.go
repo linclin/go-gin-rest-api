@@ -74,7 +74,7 @@ func OkWithData(data interface{}, c *gin.Context) {
 	Result(SUCCESS, data, "操作成功", 0, c)
 }
 func OkWithDataList(data interface{}, total int64, c *gin.Context) {
-	Result(SUCCESS, data, "操作成功", 0, c)
+	Result(SUCCESS, data, "操作成功", total, c)
 }
 func OkWithDetailed(data interface{}, message string, c *gin.Context) {
 	Result(SUCCESS, data, message, 0, c)

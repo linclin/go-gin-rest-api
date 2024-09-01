@@ -1393,10 +1393,6 @@ const docTemplate = `{
         "models.Resp": {
             "type": "object",
             "properties": {
-                "code": {
-                    "description": "错误代码",
-                    "type": "integer"
-                },
                 "data": {
                     "description": "数据内容"
                 },
@@ -1407,6 +1403,14 @@ const docTemplate = `{
                 "request_id": {
                     "description": "请求ID",
                     "type": "string"
+                },
+                "success": {
+                    "description": "请求是否成功",
+                    "type": "boolean"
+                },
+                "total": {
+                    "description": "数据总条数",
+                    "type": "integer"
                 }
             }
         },
