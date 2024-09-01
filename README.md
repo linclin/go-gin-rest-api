@@ -9,6 +9,10 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 </p>
 </div>
 
+## 配套前端[ice-antd](https://github.com/linclin/ice-antd)
+- [ice](https://github.com/alibaba/ice) 阿里开源飞冰React框架 [文档](https://v3.ice.work/docs/guide/start)
+- [Ant Design Pro](https://github.com/ant-design/pro-components) 蚂蚁开源Ant Design Pro前端UI组件 [文档](https://procomponents.ant.design/components)
+
 ## 主要功能
 - 基于`Gin`框架开发的REST API
 - API使用`JWT`的Token认证和`Casbin`的接口ACL、RBAC权限控制
@@ -92,13 +96,8 @@ curl -X 'POST' \
 ``` shell
 {
   "request_id": "cd7548de-9622-46be-8543-478e70ceb793",
-  "code": 0,
+  "success": true,
   "data": {
-    "offset": 0,
-    "limit": 10,
-    "total": 1, 
-    "sortby": "StartTime desc",
-    "list": [
       {
         "ID": 33,
         "CreatedAt": "2023-01-28T22:51:57+08:00",
@@ -114,8 +113,8 @@ curl -X 'POST' \
         "StartTime": "2023-01-28T22:51:57+08:00",
         "ExecTime": "4.6134ms"
       }
-    ]
   },
+  "total": 1, 
   "msg": "操作成功"
 }
 ```
