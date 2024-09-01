@@ -100,6 +100,7 @@ func unauthorized(c *gin.Context, code int, message string) {
 
 func loginResponse(c *gin.Context, code int, token string, expires time.Time) {
 	c.JSON(http.StatusOK, models.Token{
+		Success: models.SUCCESS,
 		Token:   token,
 		Expires: expires,
 	})

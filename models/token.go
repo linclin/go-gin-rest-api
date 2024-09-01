@@ -9,6 +9,7 @@ type ReqToken struct {
 
 // token返回结构体
 type Token struct {
+	Success bool      `json:"success"` // 请求是否成功
 	Token   string    `json:"token"`   // token
 	Expires time.Time `json:"expires"` // 过期时间
 }

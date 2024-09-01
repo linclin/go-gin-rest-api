@@ -120,8 +120,9 @@ func Routers() *gin.Engine {
 	sysRouter.InitRouterRouter(v1Group, authMiddleware)     // 注册系统路由路由
 	sysRouter.InitApiLogRouter(v1Group, authMiddleware)     // 注册服务接口日志路由
 	sysRouter.InitReqApiLogRouter(v1Group, authMiddleware)  // 注册请求接口日志路由
-	sysRouter.InitCronjobLogRouter(v1Group, authMiddleware) // 注册任务日志路由
-	sysRouter.InitPermission(v1Group, authMiddleware)       // 注册任务日志路由
+	sysRouter.InitCronjobLogRouter(v1Group, authMiddleware) // 注册定时任务日志路由
+	sysRouter.InitChangeLogRouter(v1Group, authMiddleware)  // 注册数据审计日志路由
+	sysRouter.InitPermission(v1Group, authMiddleware)       // 注册用户权限路由
 	global.Log.Info("初始化基础路由完成")
 	return r
 }

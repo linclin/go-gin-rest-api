@@ -41,7 +41,7 @@ func GetChangeLog(c *gin.Context) {
 	}
 
 	list := make([]loggable.ChangeLog, 0)
-	query := global.Mysql
+	query := global.Mysql.Table("sys_change_logs")
 	count := int64(0)
 	err = query.Model(loggable.ChangeLog{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
