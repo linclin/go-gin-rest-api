@@ -10,7 +10,7 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 </div>
 
 ## 配套前端[ice-antd](https://github.com/linclin/ice-antd)
-- [ice](https://github.com/alibaba/ice) 阿里开源飞冰React框架 [文档](https://v3.ice.work/docs/guide/start)
+- [ice.js](https://github.com/alibaba/ice) 阿里开源飞冰React框架 [文档](https://v3.ice.work/docs/guide/start)
 - [Ant Design Pro](https://github.com/ant-design/pro-components) 蚂蚁开源Ant Design Pro前端UI组件 [文档](https://procomponents.ant.design/components)
 
 ## 主要功能
