@@ -53,16 +53,7 @@ func GetSystems(c *gin.Context) {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 		return
 	}
-	// 返回分页数据
-	var resp models.PageData
-	// 设置分页参数
-	resp.PageInfo.Offset = rqlParams.Offset
-	resp.PageInfo.Limit = rqlParams.Limit
-	resp.PageInfo.Total = count
-	resp.PageInfo.SortBy = rqlParams.Sort
-	// 设置数据列表
-	resp.List = list
-	models.OkWithData(resp, c)
+	models.OkWithDataList(list, count, c)
 }
 
 // @Summary [系统内部]根据ID获取系统
@@ -200,9 +191,9 @@ func DeleteSystemById(c *gin.Context) {
 	err := query.Delete(&sys.SysSystem{}).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.Resp{
-			Code: http.StatusInternalServerError,
-			Data: err.Error(),
-			Msg:  models.CustomError[models.NotOk],
+			Success: models.ERROR,
+			Data:    err.Error(),
+			Msg:     models.CustomError[models.NotOk],
 		})
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {

@@ -91,9 +91,9 @@ func authorizator(data interface{}, c *gin.Context) bool {
 func unauthorized(c *gin.Context, code int, message string) {
 	global.Log.Error(fmt.Sprintf("JWT认证失败, 错误码%d, 错误信息%s", code, message))
 	c.JSON(http.StatusUnauthorized, models.Resp{
-		Code: http.StatusUnauthorized,
-		Data: "认证失败",
-		Msg:  message,
+		Success: models.ERROR,
+		Data:    "认证失败",
+		Msg:     message,
 	})
 	return
 }
@@ -107,8 +107,8 @@ func loginResponse(c *gin.Context, code int, token string, expires time.Time) {
 
 func logoutResponse(c *gin.Context, code int) {
 	c.JSON(http.StatusOK, models.Resp{
-		Code: http.StatusOK,
-		Data: models.OkMsg,
-		Msg:  models.CustomError[models.Ok],
+		Success: models.SUCCESS,
+		Data:    models.OkMsg,
+		Msg:     models.CustomError[models.Ok],
 	})
 }

@@ -51,16 +51,7 @@ func GetRoles(c *gin.Context) {
 		models.FailWithMessage(err.Error(), c)
 		return
 	}
-	// 返回分页数据
-	var resp models.PageData
-	// 设置分页参数
-	resp.PageInfo.Offset = rqlParams.Offset
-	resp.PageInfo.Limit = rqlParams.Limit
-	resp.PageInfo.Total = count
-	resp.PageInfo.SortBy = rqlParams.Sort
-	// 设置数据列表
-	resp.List = list
-	models.OkWithData(resp, c)
+	models.OkWithDataList(list, count, c)
 }
 
 // @Summary [系统内部]根据ID获取角色

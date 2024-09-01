@@ -26,15 +26,15 @@ func HeathCheck(c *gin.Context) {
 	}
 	if errStr != "" {
 		c.JSON(http.StatusInternalServerError, models.Resp{
-			Code: http.StatusInternalServerError,
-			Data: errStr,
-			Msg:  models.CustomError[models.NotOk],
+			Success: models.SUCCESS,
+			Data:    errStr,
+			Msg:     models.CustomError[models.NotOk],
 		})
 		return
 	}
 	c.JSON(http.StatusOK, models.Resp{
-		Code: http.StatusOK,
-		Data: "健康检查完成",
-		Msg:  models.CustomError[models.Ok],
+		Success: models.SUCCESS,
+		Data:    "健康检查完成",
+		Msg:     models.CustomError[models.Ok],
 	})
 }

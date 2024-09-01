@@ -19,9 +19,9 @@ func CasbinMiddleware(c *gin.Context) {
 	permResult, err := global.CasbinACLEnforcer.Enforce(AppId, obj, "*", "*", act)
 	if err != nil || !permResult {
 		c.JSON(http.StatusForbidden, models.Resp{
-			Code: models.Forbidden,
-			Data: models.ForbiddenMsg,
-			Msg:  models.CustomError[models.Forbidden],
+			Success: models.ERROR,
+			Data:    models.ForbiddenMsg,
+			Msg:     models.CustomError[models.Forbidden],
 		})
 		c.Abort()
 		return

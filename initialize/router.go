@@ -7,6 +7,7 @@ import (
 	"go-gin-rest-api/models/sys"
 	"go-gin-rest-api/pkg/global"
 	sysRouter "go-gin-rest-api/router/sys"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
@@ -57,7 +58,17 @@ func Routers() *gin.Engine {
 	// GZip压缩插件
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	// 添加跨域中间件, 让请求支持跨域
-	r.Use(cors.Default())
+	// 定义跨域配置
+	crosConfig := cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+	// 注册跨域中间件
+	r.Use(cors.New(crosConfig))
 	// 添加sentinel中间件
 	r.Use(
 		sentinelPlugin.SentinelMiddleware(

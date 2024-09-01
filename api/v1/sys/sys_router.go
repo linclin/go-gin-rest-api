@@ -49,14 +49,5 @@ func GetRouters(c *gin.Context) {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 		return
 	}
-	// 返回分页数据
-	var resp models.PageData
-	// 设置分页参数
-	resp.PageInfo.Offset = rqlParams.Offset
-	resp.PageInfo.Limit = rqlParams.Limit
-	resp.PageInfo.Total = count
-	resp.PageInfo.SortBy = rqlParams.Sort
-	// 设置数据列表
-	resp.List = list
-	models.OkWithData(resp, c)
+	models.OkWithDataList(list, count, c)
 }
