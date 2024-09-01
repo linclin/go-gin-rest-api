@@ -42,9 +42,13 @@ func GetChangeLog(c *gin.Context) {
 
 	list := make([]loggable.ChangeLog, 0)
 	query := global.Mysql
-	query = query.Where(rqlParams.FilterExp, rqlParams.FilterArgs...)
 	count := int64(0)
-	err = query.Limit(rqlParams.Limit).Offset(rqlParams.Offset).Order(rqlParams.Sort).Find(&list).Count(&count).Error
+	err = query.Model(loggable.ChangeLog{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
+	if err != nil {
+		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		return
+	}
+	err = query.Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Limit(rqlParams.Limit).Offset(rqlParams.Offset).Order(rqlParams.Sort).Find(&list).Error
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 		return
