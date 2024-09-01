@@ -36,7 +36,8 @@ func InitCasbin() {
 	global.CasbinACLEnforcer.AddPolicy("group_operator", "/*", "*", "*", "GET", "allow")
 	// 添加前台管理员组权限
 	global.CasbinACLEnforcer.AddPolicy("group_admin", "/*", "*", "*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)", "allow")
-	global.CasbinACLEnforcer.AddRoleForUser("lc", "group_admin", time.Now().Format("2006-01-02 15:04:05"), time.Now().AddDate(100, 0, 0).Format("2006-01-02 15:04:05"))
+	//global.CasbinACLEnforcer.AddRoleForUser("lc", "group_admin", time.Now().Format("2006-01-02 15:04:05"), time.Now().AddDate(100, 0, 0).Format("2006-01-02 15:04:05"))
+	global.CasbinACLEnforcer.AddRoleForUser("lc", "group_admin", "2024-09-01 00:00:00", "2054-09-01 00:00:00")
 	global.CasbinACLEnforcer.AddNamedLinkConditionFunc("g", "lc", "group_admin", utils.TimeMatchFunc)
 
 }
