@@ -21,7 +21,8 @@ import (
 // @Router /api/v1/changelog/list [post]
 func GetChangeLog(c *gin.Context) {
 	rqlQueryParser, err := rql.NewParser(rql.Config{
-		Model: loggable.ChangeLog{},
+		Model:        loggable.ChangeLog{},
+		DefaultLimit: -1,
 	})
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)

@@ -21,7 +21,8 @@ import (
 // @Router /api/v1/cronjoblog/list [post]
 func GetCronjobLog(c *gin.Context) {
 	rqlQueryParser, err := rql.NewParser(rql.Config{
-		Model: sys.SysCronjobLog{},
+		Model:        sys.SysCronjobLog{},
+		DefaultLimit: -1,
 	})
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)

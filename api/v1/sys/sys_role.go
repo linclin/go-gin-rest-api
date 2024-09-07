@@ -23,7 +23,8 @@ import (
 // @Router /api/v1/role/list [post]
 func GetRoles(c *gin.Context) {
 	rqlQueryParser, err := rql.NewParser(rql.Config{
-		Model: sys.SysRole{},
+		Model:        sys.SysRole{},
+		DefaultLimit: -1,
 	})
 	if err != nil {
 		models.FailWithMessage(err.Error(), c)

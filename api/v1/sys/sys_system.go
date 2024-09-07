@@ -25,7 +25,8 @@ import (
 // @Router /api/v1/system/list [post]
 func GetSystems(c *gin.Context) {
 	rqlQueryParser, err := rql.NewParser(rql.Config{
-		Model: sys.SysSystem{},
+		Model:        sys.SysSystem{},
+		DefaultLimit: -1,
 	})
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)

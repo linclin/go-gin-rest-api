@@ -21,7 +21,8 @@ import (
 // @Router /api/v1/router/list [post]
 func GetRouters(c *gin.Context) {
 	rqlQueryParser, err := rql.NewParser(rql.Config{
-		Model: sys.SysRouter{},
+		Model:        sys.SysRouter{},
+		DefaultLimit: -1,
 	})
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)

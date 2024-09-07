@@ -21,7 +21,8 @@ import (
 // @Router /api/v1/reqapilog/list [post]
 func GetReqApiLog(c *gin.Context) {
 	rqlQueryParser, err := rql.NewParser(rql.Config{
-		Model: sys.SysReqApiLog{},
+		Model:        sys.SysReqApiLog{},
+		DefaultLimit: -1,
 	})
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
