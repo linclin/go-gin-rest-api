@@ -4,10 +4,13 @@ import (
 	"go-gin-rest-api/models"
 	"go-gin-rest-api/models/sys"
 	"go-gin-rest-api/pkg/global"
+	"strings"
 
 	"github.com/a8m/rql"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	loggable "github.com/linclin/gorm2-loggable"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )
 
@@ -50,12 +53,12 @@ func GetRoles(c *gin.Context) {
 	count := int64(0)
 	err = query.Model(sys.SysRole{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	err = query.Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Limit(rqlParams.Limit).Offset(rqlParams.Offset).Order(rqlParams.Sort).Find(&list).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	models.OkWithDataList(list, count, c)
@@ -110,10 +113,17 @@ func CreateRole(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-	err = global.Mysql.Create(&role).Error
+	appId, _ := c.Get("AppId")
+	requestId, _ := c.Get("RequestId")
+	userName := c.GetHeader("User")
+	err = global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&role).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 	} else {
+		if !strings.HasPrefix(role.Name, "group_") {
+			role.Name = "group_" + role.Name
+		}
+		global.CasbinACLEnforcer.AddPolicy(role.Name, "/*", "*", "*", "GET", "allow")
 		models.OkWithData(role, c)
 	}
 }
@@ -124,7 +134,7 @@ func CreateRole(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	id		path 	string	true		"角色ID"
-// @Param	body		body 	sys.SysRole	true		"角色"
+// @Param	body	body 	sys.SysRole	true		"角色"
 // @Success 200 object models.Resp 返回创建
 // @Failure 500 object models.Resp 创建失败
 // @Security ApiKeyAuth
@@ -137,6 +147,7 @@ func UpdateRoleById(c *gin.Context) {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return
 	}
+	oldvalue := role
 	// 绑定参数
 	err := c.ShouldBindJSON(&role)
 	if err != nil {
@@ -153,9 +164,16 @@ func UpdateRoleById(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-	err = query.Updates(role).Error
+	role.Name = oldvalue.Name
+	appId, _ := c.Get("AppId")
+	requestId, _ := c.Get("RequestId")
+	userName := c.GetHeader("User")
+	err = global.Mysql.Set(loggable.LoggablePrevVersion, &oldvalue).
+		Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).
+		Model(&role).Omit("ID", "CreatedAt", "UpdatedAt", "DeletedAt").
+		Where("id = ?", id).Updates(&role).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	} else {
 		models.OkWithData(role, c)
@@ -180,9 +198,13 @@ func DeleteRoleById(c *gin.Context) {
 		models.FailWithMessage(err.Error(), c)
 		return
 	}
+	if lo.Contains([]int{1, 2, 3, 4}, id) {
+		models.FailWithDetailed(cast.ToString(id)+"角色不允许删除", models.CustomError[models.NotOk], c)
+		return
+	}
 	err = global.Mysql.Where("id = ?", id).Delete(&sys.SysRole{}).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 	} else {
 		global.CasbinACLEnforcer.DeleteRole("group_" + sysrole.Name)
 		models.OkResult(c)
@@ -204,13 +226,25 @@ func GetRolePermById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	err := global.Mysql.Where("id = ?", id).First(&role).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 	} else {
 		filteredNamedPolicy, err := global.CasbinACLEnforcer.GetPermissionsForUser("group_" + role.Name)
 		if err != nil {
-			models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+			models.FailWithDetailed("", err.Error(), c)
 		}
-		models.OkWithData(filteredNamedPolicy, c)
+		var role_perms []sys.RolePermission
+		for key, perm := range filteredNamedPolicy {
+			role_perms = append(role_perms, sys.RolePermission{
+				ID:     key,
+				Role:   perm[0],
+				Obj:    perm[1],
+				Obj1:   perm[2],
+				Obj2:   perm[3],
+				Action: perm[4],
+				Eft:    perm[5],
+			})
+		}
+		models.OkWithDataList(role_perms, cast.ToInt64(len(role_perms)), c)
 	}
 }
 
@@ -220,14 +254,14 @@ func GetRolePermById(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	id		path 	string	true "角色ID"
-// @Param	body	body 	[]sys.RolePermission	true "角色权限"
+// @Param	body	body 	sys.RolePermission	true "角色权限"
 // @Success 200 object models.Resp 返回创建
 // @Failure 500 object models.Resp 创建失败
 // @Security ApiKeyAuth
 // @Router /api/v1/role/perm/create/{id} [post]
 func CreateRolePerm(c *gin.Context) {
 	var role sys.SysRole
-	var role_perms []sys.RolePermission
+	var role_perms sys.RolePermission
 	id := cast.ToInt(c.Param("id"))
 	query := global.Mysql.Where("id = ?", id).First(&role)
 	if query.Error != nil {
@@ -250,11 +284,9 @@ func CreateRolePerm(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-	for _, perm := range role_perms {
-		if _, err := global.CasbinACLEnforcer.AddPolicy("group_"+role.Name, perm.Obj, perm.Obj1, perm.Obj2, perm.Action, "allow"); err != nil {
-			models.FailWithDetailed("授权错误:"+"group_"+role.Name+" "+perm.Obj+" "+" "+perm.Obj1+" "+" "+perm.Obj2+" "+perm.Action+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
-			return
-		}
+	if _, err := global.CasbinACLEnforcer.AddPolicy("group_"+role.Name, role_perms.Obj, role_perms.Obj1, role_perms.Obj2, role_perms.Action, role_perms.Eft); err != nil {
+		models.FailWithDetailed("授权错误:"+"group_"+role.Name+" "+role_perms.Obj+" "+" "+role_perms.Obj1+" "+" "+role_perms.Obj2+" "+role_perms.Action+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
+		return
 	}
 	models.OkResult(c)
 }
@@ -265,7 +297,7 @@ func CreateRolePerm(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	id		path 	string	true		"角色ID"
-// @Param	body	body 	[]sys.RolePermission	 true "角色权限"
+// @Param	body	body 	sys.RolePermission	 true "角色权限"
 // @Success 204 object models.Resp 返回创建
 // @Failure 500 object models.Resp 创建失败
 // @Security ApiKeyAuth
@@ -273,7 +305,7 @@ func CreateRolePerm(c *gin.Context) {
 func DeleteRolePermById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var role sys.SysRole
-	var role_perms []sys.RolePermission
+	var role_perms sys.RolePermission
 	query := global.Mysql.Where("id = ?", id).First(&role)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
@@ -295,11 +327,13 @@ func DeleteRolePermById(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-	for _, perm := range role_perms {
-		if _, err := global.CasbinACLEnforcer.RemoveNamedPolicy("p", "group_"+role.Name, perm.Obj, perm.Obj1, perm.Obj2, perm.Action, "allow"); err != nil {
-			models.FailWithDetailed("删除API系统授权错误:"+"group_"+role.Name+role.Name+" "+perm.Obj+" "+" "+perm.Obj1+" "+" "+perm.Obj2+" "+perm.Action+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
-			return
-		}
+	if lo.Contains([]int{1, 2, 3, 4}, id) {
+		models.FailWithDetailed("", cast.ToString(id)+"角色权限不允许删除", c)
+		return
+	}
+	if _, err := global.CasbinACLEnforcer.RemoveNamedPolicy("p", "group_"+role.Name, role_perms.Obj, role_perms.Obj1, role_perms.Obj2, role_perms.Action, "allow"); err != nil {
+		models.FailWithDetailed("删除API系统授权错误:"+"group_"+role.Name+role.Name+" "+role_perms.Obj+" "+" "+role_perms.Obj1+" "+" "+role_perms.Obj2+" "+role_perms.Action+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
+		return
 	}
 	models.OkResult(c)
 }
@@ -321,7 +355,19 @@ func GetRoleUsersById(c *gin.Context) {
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
-		roleUsers, _ := global.CasbinACLEnforcer.GetUsersForRole("group_" + role.Name)
+		roleUsers, err := global.CasbinACLEnforcer.GetUsersForRole("group_" + role.Name)
+		if err != nil {
+			models.FailWithDetailed([]string{}, err.Error(), c)
+			return
+		} else {
+			if len(roleUsers) == 0 {
+				roleUsers, err = global.CasbinACLEnforcer.GetRoleManager().GetUsers("group_" + role.Name)
+				if err != nil {
+					models.FailWithDetailed([]string{}, err.Error(), c)
+					return
+				}
+			}
+		}
 		models.OkWithData(roleUsers, c)
 	}
 }
@@ -332,7 +378,7 @@ func GetRoleUsersById(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	id		path 	string	true "角色ID"
-// @Param	body	body 	[]string	true "用户"
+// @Param	body	body 	[]string  true "用户"
 // @Success 201 object models.Resp 返回创建
 // @Failure 500 object models.Resp 创建失败
 // @Security ApiKeyAuth
@@ -343,7 +389,7 @@ func CreateRoleUser(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	query := global.Mysql.Where("id = ?", id).First(&role)
 	if query.Error != nil {
-		models.FailWithDetailed(query.Error, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", query.Error.Error(), c)
 		return
 	}
 	// 绑定参数
@@ -363,8 +409,12 @@ func CreateRoleUser(c *gin.Context) {
 		return
 	}
 	for _, user := range role_users {
-		if _, err := global.CasbinACLEnforcer.AddRoleForUser(user, "group_"+role.Name); err != nil {
-			models.FailWithDetailed("授权错误:"+role.Name+" "+user+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
+		if err := global.CasbinACLEnforcer.GetRoleManager().AddLink(user, "group_"+role.Name); err != nil {
+			models.FailWithDetailed("", "授权错误:"+role.Name+" "+user+" 错误："+err.Error(), c)
+			return
+		}
+		if _, err := global.CasbinACLEnforcer.AddRoleForUser(user, "group_"+role.Name, "2024-09-01 00:00:00", "2054-09-01 00:00:00"); err != nil {
+			models.FailWithDetailed("", "授权错误:"+role.Name+" "+user+" 错误："+err.Error(), c)
 			return
 		}
 	}

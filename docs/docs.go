@@ -238,7 +238,7 @@ const docTemplate = `{
                     "application/x-json-stream"
                 ],
                 "tags": [
-                    "[系统内部]系统"
+                    "[系统内部]角色"
                 ],
                 "summary": "[系统内部]用户操作鉴权",
                 "operationId": "AuthPermission",
@@ -290,7 +290,7 @@ const docTemplate = `{
                     "application/x-json-stream"
                 ],
                 "tags": [
-                    "[系统内部]系统"
+                    "[系统内部]角色"
                 ],
                 "summary": "[系统内部]获取指定用户全部权限",
                 "operationId": "GetPermission",
@@ -594,10 +594,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/sys.RolePermission"
-                            }
+                            "$ref": "#/definitions/sys.RolePermission"
                         }
                     }
                 ],
@@ -646,10 +643,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/sys.RolePermission"
-                            }
+                            "$ref": "#/definitions/sys.RolePermission"
                         }
                     }
                 ],
@@ -1137,10 +1131,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/sys.SystemPermission"
-                            }
+                            "$ref": "#/definitions/sys.SystemPermission"
                         }
                     }
                 ],
@@ -1189,10 +1180,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/sys.SystemPermission"
-                            }
+                            "$ref": "#/definitions/sys.SystemPermission"
                         }
                     }
                 ],
@@ -1421,6 +1409,10 @@ const docTemplate = `{
                     "description": "过期时间",
                     "type": "string"
                 },
+                "success": {
+                    "description": "请求是否成功",
+                    "type": "boolean"
+                },
                 "token": {
                     "description": "token",
                     "type": "string"
@@ -1429,9 +1421,22 @@ const docTemplate = `{
         },
         "sys.RolePermission": {
             "type": "object",
+            "required": [
+                "action",
+                "eft",
+                "obj",
+                "obj1",
+                "obj2"
+            ],
             "properties": {
                 "action": {
                     "type": "string"
+                },
+                "eft": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "obj": {
                     "type": "string"
@@ -1440,6 +1445,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "obj2": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 }
             }
@@ -1467,7 +1475,7 @@ const docTemplate = `{
                 },
                 "Status": {
                     "description": "角色状态(正常/禁用, 默认正常)",
-                    "type": "boolean"
+                    "type": "integer"
                 },
                 "createdAt": {
                     "type": "string"
@@ -1531,6 +1539,10 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "absolutePath",
+                "absolutePath1",
+                "absolutePath2",
+                "appId",
+                "eft",
                 "httpMethod"
             ],
             "properties": {
@@ -1538,9 +1550,28 @@ const docTemplate = `{
                     "description": "路由地址",
                     "type": "string"
                 },
+                "absolutePath1": {
+                    "description": "路由地址",
+                    "type": "string"
+                },
+                "absolutePath2": {
+                    "description": "路由地址",
+                    "type": "string"
+                },
+                "appId": {
+                    "description": "AppId",
+                    "type": "string"
+                },
+                "eft": {
+                    "description": "动作",
+                    "type": "string"
+                },
                 "httpMethod": {
                     "description": "HTTP方法",
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 }
             }
         }

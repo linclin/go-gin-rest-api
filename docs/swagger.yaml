@@ -73,6 +73,9 @@ definitions:
       expires:
         description: 过期时间
         type: string
+      success:
+        description: 请求是否成功
+        type: boolean
       token:
         description: token
         type: string
@@ -81,12 +84,24 @@ definitions:
     properties:
       action:
         type: string
+      eft:
+        type: string
+      id:
+        type: integer
       obj:
         type: string
       obj1:
         type: string
       obj2:
         type: string
+      role:
+        type: string
+    required:
+    - action
+    - eft
+    - obj
+    - obj1
+    - obj2
     type: object
   sys.SysRole:
     properties:
@@ -103,7 +118,7 @@ definitions:
         type: string
       Status:
         description: 角色状态(正常/禁用, 默认正常)
-        type: boolean
+        type: integer
       createdAt:
         type: string
       deletedAt:
@@ -151,11 +166,29 @@ definitions:
       absolutePath:
         description: 路由地址
         type: string
+      absolutePath1:
+        description: 路由地址
+        type: string
+      absolutePath2:
+        description: 路由地址
+        type: string
+      appId:
+        description: AppId
+        type: string
+      eft:
+        description: 动作
+        type: string
       httpMethod:
         description: HTTP方法
         type: string
+      id:
+        type: integer
     required:
     - absolutePath
+    - absolutePath1
+    - absolutePath2
+    - appId
+    - eft
     - httpMethod
     type: object
 info:
@@ -330,7 +363,7 @@ paths:
       - ApiKeyAuth: []
       summary: '[系统内部]用户操作鉴权'
       tags:
-      - '[系统内部]系统'
+      - '[系统内部]角色'
   /api/v1/permission/get/{casbin_subject}:
     post:
       consumes:
@@ -355,7 +388,7 @@ paths:
       - ApiKeyAuth: []
       summary: '[系统内部]获取指定用户全部权限'
       tags:
-      - '[系统内部]系统'
+      - '[系统内部]角色'
   /api/v1/reqapilog/get/{requestid}:
     get:
       consumes:
@@ -525,9 +558,7 @@ paths:
         name: body
         required: true
         schema:
-          items:
-            $ref: '#/definitions/sys.RolePermission'
-          type: array
+          $ref: '#/definitions/sys.RolePermission'
       responses:
         "200":
           description: OK
@@ -558,9 +589,7 @@ paths:
         name: body
         required: true
         schema:
-          items:
-            $ref: '#/definitions/sys.RolePermission'
-          type: array
+          $ref: '#/definitions/sys.RolePermission'
       responses:
         "204":
           description: No Content
@@ -866,9 +895,7 @@ paths:
         name: body
         required: true
         schema:
-          items:
-            $ref: '#/definitions/sys.SystemPermission'
-          type: array
+          $ref: '#/definitions/sys.SystemPermission'
       responses:
         "201":
           description: Created
@@ -899,9 +926,7 @@ paths:
         name: body
         required: true
         schema:
-          items:
-            $ref: '#/definitions/sys.SystemPermission'
-          type: array
+          $ref: '#/definitions/sys.SystemPermission'
       responses:
         "204":
           description: No Content

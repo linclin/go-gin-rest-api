@@ -31,19 +31,19 @@ func GetSystems(c *gin.Context) {
 		DefaultLimit: -1,
 	})
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	// 绑定参数
 	var rqlQuery rql.Query
 	err = c.ShouldBindJSON(&rqlQuery)
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	rqlParams, err := rqlQueryParser.ParseQuery(&rqlQuery)
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	if rqlParams.Sort == "" {
@@ -54,12 +54,12 @@ func GetSystems(c *gin.Context) {
 	count := int64(0)
 	err = query.Model(sys.SysSystem{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	err = query.Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Limit(rqlParams.Limit).Offset(rqlParams.Offset).Order(rqlParams.Sort).Find(&list).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	models.OkWithDataList(list, count, c)
@@ -80,7 +80,7 @@ func GetSystemById(c *gin.Context) {
 	id := c.Param("id")
 	err := global.Mysql.Where("id = ?", id).First(&system).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 	} else {
 		models.OkWithData(system, c)
 	}
@@ -122,7 +122,7 @@ func CreateSystem(c *gin.Context) {
 	userName := c.GetHeader("User")
 	err = global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&system).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 	} else {
 		global.CasbinACLEnforcer.AddPolicy(system.AppId, "/*", "*", "*", "(GET)", "allow")
 		global.CasbinACLEnforcer.AddPolicy(system.AppId, "/api/v1/system/*", "*", "*", "(GET)", "deny")
@@ -168,6 +168,8 @@ func UpdateSystemById(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
+	system.AppId = oldvalue.AppId
+	system.AppSecret = oldvalue.AppSecret
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
 	userName := c.GetHeader("User")
@@ -176,7 +178,7 @@ func UpdateSystemById(c *gin.Context) {
 		Model(&system).Omit("ID", "CreatedAt", "UpdatedAt", "DeletedAt").
 		Where("id = ?", id).Updates(&system).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 	} else {
 		models.OkWithData(system, c)
 	}
@@ -215,11 +217,11 @@ func DeleteSystemById(c *gin.Context) {
 			Data:    err.Error(),
 			Msg:     models.CustomError[models.NotOk],
 		})
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 	} else {
 		filteredNamedPolicy, err := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, system.AppId)
 		if err != nil {
-			models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+			models.FailWithDetailed("", err.Error(), c)
 		}
 		if len(filteredNamedPolicy) > 0 {
 			for _, p := range filteredNamedPolicy {
@@ -248,11 +250,11 @@ func GetSystemPermById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	err := global.Mysql.Where("id = ?", id).First(&system).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 	} else {
 		filteredNamedPolicy, err := global.CasbinACLEnforcer.GetFilteredNamedPolicy("p", 0, system.AppId)
 		if err != nil {
-			models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+			models.FailWithDetailed("", err.Error(), c)
 		}
 		var system_perms []sys.SystemPermission
 		for key, perm := range filteredNamedPolicy {
@@ -266,7 +268,7 @@ func GetSystemPermById(c *gin.Context) {
 				Eft:           perm[5],
 			})
 		}
-		models.OkWithDataList(system_perms, cast.ToInt64(len(filteredNamedPolicy)), c)
+		models.OkWithDataList(system_perms, cast.ToInt64(len(system_perms)), c)
 	}
 }
 
@@ -287,7 +289,7 @@ func CreateSystemPerm(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	err := global.Mysql.Where("id = ?", id).First(&system).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	// 绑定参数

@@ -25,19 +25,19 @@ func GetChangeLog(c *gin.Context) {
 		DefaultLimit: -1,
 	})
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	// 绑定参数
 	var rqlQuery rql.Query
 	err = c.ShouldBindJSON(&rqlQuery)
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	rqlParams, err := rqlQueryParser.ParseQuery(&rqlQuery)
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	if rqlParams.Sort == "" {
@@ -48,12 +48,12 @@ func GetChangeLog(c *gin.Context) {
 	count := int64(0)
 	err = query.Model(loggable.ChangeLog{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	err = query.Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Limit(rqlParams.Limit).Offset(rqlParams.Offset).Order(rqlParams.Sort).Find(&list).Error
 	if err != nil {
-		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
+		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
 	models.OkWithDataList(list, count, c)

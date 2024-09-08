@@ -12,7 +12,7 @@ import (
 
 // @Summary [系统内部]获取指定用户全部权限
 // @Id GetPermission
-// @Tags [系统内部]系统
+// @Tags [系统内部]角色
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	casbin_subject path string	true "用户名"
@@ -32,7 +32,7 @@ func GetPermission(c *gin.Context) {
 
 // @Summary [系统内部]用户操作鉴权
 // @Id AuthPermission
-// @Tags [系统内部]系统
+// @Tags [系统内部]角色
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	user		path 	string	true "用户名"
