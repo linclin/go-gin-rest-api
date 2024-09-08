@@ -24,6 +24,7 @@ require (
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/samber/lo v1.47.0
 	github.com/samber/slog-gin v1.13.4
 	github.com/sentinel-group/sentinel-go-adapters v1.0.1
 	github.com/spf13/cast v1.7.0

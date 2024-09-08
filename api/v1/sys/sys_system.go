@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	loggable "github.com/linclin/gorm2-loggable"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )
 
@@ -203,6 +204,10 @@ func DeleteSystemById(c *gin.Context) {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return
 	}
+	if lo.Contains([]int{1, 2}, id) {
+		models.FailWithDetailed(cast.ToString(id)+"系统不允许删除", models.CustomError[models.NotOk], c)
+		return
+	}
 	err := query.Delete(&sys.SysSystem{}).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.Resp{
@@ -342,6 +347,10 @@ func DeleteSystemPermById(c *gin.Context) {
 			errInfo = errs.Translate(global.Translator) // 翻译校验错误提示
 		}
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
+		return
+	}
+	if lo.Contains([]int{1, 2}, id) {
+		models.FailWithDetailed(cast.ToString(id)+"系统不允许删除权限", models.CustomError[models.NotOk], c)
 		return
 	}
 	if _, err := global.CasbinACLEnforcer.RemoveNamedPolicy("p", system.AppId, system_perms.AbsolutePath, system_perms.AbsolutePath1, system_perms.AbsolutePath2, system_perms.HttpMethod, system_perms.Eft); err != nil {
