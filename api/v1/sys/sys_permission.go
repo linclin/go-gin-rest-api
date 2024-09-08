@@ -28,7 +28,6 @@ func GetPermission(c *gin.Context) {
 	} else {
 		models.OkWithData(map[string]string{"perm": perm}, c)
 	}
-
 }
 
 // @Summary [系统内部]用户操作鉴权

@@ -29,8 +29,13 @@ func (system SysSystem) Meta() interface{} {
 
 // 权限
 type SystemPermission struct {
-	HttpMethod   string `validate:"required"` // HTTP方法
-	AbsolutePath string `validate:"required"` // 路由地址
+	ID            int
+	AppId         string `validate:"required"` // AppId
+	AbsolutePath  string `validate:"required"` // 路由地址
+	AbsolutePath1 string `validate:"required"` // 路由地址
+	AbsolutePath2 string `validate:"required"` // 路由地址
+	HttpMethod    string `validate:"required"` // HTTP方法
+	Eft           string `validate:"required"` // 动作
 }
 
 func InitSysSystem() {

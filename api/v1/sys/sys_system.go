@@ -5,6 +5,7 @@ import (
 	"go-gin-rest-api/models/sys"
 	"go-gin-rest-api/pkg/global"
 	"net/http"
+	"strings"
 
 	"github.com/a8m/rql"
 	"github.com/gin-gonic/gin"
@@ -112,6 +113,9 @@ func CreateSystem(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
+	if !strings.HasPrefix(system.AppId, "api-") {
+		system.AppId = "api-" + system.AppId
+	}
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
 	userName := c.GetHeader("User")
@@ -119,6 +123,10 @@ func CreateSystem(c *gin.Context) {
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
+		global.CasbinACLEnforcer.AddPolicy(system.AppId, "/*", "*", "*", "(GET)", "allow")
+		global.CasbinACLEnforcer.AddPolicy(system.AppId, "/api/v1/system/*", "*", "*", "(GET)", "deny")
+		global.CasbinACLEnforcer.AddPolicy(system.AppId, "/api/v1/role/*", "*", "*", "(GET)", "deny")
+		global.CasbinACLEnforcer.AddPolicy(system.AppId, "/api/v1/permission/*", "*", "*", "(GET)", "deny")
 		models.OkWithData(system, c)
 	}
 }
@@ -241,7 +249,19 @@ func GetSystemPermById(c *gin.Context) {
 		if err != nil {
 			models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 		}
-		models.OkWithData(filteredNamedPolicy, c)
+		var system_perms []sys.SystemPermission
+		for key, perm := range filteredNamedPolicy {
+			system_perms = append(system_perms, sys.SystemPermission{
+				ID:            key,
+				AppId:         perm[0],
+				AbsolutePath:  perm[1],
+				AbsolutePath1: perm[2],
+				AbsolutePath2: perm[3],
+				HttpMethod:    perm[4],
+				Eft:           perm[5],
+			})
+		}
+		models.OkWithDataList(system_perms, cast.ToInt64(len(filteredNamedPolicy)), c)
 	}
 }
 
@@ -251,14 +271,14 @@ func GetSystemPermById(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	id		path 	string	true "系统ID"
-// @Param	body	body 	[]sys.SystemPermission	true "系统权限"
+// @Param	body	body 	sys.SystemPermission	true "系统权限"
 // @Success 201 object models.Resp 返回创建
 // @Failure 500 object models.Resp 创建失败
 // @Security ApiKeyAuth
 // @Router /api/v1/system/perm/create/{id} [post]
 func CreateSystemPerm(c *gin.Context) {
 	var system sys.SysSystem
-	var system_perms []sys.SystemPermission
+	var system_perms sys.SystemPermission
 	id := cast.ToInt(c.Param("id"))
 	err := global.Mysql.Where("id = ?", id).First(&system).Error
 	if err != nil {
@@ -281,11 +301,9 @@ func CreateSystemPerm(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-	for _, perm := range system_perms {
-		if _, err := global.CasbinACLEnforcer.AddPolicy(system.AppId, perm.AbsolutePath, "*", "*", perm.HttpMethod, "allow"); err != nil {
-			models.FailWithDetailed("授权错误:"+system.AppId+" "+perm.AbsolutePath+" "+perm.HttpMethod+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
-			return
-		}
+	if _, err := global.CasbinACLEnforcer.AddPolicy(system.AppId, system_perms.AbsolutePath, system_perms.AbsolutePath1, system_perms.AbsolutePath2, system_perms.HttpMethod, system_perms.Eft); err != nil {
+		models.FailWithDetailed("授权错误:"+system.AppId+" "+system_perms.AbsolutePath+" "+system_perms.AbsolutePath1+" "+system_perms.AbsolutePath2+" "+system_perms.HttpMethod+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
+		return
 	}
 	models.OkResult(c)
 }
@@ -296,7 +314,7 @@ func CreateSystemPerm(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	id		path 	string	true		"系统ID"
-// @Param	body	body 	[]sys.SystemPermission	 true "系统权限"
+// @Param	body	body 	sys.SystemPermission	 true "系统权限"
 // @Success 204 object models.Resp 返回创建
 // @Failure 500 object models.Resp 创建失败
 // @Security ApiKeyAuth
@@ -304,7 +322,7 @@ func CreateSystemPerm(c *gin.Context) {
 func DeleteSystemPermById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var system sys.SysSystem
-	var system_perms []sys.SystemPermission
+	var system_perms sys.SystemPermission
 	query := global.Mysql.Where("id = ?", id).First(&system)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
@@ -326,11 +344,9 @@ func DeleteSystemPermById(c *gin.Context) {
 		models.FailWithDetailed(errInfo, models.CustomError[models.NotOk], c)
 		return
 	}
-	for _, perm := range system_perms {
-		if _, err := global.CasbinACLEnforcer.RemoveNamedPolicy("p", system.AppId, perm.AbsolutePath, "*", "*", perm.HttpMethod, "allow"); err != nil {
-			models.FailWithDetailed("删除API系统授权错误:"+system.AppId+" "+perm.AbsolutePath+" "+perm.HttpMethod+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
-			return
-		}
+	if _, err := global.CasbinACLEnforcer.RemoveNamedPolicy("p", system.AppId, system_perms.AbsolutePath, system_perms.AbsolutePath1, system_perms.AbsolutePath2, system_perms.HttpMethod, system_perms.Eft); err != nil {
+		models.FailWithDetailed("删除API系统授权错误:"+system.AppId+" "+system_perms.AbsolutePath1+" "+system_perms.AbsolutePath2+" "+system_perms.HttpMethod+" 错误："+err.Error(), models.CustomError[models.NotOk], c)
+		return
 	}
 	models.OkResult(c)
 }
