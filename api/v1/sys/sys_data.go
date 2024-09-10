@@ -41,12 +41,12 @@ func GetSysData(c *gin.Context) {
 		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
-	err = query.Model(sys.SysApiLog{}).Select("DATE_FORMAT(StartTime, '%Y-%m-%d') as date, COUNT(*) as count").Where("StartTime >= ?", time.Now().AddDate(0, 0, -7)).Group("date").Scan(&data.WeekApiCount).Error
+	err = query.Model(sys.SysApiLog{}).Select("DATE_FORMAT(StartTime, '%Y-%m-%d') as Date, COUNT(*) as Count").Where("StartTime >= ?", time.Now().AddDate(0, 0, -7)).Group("date").Scan(&data.WeekApiCount).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
-	err = query.Model(sys.SysApiLog{}).Select("ClientIP , COUNT(*) as count").Where("StartTime >= ?", time.Now().AddDate(0, 0, -7)).Group("ClientIP").Scan(&data.WeekClientApiCount).Error
+	err = query.Model(sys.SysApiLog{}).Select("ClientIP , COUNT(*) as Count").Where("StartTime >= ?", time.Now().AddDate(0, 0, -7)).Group("ClientIP").Scan(&data.WeekClientApiCount).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 		return
