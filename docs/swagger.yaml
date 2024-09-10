@@ -331,6 +331,25 @@ paths:
       summary: '[系统内部]获取定时任务日志'
       tags:
       - '[系统内部]日志'
+  /api/v1/data/list:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetSysData
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取系统运营数据'
+      tags:
+      - '[系统内部]日志'
   /api/v1/permission/auth/{user}:
     post:
       consumes:

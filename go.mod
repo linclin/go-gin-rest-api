@@ -17,8 +17,8 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
-	github.com/go-playground/validator/v10 v10.22.0
-	github.com/go-resty/resty/v2 v2.13.1
+	github.com/go-playground/validator/v10 v10.22.1
+	github.com/go-resty/resty/v2 v2.14.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/linclin/gorm2-loggable v1.0.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible

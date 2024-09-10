@@ -219,6 +219,37 @@
                 }
             }
         },
+        "/api/v1/data/list": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/x-json-stream"
+                ],
+                "tags": [
+                    "[系统内部]日志"
+                ],
+                "summary": "[系统内部]获取系统运营数据",
+                "operationId": "GetSysData",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resp"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/permission/auth/{user}": {
             "post": {
                 "security": [

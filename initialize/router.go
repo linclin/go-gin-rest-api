@@ -123,6 +123,7 @@ func Routers() *gin.Engine {
 	sysRouter.InitCronjobLogRouter(v1Group, authMiddleware) // 注册定时任务日志路由
 	sysRouter.InitChangeLogRouter(v1Group, authMiddleware)  // 注册数据审计日志路由
 	sysRouter.InitPermission(v1Group, authMiddleware)       // 注册用户权限路由
+	sysRouter.InitDataRouter(v1Group, authMiddleware)
 	global.Log.Info("初始化基础路由完成")
 	return r
 }
