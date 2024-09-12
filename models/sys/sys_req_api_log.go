@@ -36,7 +36,7 @@ func AddReqApi(c *gin.Context, RequestMethod, RequestURI, RequestBody, RespBody,
 		StartTime:     StartTime,
 		ExecTime:      ExecTime,
 	}
-	err = global.Mysql.Create(&reqapilog).Error
+	err = global.DB.Create(&reqapilog).Error
 	if err != nil {
 		global.Log.Error(fmt.Sprint("AddReqApi 写入请求日志数据初始化失败", err.Error()))
 	}

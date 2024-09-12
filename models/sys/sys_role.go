@@ -62,7 +62,7 @@ func InitSysRole() {
 		},
 	}
 	for _, role := range roles {
-		err := global.Mysql.Where(&role).FirstOrCreate(&role).Error
+		err := global.DB.Where(&role).FirstOrCreate(&role).Error
 		if err != nil {
 			global.Log.Error(fmt.Sprint("InitSysRole 数据初始化失败", err.Error()))
 		}

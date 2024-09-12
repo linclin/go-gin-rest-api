@@ -30,7 +30,7 @@ func AddSysCronjobLog(cronMethod, cronParam, status, errMsg string, startTime, e
 		Status:     status,
 		ErrMsg:     errMsg,
 	}
-	err := global.Mysql.Create(&cronjoblog).Error
+	err := global.DB.Create(&cronjoblog).Error
 	if err != nil {
 		global.Log.Error(fmt.Sprint("AddSysCronjobLog写入定时任务日志表失败", err.Error()))
 		return err

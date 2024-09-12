@@ -36,6 +36,8 @@ func init() {
 	initialize.Logger()
 	// 初始化数据库
 	initialize.Mysql()
+
+	initialize.Pgsql()
 	// 初始化Sentinel流控规则
 	initialize.InitSentinel()
 	// 初始校验器

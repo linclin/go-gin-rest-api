@@ -32,7 +32,7 @@ func Routers() *gin.Engine {
 				AbsolutePath: absolutePath,
 				HandlerName:  handlerName,
 			}
-			err := global.Mysql.Where(&sys_router).FirstOrCreate(&sys_router).Error
+			err := global.DB.Where(&sys_router).FirstOrCreate(&sys_router).Error
 			if err != nil {
 				global.Log.Error(fmt.Sprint("SysRouter 数据初始化失败", err.Error()))
 			}

@@ -62,7 +62,7 @@ func InitSysSystem() {
 		},
 	}
 	for _, system := range systems {
-		err := global.Mysql.Where(&system).FirstOrCreate(&system).Error
+		err := global.DB.Where(&system).FirstOrCreate(&system).Error
 		if err != nil {
 			global.Log.Error(fmt.Sprint("InitSysSystem 数据初始化失败", err.Error()))
 			continue

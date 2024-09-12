@@ -79,7 +79,7 @@ func AccessLog(c *gin.Context) {
 			StartTime: startTime,
 			ExecTime:  execTime.String(),
 		}
-		err = global.Mysql.Create(&sysApiLog).Error
+		err = global.DB.Create(&sysApiLog).Error
 		if err != nil {
 			global.Log.Info("接口日志存库错误", err, requestId, reqMethod, reqUri, reqBody, respBody, statusCode, execTime.String(), clientIP)
 		}

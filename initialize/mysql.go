@@ -20,6 +20,9 @@ func Mysql() {
 	if global.Conf.System.RunMode == "prd" {
 		logLevel = gormlogger.Warn
 	}
+	if global.Conf.Mysql == nil {
+		return
+	}
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN: fmt.Sprintf(
 			"%s:%s@tcp(%s:%d)/%s?%s",
@@ -73,16 +76,16 @@ func Mysql() {
 	sqlDB.SetMaxOpenConns(500)
 	// SetConnMaxLifetiment 设置连接的最大可复用时间。
 	sqlDB.SetConnMaxLifetime(time.Hour)
-	global.Mysql = db
+	global.DB = db
 	// 自动迁移表结构
-	global.Mysql.AutoMigrate(&sys.SysSystem{})
-	global.Mysql.AutoMigrate(&sys.SysRouter{})
-	global.Mysql.AutoMigrate(&sys.SysRole{})
-	global.Mysql.AutoMigrate(&sys.SysApiLog{})
-	global.Mysql.AutoMigrate(&sys.SysReqApiLog{})
-	global.Mysql.AutoMigrate(&sys.SysCronjobLog{})
-	global.Mysql.AutoMigrate(&sys.SysLock{})
-	global.Mysql.Table("sys_change_logs").AutoMigrate(&loggable.ChangeLog{})
+	global.DB.AutoMigrate(&sys.SysSystem{})
+	global.DB.AutoMigrate(&sys.SysRouter{})
+	global.DB.AutoMigrate(&sys.SysRole{})
+	global.DB.AutoMigrate(&sys.SysApiLog{})
+	global.DB.AutoMigrate(&sys.SysReqApiLog{})
+	global.DB.AutoMigrate(&sys.SysCronjobLog{})
+	global.DB.AutoMigrate(&sys.SysLock{})
+	global.DB.Table("sys_change_logs").AutoMigrate(&loggable.ChangeLog{})
 	global.Log.Info("初始化mysql完成")
 	//初始化数据变更记录插件
 	_, err = loggable.Register(db, "sys_change_logs", loggable.ComputeDiff())

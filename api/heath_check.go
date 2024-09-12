@@ -19,7 +19,7 @@ import (
 func HeathCheck(c *gin.Context) {
 	errStr := ""
 	// MySQL连接检查
-	db, _ := global.Mysql.DB()
+	db, _ := global.DB.DB()
 	err := db.Ping()
 	if err != nil {
 		errStr += "健康检查失败 数据库连接错误：" + err.Error() + "\r\n"

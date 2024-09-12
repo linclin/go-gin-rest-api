@@ -44,7 +44,7 @@ func GetRouters(c *gin.Context) {
 		rqlParams.Sort = "id desc"
 	}
 	list := make([]sys.SysRouter, 0)
-	query := global.Mysql
+	query := global.DB
 	count := int64(0)
 	err = query.Model(sys.SysRouter{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
