@@ -49,7 +49,7 @@ func GetRoles(c *gin.Context) {
 		rqlParams.Sort = "id desc"
 	}
 	list := make([]sys.SysRole, 0)
-	query := global.Mysql
+	query := global.DB
 	count := int64(0)
 	err = query.Model(sys.SysRole{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
@@ -77,7 +77,7 @@ func GetRoles(c *gin.Context) {
 func GetRoleById(c *gin.Context) {
 	var sysrole sys.SysRole
 	id := cast.ToInt(c.Param("id"))
-	err := global.Mysql.Where("id = ?", id).First(&sysrole).Error
+	err := global.DB.Where("id = ?", id).First(&sysrole).Error
 	if err != nil {
 		models.FailWithMessage(err.Error(), c)
 	} else {
@@ -116,7 +116,7 @@ func CreateRole(c *gin.Context) {
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
 	userName := c.GetHeader("User")
-	err = global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&role).Error
+	err = global.DB.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&role).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 	} else {
@@ -142,7 +142,7 @@ func CreateRole(c *gin.Context) {
 func UpdateRoleById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var role sys.SysRole
-	query := global.Mysql.Where("id = ?", id).First(&role)
+	query := global.DB.Where("id = ?", id).First(&role)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return
@@ -168,7 +168,7 @@ func UpdateRoleById(c *gin.Context) {
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
 	userName := c.GetHeader("User")
-	err = global.Mysql.Set(loggable.LoggablePrevVersion, &oldvalue).
+	err = global.DB.Set(loggable.LoggablePrevVersion, &oldvalue).
 		Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).
 		Model(&role).Omit("ID", "CreatedAt", "UpdatedAt", "DeletedAt").
 		Where("id = ?", id).Updates(&role).Error
@@ -193,7 +193,7 @@ func UpdateRoleById(c *gin.Context) {
 func DeleteRoleById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var sysrole sys.SysRole
-	err := global.Mysql.Where("id = ?", id).First(&sysrole).Error
+	err := global.DB.Where("id = ?", id).First(&sysrole).Error
 	if err != nil {
 		models.FailWithMessage(err.Error(), c)
 		return
@@ -202,7 +202,7 @@ func DeleteRoleById(c *gin.Context) {
 		models.FailWithDetailed(cast.ToString(id)+"角色不允许删除", models.CustomError[models.NotOk], c)
 		return
 	}
-	err = global.Mysql.Where("id = ?", id).Delete(&sys.SysRole{}).Error
+	err = global.DB.Where("id = ?", id).Delete(&sys.SysRole{}).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 	} else {
@@ -224,7 +224,7 @@ func DeleteRoleById(c *gin.Context) {
 func GetRolePermById(c *gin.Context) {
 	var role sys.SysRole
 	id := cast.ToInt(c.Param("id"))
-	err := global.Mysql.Where("id = ?", id).First(&role).Error
+	err := global.DB.Where("id = ?", id).First(&role).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 	} else {
@@ -263,7 +263,7 @@ func CreateRolePerm(c *gin.Context) {
 	var role sys.SysRole
 	var role_perms sys.RolePermission
 	id := cast.ToInt(c.Param("id"))
-	query := global.Mysql.Where("id = ?", id).First(&role)
+	query := global.DB.Where("id = ?", id).First(&role)
 	if query.Error != nil {
 		models.FailWithDetailed(query.Error, models.CustomError[models.NotOk], c)
 		return
@@ -306,7 +306,7 @@ func DeleteRolePermById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var role sys.SysRole
 	var role_perms sys.RolePermission
-	query := global.Mysql.Where("id = ?", id).First(&role)
+	query := global.DB.Where("id = ?", id).First(&role)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return
@@ -351,7 +351,7 @@ func DeleteRolePermById(c *gin.Context) {
 func GetRoleUsersById(c *gin.Context) {
 	var role sys.SysRole
 	id := cast.ToInt(c.Param("id"))
-	err := global.Mysql.Where("id = ?", id).First(&role).Error
+	err := global.DB.Where("id = ?", id).First(&role).Error
 	if err != nil {
 		models.FailWithDetailed(err, models.CustomError[models.NotOk], c)
 	} else {
@@ -387,7 +387,7 @@ func CreateRoleUser(c *gin.Context) {
 	var role sys.SysRole
 	var role_users []string
 	id := cast.ToInt(c.Param("id"))
-	query := global.Mysql.Where("id = ?", id).First(&role)
+	query := global.DB.Where("id = ?", id).First(&role)
 	if query.Error != nil {
 		models.FailWithDetailed("", query.Error.Error(), c)
 		return
@@ -436,7 +436,7 @@ func DeleteRoleUserById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var role sys.SysRole
 	var role_users []string
-	query := global.Mysql.Where("id = ?", id).First(&role)
+	query := global.DB.Where("id = ?", id).First(&role)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return

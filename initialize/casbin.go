@@ -14,7 +14,7 @@ import (
 // 获取casbin策略管理器
 func InitCasbin() {
 	// 初始化数据库适配器
-	casbinAdapter, err := gormadapter.NewAdapterByDBUseTableName(global.Mysql, "sys", "casbin_rule")
+	casbinAdapter, err := gormadapter.NewAdapterByDBUseTableName(global.DB, "sys", "casbin_rule")
 	if err != nil {
 		global.Log.Error(fmt.Sprint("Casbin初始化错误", err.Error()))
 	}

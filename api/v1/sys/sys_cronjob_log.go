@@ -44,7 +44,7 @@ func GetCronjobLog(c *gin.Context) {
 		rqlParams.Sort = "id desc"
 	}
 	list := make([]sys.SysReqApiLog, 0)
-	query := global.Mysql
+	query := global.DB
 	count := int64(0)
 	err = query.Model(sys.SysReqApiLog{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {

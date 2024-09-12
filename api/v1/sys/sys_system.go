@@ -50,7 +50,7 @@ func GetSystems(c *gin.Context) {
 		rqlParams.Sort = "id desc"
 	}
 	list := make([]sys.SysSystem, 0)
-	query := global.Mysql
+	query := global.DB
 	count := int64(0)
 	err = query.Model(sys.SysSystem{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
@@ -78,7 +78,7 @@ func GetSystems(c *gin.Context) {
 func GetSystemById(c *gin.Context) {
 	var system sys.SysSystem
 	id := c.Param("id")
-	err := global.Mysql.Where("id = ?", id).First(&system).Error
+	err := global.DB.Where("id = ?", id).First(&system).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 	} else {
@@ -120,7 +120,7 @@ func CreateSystem(c *gin.Context) {
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
 	userName := c.GetHeader("User")
-	err = global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&system).Error
+	err = global.DB.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).Create(&system).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 	} else {
@@ -146,7 +146,7 @@ func CreateSystem(c *gin.Context) {
 func UpdateSystemById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var system sys.SysSystem
-	query := global.Mysql.Where("id = ?", id).First(&system)
+	query := global.DB.Where("id = ?", id).First(&system)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return
@@ -173,7 +173,7 @@ func UpdateSystemById(c *gin.Context) {
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
 	userName := c.GetHeader("User")
-	err = global.Mysql.Set(loggable.LoggablePrevVersion, &oldvalue).
+	err = global.DB.Set(loggable.LoggablePrevVersion, &oldvalue).
 		Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).
 		Model(&system).Omit("ID", "CreatedAt", "UpdatedAt", "DeletedAt").
 		Where("id = ?", id).Updates(&system).Error
@@ -200,7 +200,7 @@ func DeleteSystemById(c *gin.Context) {
 	appId, _ := c.Get("AppId")
 	requestId, _ := c.Get("RequestId")
 	userName := c.GetHeader("User")
-	query := global.Mysql.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).
+	query := global.DB.Set(loggable.LoggableUserTag, &loggable.User{Name: userName, ID: cast.ToString(requestId), Class: cast.ToString(appId)}).
 		Where("id = ?", id).First(&system)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
@@ -248,7 +248,7 @@ func DeleteSystemById(c *gin.Context) {
 func GetSystemPermById(c *gin.Context) {
 	var system sys.SysSystem
 	id := cast.ToInt(c.Param("id"))
-	err := global.Mysql.Where("id = ?", id).First(&system).Error
+	err := global.DB.Where("id = ?", id).First(&system).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 	} else {
@@ -287,7 +287,7 @@ func CreateSystemPerm(c *gin.Context) {
 	var system sys.SysSystem
 	var system_perms sys.SystemPermission
 	id := cast.ToInt(c.Param("id"))
-	err := global.Mysql.Where("id = ?", id).First(&system).Error
+	err := global.DB.Where("id = ?", id).First(&system).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 		return
@@ -330,7 +330,7 @@ func DeleteSystemPermById(c *gin.Context) {
 	id := cast.ToInt(c.Param("id"))
 	var system sys.SysSystem
 	var system_perms sys.SystemPermission
-	query := global.Mysql.Where("id = ?", id).First(&system)
+	query := global.DB.Where("id = ?", id).First(&system)
 	if query.Error != nil {
 		models.FailWithDetailed("记录不存在", models.CustomError[models.NotOk], c)
 		return

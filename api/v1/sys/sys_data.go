@@ -20,7 +20,7 @@ import (
 // @Router /api/v1/data/list [get]
 func GetSysData(c *gin.Context) {
 	data := sys.SysData{}
-	query := global.Mysql
+	query := global.DB
 	err := query.Model(sys.SysSystem{}).Count(&data.SystemCount).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)

@@ -17,7 +17,7 @@ var (
 	Logger *log.Logger
 	Log    *slog.Logger
 	// mysql实例
-	Mysql *gorm.DB
+	DB *gorm.DB
 	// Casbin实例
 	CasbinACLEnforcer *casbin.SyncedEnforcer
 	// validation.v10校验器

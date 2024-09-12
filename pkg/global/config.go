@@ -7,7 +7,8 @@ import "log/slog"
 type Configuration struct {
 	System    SystemConfiguration    `mapstructure:"system" json:"system"`
 	Logs      LogsConfiguration      `mapstructure:"logs" json:"logs"`
-	Mysql     MysqlConfiguration     `mapstructure:"mysql" json:"mysql"`
+	Mysql     *MysqlConfiguration    `mapstructure:"mysql" json:"mysql"`
+	Pgsql     *PgsqlConfiguration    `mapstructure:"pgsql" json:"pgsql"`
 	Casbin    CasbinConfiguration    `mapstructure:"casbin" json:"casbin"`
 	Jwt       JwtConfiguration       `mapstructure:"jwt" json:"jwt"`
 	RateLimit RateLimitConfiguration `mapstructure:"rate-limit" json:"rateLimit"`
@@ -43,6 +44,16 @@ type MysqlConfiguration struct {
 	TablePrefix string `mapstructure:"table-prefix" json:"tablePrefix"`
 }
 
+type PgsqlConfiguration struct {
+	Username    string `mapstructure:"username" json:"username"`
+	Password    string `mapstructure:"password" json:"password"`
+	Database    string `mapstructure:"database" json:"database"`
+	Host        string `mapstructure:"host" json:"host"`
+	Port        int    `mapstructure:"port" json:"port"`
+	SslMode     string `mapstructure:"ssl-mode" json:"sslMode"`
+	LogMode     bool   `mapstructure:"log-mode" json:"logMode"`
+	TablePrefix string `mapstructure:"table-prefix" json:"tablePrefix"`
+}
 type CasbinConfiguration struct {
 	ModelPath string `mapstructure:"model-path" json:"modelPath"`
 }
