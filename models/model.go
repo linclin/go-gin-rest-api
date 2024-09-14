@@ -18,7 +18,13 @@ type Model struct {
 // 表名设置
 func (Model) TableName(name string) string {
 	// 添加表前缀
-	return fmt.Sprintf("%s%s", global.Conf.Mysql.TablePrefix, name)
+	if global.Conf.Mysql != nil {
+		return fmt.Sprintf("%s%s", global.Conf.Mysql.TablePrefix, name)
+	}
+	if global.Conf.Pgsql != nil {
+		return fmt.Sprintf("%s%s", global.Conf.Pgsql.TablePrefix, name)
+	}
+	return name
 }
 
 // 自定义时间json转换

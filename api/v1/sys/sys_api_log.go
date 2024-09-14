@@ -44,7 +44,7 @@ func GetApiLog(c *gin.Context) {
 		rqlParams.Sort = "id desc"
 	}
 	list := make([]sys.SysApiLog, 0)
-	query := global.Mysql
+	query := global.DB
 	count := int64(0)
 	err = query.Model(sys.SysApiLog{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
@@ -72,7 +72,7 @@ func GetApiLog(c *gin.Context) {
 func GetApiLogById(c *gin.Context) {
 	var apilog sys.SysApiLog
 	requestid := c.Param("requestid")
-	err := global.Mysql.Where("RequestId = ?", requestid).First(&apilog).Error
+	err := global.DB.Where("RequestId = ?", requestid).First(&apilog).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 	} else {

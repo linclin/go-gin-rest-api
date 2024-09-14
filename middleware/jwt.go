@@ -68,7 +68,7 @@ func auth(c *gin.Context) (interface{}, error) {
 		return nil, err
 	}
 	var system sys.SysSystem
-	query := global.Mysql.Where(req).First(&system)
+	query := global.DB.Where(req).First(&system)
 	if query.Error != nil {
 		return nil, fmt.Errorf("AppId:%s和AppSecret:%s不存在:%s", req.AppId, req.AppSecret, query.Error)
 	}

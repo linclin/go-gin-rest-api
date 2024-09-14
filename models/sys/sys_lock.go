@@ -36,7 +36,7 @@ func (lock *SysLock) TryLock() bool {
 		Time:  time.Now(),
 		Valid: true,
 	}
-	err := global.Mysql.Create(&newlock).Error
+	err := global.DB.Create(&newlock).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") {
 			return false
@@ -49,9 +49,9 @@ func (lock *SysLock) TryLock() bool {
 
 func (lock *SysLock) deleteExpiredLock() error {
 	var now = time.Now().Unix()
-	return global.Mysql.Where("LockMethod = ? AND ExpireTime < ?", lock.LockMethod, now).Unscoped().Delete(SysLock{}).Error
+	return global.DB.Where("LockMethod = ? AND ExpireTime < ?", lock.LockMethod, now).Unscoped().Delete(SysLock{}).Error
 }
 
 func (lock *SysLock) DeleteLock() error {
-	return global.Mysql.Where("LockMethod = ? ", lock.LockMethod).Unscoped().Delete(SysLock{}).Error
+	return global.DB.Where("LockMethod = ? ", lock.LockMethod).Unscoped().Delete(SysLock{}).Error
 }

@@ -32,16 +32,16 @@ func (u CleanLog) Run() {
 	}
 	defer lock.DeleteLock()
 	//删除日志
-	if err := global.Mysql.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysApiLog{}).Error; err != nil {
+	if err := global.DB.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysApiLog{}).Error; err != nil {
 		global.Log.Error("cronjob定时任务:CleanLog删除SysApiLog失败")
 	}
-	if err := global.Mysql.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysReqApiLog{}).Error; err != nil {
+	if err := global.DB.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysReqApiLog{}).Error; err != nil {
 		global.Log.Error("cronjob定时任务:CleanLog删除SysReqApiLog失败")
 	}
-	if err := global.Mysql.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysCronjobLog{}).Error; err != nil {
+	if err := global.DB.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysCronjobLog{}).Error; err != nil {
 		global.Log.Error("cronjob定时任务:CleanLog删除SysCronjobLog失败")
 	}
-	if err := global.Mysql.Table("sys_change_logs").Where("created_at < ? ", time.Now().AddDate(0, 0, -7).Unix()).Unscoped().Delete(loggable.ChangeLog{}).Error; err != nil {
+	if err := global.DB.Table("sys_change_logs").Where("created_at < ? ", time.Now().AddDate(0, 0, -7).Unix()).Unscoped().Delete(loggable.ChangeLog{}).Error; err != nil {
 		global.Log.Error("cronjob定时任务:CleanLog删除ChangeLog失败")
 	}
 	//记录任务日志表
