@@ -50,6 +50,8 @@ func init() {
 	initialize.InitCasbin()
 	// 初始化定时任务
 	initialize.Cron()
+	// 初始化casdoor客户端
+	initialize.InitCasdoor()
 }
 
 // @title go-gin-rest-api

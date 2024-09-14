@@ -11,6 +11,7 @@ type Configuration struct {
 	Casbin    CasbinConfiguration    `mapstructure:"casbin" json:"casbin"`
 	Jwt       JwtConfiguration       `mapstructure:"jwt" json:"jwt"`
 	RateLimit RateLimitConfiguration `mapstructure:"rate-limit" json:"rateLimit"`
+	Casdoor   CasdoorConfiguration   `mapstructure:"casdoor" json:"casdoor"`
 }
 
 type SystemConfiguration struct {
@@ -54,4 +55,15 @@ type JwtConfiguration struct {
 
 type RateLimitConfiguration struct {
 	Max int64 `mapstructure:"max" json:"max"`
+}
+
+type CasdoorConfiguration struct {
+	Endpoint        string `mapstructure:"endpoint" json:"endpoint"`
+	ClientID        string `mapstructure:"client-id" json:"client-id"`
+	ClientSecret    string `mapstructure:"client-secret" json:"client-secret"`
+	CertificatePath string `mapstructure:"certificate-path" json:"certificate-path"`
+	Certificate     string `mapstructure:"certificate" json:"certificate"`
+	Organization    string `mapstructure:"organization" json:"organization"`
+	Application     string `mapstructure:"application" json:"application"`
+	FrontendUrl     string `mapstructure:"frontend-url" json:"frontend-url"`
 }

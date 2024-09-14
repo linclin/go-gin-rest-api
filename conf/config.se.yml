@@ -14,7 +14,6 @@ system:
   transaction: true
   # 是否初始化数据(没有初始数据时使用, 已发布正式版谨慎使用)
   init-data: true
-
 logs:
   # 日志等级(-4:Debug, 0:Info,4:Warn, 8:Error, 参照slog.level源码)
   level: -4
@@ -28,7 +27,6 @@ logs:
   max-age: 30
   # 是否压缩
   compress: false
-
 mysql:
   # 用户名
   username: root
@@ -42,19 +40,25 @@ mysql:
   port: 3306
   # 连接字符串查询参数
   query: charset=utf8mb4&parseTime=True&loc=Local&timeout=10000ms
-
 # casbin配置
 casbin:
   # 模型配置文件, 默认以conf目录为根目录
   model-path: "rbac_model.conf"
-
 # jwt配置
 jwt:
   # token过期时间, 小时
   timeout: 2
   # token更新时间, 小时
   max-refresh: 2
- 
+# casdoor配置
+casdoor:
+  endpoint: "http://127.0.0.1:8000"
+  client-id: "fcbf0997646218329673"
+  client-secret: "255b86f18821dfa6072e3d56db7a0e907dd0924a"
+  certificate-path: "casdoor-se.pem"
+  organization: "built-in"
+  application: "app-built-in"
+  frontend-url: "http://localhost:3000"
  
  
  

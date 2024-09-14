@@ -96,6 +96,9 @@ github.com/casbin/gorm-adapter/v3
 # github.com/casbin/govaluate v1.2.0
 ## explicit; go 1.13
 github.com/casbin/govaluate
+# github.com/casdoor/casdoor-go-sdk v0.50.0
+## explicit; go 1.17
+github.com/casdoor/casdoor-go-sdk/casdoorsdk
 # github.com/cespare/xxhash/v2 v2.3.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
@@ -522,6 +525,10 @@ golang.org/x/net/idna
 golang.org/x/net/publicsuffix
 golang.org/x/net/webdav
 golang.org/x/net/webdav/internal/xml
+# golang.org/x/oauth2 v0.22.0
+## explicit; go 1.18
+golang.org/x/oauth2
+golang.org/x/oauth2/internal
 # golang.org/x/sync v0.8.0
 ## explicit; go 1.18
 golang.org/x/sync/errgroup

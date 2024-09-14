@@ -350,64 +350,6 @@ paths:
       summary: '[系统内部]获取系统运营数据'
       tags:
       - '[系统内部]日志'
-  /api/v1/permission/auth/{user}:
-    post:
-      consumes:
-      - application/x-json-stream
-      operationId: AuthPermission
-      parameters:
-      - description: 用户名
-        in: path
-        name: user
-        required: true
-        type: string
-      - description: 权限
-        in: body
-        name: body
-        required: true
-        schema:
-          items:
-            $ref: '#/definitions/sys.RolePermission'
-          type: array
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.Resp'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.Resp'
-      security:
-      - ApiKeyAuth: []
-      summary: '[系统内部]用户操作鉴权'
-      tags:
-      - '[系统内部]角色'
-  /api/v1/permission/get/{casbin_subject}:
-    post:
-      consumes:
-      - application/x-json-stream
-      operationId: GetPermission
-      parameters:
-      - description: 用户名
-        in: path
-        name: casbin_subject
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.Resp'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.Resp'
-      security:
-      - ApiKeyAuth: []
-      summary: '[系统内部]获取指定用户全部权限'
-      tags:
-      - '[系统内部]角色'
   /api/v1/reqapilog/get/{requestid}:
     get:
       consumes:
@@ -1016,6 +958,113 @@ paths:
       summary: '[系统内部]更新系统'
       tags:
       - '[系统内部]系统'
+  /api/v1/user/auth/{user}:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: AuthPermission
+      parameters:
+      - description: 用户名
+        in: path
+        name: user
+        required: true
+        type: string
+      - description: 权限
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/sys.RolePermission'
+          type: array
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]用户操作鉴权'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/user/info:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetUserInfo
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]用户登录'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/user/login:
+    post:
+      consumes:
+      - application/x-json-stream
+      operationId: Login
+      parameters:
+      - description: code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: state
+        in: query
+        name: state
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]用户登录'
+      tags:
+      - '[系统内部]角色'
+  /api/v1/user/perm/{user}:
+    get:
+      consumes:
+      - application/x-json-stream
+      operationId: GetPermission
+      parameters:
+      - description: 用户名
+        in: path
+        name: user
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Resp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Resp'
+      security:
+      - ApiKeyAuth: []
+      summary: '[系统内部]获取指定用户全部权限'
+      tags:
+      - '[系统内部]角色'
   /heatch_check:
     get:
       consumes:

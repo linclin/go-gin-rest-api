@@ -6,27 +6,73 @@ import (
 	"go-gin-rest-api/pkg/global"
 
 	"github.com/casbin/casbin/v2"
+	"github.com/casdoor/casdoor-go-sdk/casdoorsdk"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
+
+// @Summary [系统内部]用户登录
+// @Id Login
+// @Tags [系统内部]角色
+// @version 1.0
+// @Accept application/x-json-stream
+// @Param  code query string	true "code"
+// @Param  state query string	true "state"
+// @Success 200 object models.Resp 返回列表
+// @Failure 400 object models.Resp 查询失败
+// @Security ApiKeyAuth
+// @Router /api/v1/user/login [post]
+func Login(c *gin.Context) {
+	code := c.Query("code")
+	state := c.Query("state")
+	token, err := casdoorsdk.GetOAuthToken(code, state)
+	if err != nil {
+		models.FailWithMessage(err.Error(), c)
+		return
+	}
+	models.OkWithData(token, c)
+}
+
+// @Summary [系统内部]用户登录
+// @Id GetUserInfo
+// @Tags [系统内部]角色
+// @version 1.0
+// @Accept application/x-json-stream
+// @Success 200 object models.Resp 返回列表
+// @Failure 400 object models.Resp 查询失败
+// @Security ApiKeyAuth
+// @Router /api/v1/user/info [get]
+func GetUserInfo(c *gin.Context) {
+	token := c.GetHeader("X-Auth-Token")
+	claims, err := casdoorsdk.ParseJwtToken(token)
+	if err != nil {
+		models.FailWithMessage(err.Error(), c)
+		return
+	}
+	models.OkWithData(claims.User, c)
+}
 
 // @Summary [系统内部]获取指定用户全部权限
 // @Id GetPermission
 // @Tags [系统内部]角色
 // @version 1.0
 // @Accept application/x-json-stream
-// @Param	casbin_subject path string	true "用户名"
+// @Param	user path string	true "用户名"
 // @Success 200 object models.Resp 返回列表
 // @Failure 400 object models.Resp 查询失败
 // @Security ApiKeyAuth
-// @Router /api/v1/permission/get/{casbin_subject} [post]
+// @Router /api/v1/user/perm/{user} [get]
 func GetPermission(c *gin.Context) {
-	casbin_subject := c.Param("casbin_subject")
-	perm, err := casbin.CasbinJsGetPermissionForUser(global.CasbinACLEnforcer, casbin_subject)
+	user := c.Param("user")
+	group, err := global.CasbinACLEnforcer.GetImplicitRolesForUser(user)
+	if err != nil {
+		models.FailWithMessage(err.Error(), c)
+	}
+	perm, err := casbin.CasbinJsGetPermissionForUser(global.CasbinACLEnforcer, user)
 	if err != nil {
 		models.FailWithMessage(err.Error(), c)
 	} else {
-		models.OkWithData(map[string]string{"perm": perm}, c)
+		models.OkWithData(map[string]interface{}{"group": group, "perm": perm}, c)
 	}
 }
 
@@ -35,12 +81,12 @@ func GetPermission(c *gin.Context) {
 // @Tags [系统内部]角色
 // @version 1.0
 // @Accept application/x-json-stream
-// @Param	user		path 	string	true "用户名"
+// @Param	user	path 	string	true "用户名"
 // @Param	body	body 	[]sys.RolePermission	true "权限"
 // @Success 200 object models.Resp 返回列表
 // @Failure 400 object models.Resp 查询失败
 // @Security ApiKeyAuth
-// @Router /api/v1/permission/auth/{user} [post]
+// @Router /api/v1/user/auth/{user} [post]
 func AuthPermission(c *gin.Context) {
 	user := c.Param("user")
 	var role_perms sys.RolePermission
