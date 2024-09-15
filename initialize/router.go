@@ -62,7 +62,7 @@ func Routers() *gin.Engine {
 	crosConfig := cors.Config{
 		AllowOrigins:     []string{"*", "http://localhost:3000", "http://127.0.0.1:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Access-Control-Allow-Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Access-Control-Allow-Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "X-Auth-Token", "X-Real-IP"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
@@ -81,9 +81,9 @@ func Routers() *gin.Engine {
 			// abort with status 429 by default
 			sentinelPlugin.WithBlockFallback(func(ctx *gin.Context) {
 				ctx.AbortWithStatusJSON(429, map[string]interface{}{
-					"code": 429,
-					"data": "",
-					"msg":  "too many request; the quota used up",
+					"success": false,
+					"data":    "",
+					"msg":     "too many request; the quota used up",
 				})
 			}),
 		),
