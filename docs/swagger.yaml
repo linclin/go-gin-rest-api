@@ -974,9 +974,7 @@ paths:
         name: body
         required: true
         schema:
-          items:
-            $ref: '#/definitions/sys.RolePermission'
-          type: array
+          $ref: '#/definitions/sys.RolePermission'
       responses:
         "200":
           description: OK

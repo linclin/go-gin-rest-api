@@ -91,7 +91,7 @@ func GetPermission(c *gin.Context) {
 // @version 1.0
 // @Accept application/x-json-stream
 // @Param	user	path 	string	true "用户名"
-// @Param	body	body 	[]sys.RolePermission	true "权限"
+// @Param	body	body 	sys.RolePermission	true "权限"
 // @Success 200 object models.Resp 返回列表
 // @Failure 400 object models.Resp 查询失败
 // @Security ApiKeyAuth

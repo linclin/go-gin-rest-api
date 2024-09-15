@@ -1257,10 +1257,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/sys.RolePermission"
-                            }
+                            "$ref": "#/definitions/sys.RolePermission"
                         }
                     }
                 ],
