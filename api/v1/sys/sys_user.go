@@ -1,9 +1,12 @@
 package sys
 
 import (
+	"fmt"
 	"go-gin-rest-api/models"
 	"go-gin-rest-api/models/sys"
 	"go-gin-rest-api/pkg/global"
+	"go-gin-rest-api/pkg/utils"
+	"time"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casdoor/casdoor-go-sdk/casdoorsdk"
@@ -23,9 +26,12 @@ import (
 // @Security ApiKeyAuth
 // @Router /api/v1/user/login [post]
 func Login(c *gin.Context) {
+	startTime := time.Now()
 	code := c.Query("code")
 	state := c.Query("state")
 	token, err := casdoorsdk.GetOAuthToken(code, state)
+	execTime := time.Now().Sub(startTime)
+	sys.AddReqApi(c, "POST", fmt.Sprintf("%s/api/login/oauth/authorize", global.Conf.Casdoor.Endpoint), fmt.Sprintf("?state=%s&code=%s", state, code), utils.JsonStr(token), execTime.String(), 0, time.Now())
 	if err != nil {
 		models.FailWithMessage(err.Error(), c)
 		return
@@ -43,8 +49,11 @@ func Login(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Router /api/v1/user/info [get]
 func GetUserInfo(c *gin.Context) {
+	startTime := time.Now()
 	token := c.GetHeader("X-Auth-Token")
 	claims, err := casdoorsdk.ParseJwtToken(token)
+	execTime := time.Now().Sub(startTime)
+	sys.AddReqApi(c, "POST", fmt.Sprintf("%s/api/login/oauth/access_token", global.Conf.Casdoor.Endpoint), token, utils.JsonStr(claims), execTime.String(), 0, time.Now())
 	if err != nil {
 		models.FailWithMessage(err.Error(), c)
 		return
