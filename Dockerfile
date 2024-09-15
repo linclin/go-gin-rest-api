@@ -1,4 +1,4 @@
-# syntax=registry.cn-shenzhen.aliyuncs.com/dev-ops/dockerfile:1.6
+# syntax=registry.cn-shenzhen.aliyuncs.com/dev-ops/dockerfile:1.9.0
 FROM registry.cn-shenzhen.aliyuncs.com/dev-ops/golang:1.23.1-alpine3.20 as golang
 ENV APP go-gin-rest-api  
 RUN sed -i 's/https/http/' /etc/apk/repositories &&\
