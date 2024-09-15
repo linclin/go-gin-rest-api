@@ -206,22 +206,21 @@ go build -ldflags="$LDFlags" -o  ./go-gin-rest-api
 ## 镜像构建-Docker构建 
 ``` shell
 # 使用multi-stage(多阶段构建)需要docker 17.05+版本支持
-DOCKER_BUILDKIT=1 docker build  --network=host --no-cache --force-rm -t lc13579443/go-gin-rest-api:1.0.0 .
-DOCKER_BUILDKIT=1 docker build -f ./Dockerfile_base --network=host --no-cache --force-rm -t lc13579443/go-gin-rest-api:1.0.0 .
-docker push  lc13579443/go-gin-rest-api
-docker save -o go-gin-rest-api-1.0.0.tar  go-gin-rest-api:1.0.0
+DOCKER_BUILDKIT=1 docker build  --network=host --no-cache --force-rm -t registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.0 .
+docker push  registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.0
+docker save -o go-gin-rest-api-1.0.0.tar  registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.0
 docker load -i go-gin-rest-api-1.0.0.tar
 ```
 ## 镜像构建-Buildkit构建
 ``` shell
 # 使用K8S job方式
-kubectl apply -f .\buildkit-build-job.yaml
+kubectl apply -f ./wiki/buildkit-build-job.yaml
 # 使用Argo Workflow方式
-kubectl apply -f .\buildkit-argo-workflow-template.yaml
+kubectl apply -f ./wiki/buildkit-argo-workflow-template.yaml
 ```
 ## 容器运行-Docker运行
 ``` shell
-docker run -d --name go-gin-rest-api -e RunMode=se -p 8080:8080 --restart always lc13579443/go-gin-rest-api:1.0.0 
+docker run -d --name go-gin-rest-api -e RunMode=se -p 8080:8080 --restart always registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.0
 ```
 ## 容器运行-K8S Deployment运行
 ``` shell

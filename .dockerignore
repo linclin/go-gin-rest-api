@@ -2,6 +2,7 @@
 .vscode
 ./tmp/
 ./logs/*
+./wiki/*
 go-gin-rest-api
 go-gin-rest-api.exe
 go-gin-rest-api.exe~
