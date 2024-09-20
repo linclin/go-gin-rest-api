@@ -6,9 +6,9 @@ require (
 	github.com/a8m/rql v1.4.0
 	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/appleboy/gin-jwt/v2 v2.10.0
-	github.com/casbin/casbin/v2 v2.99.0
+	github.com/casbin/casbin/v2 v2.100.0
 	github.com/casbin/gorm-adapter/v3 v3.28.0
-	github.com/casdoor/casdoor-go-sdk v0.50.0
+	github.com/casdoor/casdoor-go-sdk v0.51.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-contrib/gzip v1.0.1
@@ -19,7 +19,7 @@ require (
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.22.1
-	github.com/go-resty/resty/v2 v2.14.0
+	github.com/go-resty/resty/v2 v2.15.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/linclin/gorm2-loggable v1.0.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible

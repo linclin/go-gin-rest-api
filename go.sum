@@ -122,12 +122,16 @@ github.com/caddyserver/certmagic v0.10.6/go.mod h1:Y8jcUBctgk/IhpAzlHKfimZNyXCkf
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/casbin/casbin/v2 v2.99.0 h1:Y993vfRenh8Xtb4XVaK8KeYJTjD4Zn1XVewGszhzk1E=
 github.com/casbin/casbin/v2 v2.99.0/go.mod h1:LO7YPez4dX3LgoTCqSQAleQDo0S0BeZBDxYnPUl95Ng=
+github.com/casbin/casbin/v2 v2.100.0 h1:aeugSNjjHfCrgA22nHkVvw2xsscboHv5r0a13ljQKGQ=
+github.com/casbin/casbin/v2 v2.100.0/go.mod h1:LO7YPez4dX3LgoTCqSQAleQDo0S0BeZBDxYnPUl95Ng=
 github.com/casbin/gorm-adapter/v3 v3.28.0 h1:ORF8prF6SfaipdgT1fud+r1Tp5J0uul8QaKJHqCPY/o=
 github.com/casbin/gorm-adapter/v3 v3.28.0/go.mod h1:aftWi0cla0CC1bHQVrSFzBcX/98IFK28AvuPppCQgTs=
 github.com/casbin/govaluate v1.2.0 h1:wXCXFmqyY+1RwiKfYo3jMKyrtZmOL3kHwaqDyCPOYak=
 github.com/casbin/govaluate v1.2.0/go.mod h1:G/UnbIjZk/0uMNaLwZZmFQrR72tYRZWQkO70si/iR7A=
 github.com/casdoor/casdoor-go-sdk v0.50.0 h1:bUYbz/MzJuWfLKJbJM0+U0YpYewAur+THp5TKnufWZM=
 github.com/casdoor/casdoor-go-sdk v0.50.0/go.mod h1:cMnkCQJgMYpgAlgEx8reSt1AVaDIQLcJ1zk5pzBaz+4=
+github.com/casdoor/casdoor-go-sdk v0.51.0 h1:BoE2K+Eyk6/egoNnXaOPIx6W84JQwV5cmavp8+Qg/mQ=
+github.com/casdoor/casdoor-go-sdk v0.51.0/go.mod h1:cMnkCQJgMYpgAlgEx8reSt1AVaDIQLcJ1zk5pzBaz+4=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/cenkalti/backoff/v4 v4.0.0/go.mod h1:eEew/i+1Q6OrCDZh3WiXYv3+nJwBASZ8Bog/87DQnVg=
 github.com/census-instrumentation/opencensus-proto v0.2.0/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -274,6 +278,8 @@ github.com/go-playground/validator/v10 v10.22.1 h1:40JcKH+bBNGFczGuoBYgX4I6m/i27
 github.com/go-playground/validator/v10 v10.22.1/go.mod h1:dbuPbCMFw/DrkbEynArYaCwl3amGuJotoKCe95atGMM=
 github.com/go-resty/resty/v2 v2.14.0 h1:/rhkzsAqGQkozwfKS5aFAbb6TyKd3zyFRWcdRXLPCAU=
 github.com/go-resty/resty/v2 v2.14.0/go.mod h1:IW6mekUOsElt9C7oWr0XRt9BNSD6D5rr9mhk6NjmNHg=
+github.com/go-resty/resty/v2 v2.15.1 h1:vuna8FM2EaQ6IYbtjh+Gjh00uu7xEWuuGyTKeIaYkvE=
+github.com/go-resty/resty/v2 v2.15.1/go.mod h1:0fHAoK7JoBy/Ch36N8VFeMsK7xQOHhvWaC3iOktwmIU=
 github.com/go-sql-driver/mysql v1.4.0/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
