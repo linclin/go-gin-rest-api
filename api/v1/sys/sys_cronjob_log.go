@@ -43,10 +43,10 @@ func GetCronjobLog(c *gin.Context) {
 	if rqlParams.Sort == "" {
 		rqlParams.Sort = "id desc"
 	}
-	list := make([]sys.SysReqApiLog, 0)
+	list := make([]sys.SysCronjobLog, 0)
 	query := global.DB
 	count := int64(0)
-	err = query.Model(sys.SysReqApiLog{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
+	err = query.Model(sys.SysCronjobLog{}).Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Count(&count).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 		return
