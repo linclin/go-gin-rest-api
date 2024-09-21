@@ -12,6 +12,8 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 ## 配套前端[ice-antd](https://github.com/linclin/ice-antd)
 - [ice.js](https://github.com/alibaba/ice) 阿里开源飞冰React框架 [文档](https://v3.ice.work/docs/guide/start)
 - [Ant Design Pro](https://github.com/ant-design/pro-components) 蚂蚁开源Ant Design Pro前端UI组件 [文档](https://procomponents.ant.design/components)
+![工作台](wiki/image/index.png)
+![角色管理](wiki/image/role.png)
 
 ## 主要功能
 - 基于`Gin`框架开发的REST API
@@ -22,6 +24,7 @@ gin + viper + gorm + jwt + casbin实现的golang后台API开发脚手架
 - 定时任务使用`robfig/cron`运行,使用基于MySQL唯一索引的分布式锁避免多副本重复执行，并记录任务执行状态到数据表
 - 日志输出使用Golang 1.21版本日志库`slog`，搭配`lumberjack`日志文件切割
 - 全局panic日志输出设置使用Golang 1.23版本`debug.SetCrashOutput`，最低运行版本为1.23
+- 前后台对接Casdoor实现SSO单点登录，可支持LDAP、AD、企业微信、钉钉等登录
 
 ## 使用golang大众开源类库
 - [gin](https://github.com/gin-gonic/gin) 一款高效的golang web框架 [教程](https://gin-gonic.com/zh-cn/docs/)
