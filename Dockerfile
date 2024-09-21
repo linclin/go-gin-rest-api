@@ -6,20 +6,19 @@ RUN sed -i 's/https/http/' /etc/apk/repositories && \
     apk update && \
     apk add ca-certificates git && \
     rm -rf /var/cache/apk/*   /tmp/*  
-ADD ./ /app/${APP}
-ADD .git/ /app/${APP}/.git
-WORKDIR /app/${APP}
+ADD ./ /app/go-gin-rest-api
+ADD .git/ /app/go-gin-rest-api/.git
+WORKDIR /app/go-gin-rest-api
 RUN export GitBranch=$(git name-rev --name-only HEAD) && \
     export GitRevision=$(git rev-parse --short HEAD) && \
     export GitCommitLog=`git log --pretty=oneline -n 1` && \
     export BuildTime=`date +'%Y.%m.%d.%H%M%S'` && \
     export BuildGoVersion=`go version` && \
     export LDFlags="-s -w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"  && \
-    go build -tags=jsoniter -ldflags="$LDFlags" -o  ./${APP}
+    go build -tags=jsoniter -ldflags="$LDFlags" -o  ./go-gin-rest-api
 
 FROM registry.cn-shenzhen.aliyuncs.com/dev-ops/alpine:3.20.3
 LABEL MAINTAINER="13579443@qq.com"
-ENV APP go-gin-rest-api
 ENV TZ='Asia/Shanghai' 
 ENV LANG UTF-8
 ENV LC_ALL zh_CN.UTF-8
@@ -36,11 +35,9 @@ RUN sed -i 's/https/http/' /etc/apk/repositories && \
     adduser -u 1000 -G app -D app && \
     adduser -u 1001 -G app -D dev && \
     chmod 4755 /bin/busybox  && \
-    # chmod +w /etc/sudoers && \
-    # echo "app ALL=(ALL) NOPASSWD: NOPASSWD: /bin/su " >> /etc/sudoers && \
     mkdir -p /app  && \
     chown -R app:app /app 
-WORKDIR /app/${APP}/
-COPY --from=golang --chown=app:app --chmod=755 /app/${APP}/${APP} /app/${APP}/${APP} 
-COPY --from=golang --chown=app:app --chmod=755 /app/${APP}/conf /app/${APP}/conf  
-CMD ["./${APP}"]
+WORKDIR /app/go-gin-rest-api/
+COPY --from=golang --chown=app:app --chmod=755 /app/go-gin-rest-api/go-gin-rest-api /app/go-gin-rest-api/go-gin-rest-api 
+COPY --from=golang --chown=app:app --chmod=755 /app/go-gin-rest-api/conf /app/go-gin-rest-api/conf  
+CMD ["./go-gin-rest-api"]

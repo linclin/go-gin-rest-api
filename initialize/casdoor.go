@@ -1,7 +1,6 @@
 package initialize
 
 import (
-	"fmt"
 	"go-gin-rest-api/pkg/global"
 	"os"
 
@@ -12,7 +11,8 @@ import (
 func InitCasdoor() {
 	certificate, err := os.ReadFile("./conf/rsa/" + global.Conf.Casdoor.CertificatePath)
 	if err != nil {
-		panic(fmt.Sprintf("初始化casdoor客户端失败: %v", err))
+		return
+		//panic(fmt.Sprintf("初始化casdoor客户端失败: %v", err))
 	}
 	global.Conf.Casdoor.Certificate = string(certificate)
 	casdoorsdk.InitConfig(

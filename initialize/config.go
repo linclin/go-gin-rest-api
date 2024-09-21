@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-gin-rest-api/pkg/global"
 	"os"
+	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -33,6 +34,9 @@ func InitConfig() {
 	v.SetConfigName(configName)
 	v.SetConfigType(configType)
 	v.AddConfigPath(configPath)
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	// 绑定环境变量
+	v.AutomaticEnv()
 	err := v.ReadInConfig()
 	if err != nil {
 		panic(fmt.Sprintf("初始化配置文件失败: %v", err))
@@ -41,8 +45,6 @@ func InitConfig() {
 	if err := v.Unmarshal(&global.Conf); err != nil {
 		panic(fmt.Sprintf("初始化配置文件失败: %v", err))
 	}
-	// 绑定环境变量
-	v.AutomaticEnv()
 	// 监听文件修改，热加载配置。因此不需要重启服务器，就能让配置生效。
 	v.WatchConfig()
 	// 监听文件修改回调函数
