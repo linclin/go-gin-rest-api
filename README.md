@@ -220,7 +220,7 @@ kubectl apply -f ./wiki/buildkit-argo-workflow-template.yaml
 ```
 ## 容器运行-Docker运行
 ``` shell
-docker run -d --name go-gin-rest-api -e RunMode=se -p 8080:8080 -v /etc/localtime:/etc/localtime --restart always registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.0
+docker run -d --name go-gin-rest-api -e RunMode=se --network=host -v /etc/localtime:/etc/localtime --restart always registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.0
 docker run -d --name go-gin-rest-api -e RunMode=prd -e MYSQL_HOST=xx.xx.xx.xx -e MYSQL_PORT=3306 -e MYSQL_USERNAME=root -e MYSQL_PASSWORD=xxxxxxx -e MYSQL_DATABASE=go-gin-rest-api -p 8080:8080 -v /etc/localtime:/etc/localtime --restart always registry.cn-shenzhen.aliyuncs.com/dev-ops/go-gin-rest-api:1.0.0
 ```
 ## 容器运行-K8S Deployment运行

@@ -4,7 +4,7 @@ ENV APP go-gin-rest-api
 RUN sed -i 's/https/http/' /etc/apk/repositories && \
     sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update && \
-    apk add ca-certificates git && \
+    apk add --no-cache ca-certificates git && \
     rm -rf /var/cache/apk/*   /tmp/*  
 ADD ./ /app/go-gin-rest-api
 ADD .git/ /app/go-gin-rest-api/.git
@@ -27,10 +27,10 @@ RUN TERM=linux && export TERM
 RUN sed -i 's/https/http/' /etc/apk/repositories && \
     sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update && \
-    apk add ca-certificates tzdata bash sudo busybox-extras curl && \
-    echo "Asia/Shanghai" > /etc/timezone &&\ 
+    apk add --no-cache ca-certificates tzdata bash sudo busybox-extras curl && \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtim && \
+    echo "Asia/Shanghai" > /etc/timezone && \ 
     rm -rf /var/cache/apk/*   /tmp/* && \
-    apk del tzdata && \
     addgroup -g 1000 app && \
     adduser -u 1000 -G app -D app && \
     adduser -u 1001 -G app -D dev && \
