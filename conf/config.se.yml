@@ -35,7 +35,7 @@ mysql:
   # 数据库名
   database: go-gin-rest-api
   # 主机地址
-  host: 172.31.116.212
+  host: 127.0.0.1
   # 端口
   port: 3306
   # 连接字符串查询参数
