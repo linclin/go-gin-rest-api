@@ -28,6 +28,6 @@ containers:
       portForward: 
         - "8080:8080"
       patches:  
-        - patch: '{"spec":{"template":{"spec":{"containers":[{"name":"nocalhost-sidecar","securityContext":{"privileged":"false","runAsUser":"1000","runAsGroup":"1000"}}],"hostAliases":[{"hostnames":["dev.mucfc.com"],"ip":"10.75.88.4"}]}}}}'
+        - patch: '{"spec":{"template":{"spec":{"containers":[{"name":"nocalhost-sidecar","securityContext":{"privileged":"false","runAsUser":"1000","runAsGroup":"1000"}}]}}}}'
           type: strategic
         
