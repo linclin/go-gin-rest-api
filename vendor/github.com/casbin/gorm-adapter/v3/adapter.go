@@ -17,16 +17,17 @@ package gormadapter
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/glebarez/sqlite"
+	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlserver"
@@ -275,6 +276,18 @@ func NewAdapterByDB(db *gorm.DB) (*Adapter, error) {
 	return NewAdapterByDBUseTableName(db, "", defaultTableName)
 }
 
+// NewTransactionalAdapter creates a new adapter that supports the new transaction interface.
+// This is an alias for NewAdapter for clarity when using with TransactionalEnforcer.
+func NewTransactionalAdapter(driverName string, dataSourceName string, params ...interface{}) (*Adapter, error) {
+	return NewAdapter(driverName, dataSourceName, params...)
+}
+
+// NewTransactionalAdapterByDB creates a new adapter by existing DB that supports the new transaction interface.
+// This is an alias for NewAdapterByDB for clarity when using with TransactionalEnforcer.
+func NewTransactionalAdapterByDB(db *gorm.DB) (*Adapter, error) {
+	return NewAdapterByDB(db)
+}
+
 func TurnOffAutoMigrate(db *gorm.DB) {
 	ctx := db.Statement.Context
 	if ctx == nil {
@@ -305,14 +318,17 @@ func NewAdapterByDBWithCustomTable(db *gorm.DB, t interface{}, tableName ...stri
 func openDBConnection(driverName, dataSourceName string) (*gorm.DB, error) {
 	var err error
 	var db *gorm.DB
+	config := &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	}
 	if driverName == "postgres" {
-		db, err = gorm.Open(postgres.Open(dataSourceName), &gorm.Config{})
+		db, err = gorm.Open(postgres.Open(dataSourceName), config)
 	} else if driverName == "mysql" {
-		db, err = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+		db, err = gorm.Open(mysql.Open(dataSourceName), config)
 	} else if driverName == "sqlserver" {
-		db, err = gorm.Open(sqlserver.Open(dataSourceName), &gorm.Config{})
+		db, err = gorm.Open(sqlserver.Open(dataSourceName), config)
 	} else if driverName == "sqlite3" {
-		db, err = gorm.Open(sqlite.Open(dataSourceName), &gorm.Config{})
+		db, err = gorm.Open(sqlite.Open(dataSourceName), config)
 	} else {
 		return nil, errors.New("Database dialect '" + driverName + "' is not supported. Supported databases are postgres, mysql, sqlserver and sqlite3")
 	}
@@ -693,7 +709,7 @@ func (a *Adapter) AddPolicies(sec string, ptype string, rules [][]string) error 
 	return a.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&lines).Error
 }
 
-// Transaction perform a set of operations within a transaction
+// Transaction perform a set of operations within a transaction.
 func (a *Adapter) Transaction(e casbin.IEnforcer, fc func(casbin.IEnforcer) error, opts ...*sql.TxOptions) error {
 	// ensure the transactionMu is initialized
 	if a.transactionMu == nil {
@@ -703,32 +719,154 @@ func (a *Adapter) Transaction(e casbin.IEnforcer, fc func(casbin.IEnforcer) erro
 			}
 		})
 	}
+
+	// check adapter type
+	adapter, ok := e.GetAdapter().(*Adapter)
+	if !ok {
+		return errors.New("expected adapter of type Adapter, but got incompatible type")
+	}
+
+	// check if we're already in a transaction by checking if the current adapter is a transaction adapter
+	if _, isTxAdapter := adapter.db.Statement.ConnPool.(*sql.Tx); isTxAdapter {
+		// we're already in a transaction, create a savepoint for nested transaction
+		savepointName := fmt.Sprintf("casbin_nested_%d", time.Now().UnixNano())
+
+		// create savepoint
+		if err := adapter.db.SavePoint(savepointName).Error; err != nil {
+			return errors.Wrap(err, "failed to create savepoint for nested transaction")
+		}
+
+		// save model state before inner transaction
+		originalModel := e.GetModel().Copy()
+
+		err := fc(e)
+		if err != nil {
+			// rollback database changes
+			if rollbackErr := adapter.db.RollbackTo(savepointName).Error; rollbackErr != nil {
+				return errors.Wrap(rollbackErr, "failed to rollback savepoint")
+			}
+			// restore model state to undo inner transaction changes
+			e.SetModel(originalModel)
+			fmt.Printf("Warning: Inner transaction failed and was rolled back: %v\n", err)
+			// Don't return error to allow outer transaction to continue
+			return nil
+		}
+
+		return nil
+	}
+
 	// lock the transactionMu to ensure the transaction is thread-safe
 	a.transactionMu.Lock()
 	defer a.transactionMu.Unlock()
-	var err error
-	oriAdapter := a.db
-	// reload policy from database to sync with the transaction
-	defer func() {
-		e.SetAdapter(&Adapter{db: oriAdapter, transactionMu: a.transactionMu})
-		err = e.LoadPolicy()
+
+	// save original adapter
+	originalAdapter := adapter.Copy()
+
+	// use GORM transaction functionality
+	err := adapter.db.Transaction(func(tx *gorm.DB) error {
+		// create transaction adapter
+		txAdapter, err := NewAdapterByDB(tx)
 		if err != nil {
-			panic(err)
+			return errors.Wrap(err, "failed to initialize gorm adapter")
 		}
-	}()
-	copyDB := *a.db
-	tx := copyDB.Begin(opts...)
-	b := &Adapter{db: tx, transactionMu: a.transactionMu}
-	// copy enforcer to set the new adapter with transaction tx
-	copyEnforcer := e
-	copyEnforcer.SetAdapter(b)
-	err = fc(copyEnforcer)
+
+		// temporarily set transaction adapter
+		e.SetAdapter(txAdapter)
+
+		// execute transaction function
+		err = fc(e)
+		if err != nil {
+			return errors.Wrap(err, "failed transactional policy operations")
+		}
+
+		return nil
+	}, opts...)
+
+	// restore original adapter
+	e.SetAdapter(originalAdapter)
+
 	if err != nil {
-		tx.Rollback()
-		return err
+		// LoadPolicy is called only when the transaction encounters an error and fails.
+		// While this operation is expensive, failures are rare due to validation at earlier layers.
+		// When a transaction fails, the in-memory model may be out of sync, so LoadPolicy is needed
+		// to restore consistency by reloading from the database.
+		if loadErr := e.LoadPolicy(); loadErr != nil {
+			return errors.Wrap(loadErr, "failed to load policy after transaction failure")
+		}
+		return errors.Wrap(err, "transaction execution failed")
 	}
-	err = tx.Commit().Error
+
+	return nil
+}
+
+// BeginTransaction implements TransactionalAdapter interface.
+// It starts a new database transaction and returns a TransactionContext.
+func (a *Adapter) BeginTransaction(ctx context.Context) (persist.TransactionContext, error) {
+	// Start GORM database transaction
+	tx := a.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return &GormTransactionContext{
+		tx:        tx,
+		ctx:       ctx,
+		adapter:   a,
+		tableName: a.tableName,
+	}, nil
+}
+
+// GormTransactionContext implements persist.TransactionContext interface.
+// It provides transaction control methods and returns a transaction-aware adapter.
+type GormTransactionContext struct {
+	tx         *gorm.DB
+	ctx        context.Context
+	adapter    *Adapter
+	tableName  string
+	committed  bool
+	rolledBack bool
+}
+
+// Commit commits the database transaction.
+func (gtx *GormTransactionContext) Commit() error {
+	if gtx.committed || gtx.rolledBack {
+		return errors.New("transaction already finished")
+	}
+
+	err := gtx.tx.Commit().Error
+	if err == nil {
+		gtx.committed = true
+	}
 	return err
+}
+
+// Rollback rolls back the database transaction.
+func (gtx *GormTransactionContext) Rollback() error {
+	if gtx.committed || gtx.rolledBack {
+		return errors.New("transaction already finished")
+	}
+
+	err := gtx.tx.Rollback().Error
+	if err == nil {
+		gtx.rolledBack = true
+	}
+	return err
+}
+
+// GetAdapter returns an adapter that operates within this transaction.
+// All policy operations through this adapter will be part of the transaction.
+func (gtx *GormTransactionContext) GetAdapter() persist.Adapter {
+	return &Adapter{
+		driverName:     gtx.adapter.driverName,
+		dataSourceName: gtx.adapter.dataSourceName,
+		databaseName:   gtx.adapter.databaseName,
+		tablePrefix:    gtx.adapter.tablePrefix,
+		tableName:      gtx.tableName,
+		dbSpecified:    gtx.adapter.dbSpecified,
+		db:             gtx.tx, // Use transaction connection
+		isFiltered:     gtx.adapter.isFiltered,
+		// Note: No transactionMu needed as each transaction has its own adapter
+	}
 }
 
 // RemovePolicies removes multiple policy rules from the storage.
@@ -944,6 +1082,21 @@ func (a *Adapter) UpdateFilteredPolicies(sec string, ptype string, newPolicies [
 		oldPolicies = append(oldPolicies, oldPolicy)
 	}
 	return oldPolicies, tx.Commit().Error
+}
+
+func (a *Adapter) Copy() *Adapter {
+	oriAdapter := a.db
+	return &Adapter{
+		db:             oriAdapter,
+		transactionMu:  a.transactionMu,
+		driverName:     a.driverName,
+		dataSourceName: a.dataSourceName,
+		databaseName:   a.databaseName,
+		tablePrefix:    a.tablePrefix,
+		tableName:      a.tableName,
+		dbSpecified:    a.dbSpecified,
+		isFiltered:     a.isFiltered,
+	}
 }
 
 // Preview Pre-checking to avoid causing partial load success and partial failure deep

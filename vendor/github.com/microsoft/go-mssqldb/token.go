@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"strconv"
 
@@ -261,9 +260,7 @@ func processEnvChg(ctx context.Context, sess *tdsSession) {
 			if err != nil {
 				badStreamPanic(err)
 			}
-			if sess.logFlags&logTransaction != 0 {
-				sess.logger.Log(ctx, msdsn.LogTransaction, fmt.Sprintf("BEGIN TRANSACTION %x", sess.tranid))
-			}
+			sess.LogF(ctx, msdsn.LogTransaction, "BEGIN TRANSACTION %x", sess.tranid)
 			_, err = readBVarByte(r)
 			if err != nil {
 				badStreamPanic(err)
@@ -277,12 +274,10 @@ func processEnvChg(ctx context.Context, sess *tdsSession) {
 			if err != nil {
 				badStreamPanic(err)
 			}
-			if sess.logFlags&logTransaction != 0 {
-				if envtype == envTypCommitTran {
-					sess.logger.Log(ctx, msdsn.LogTransaction, fmt.Sprintf("COMMIT TRANSACTION %x", sess.tranid))
-				} else {
-					sess.logger.Log(ctx, msdsn.LogTransaction, fmt.Sprintf("ROLLBACK TRANSACTION %x", sess.tranid))
-				}
+			if envtype == envTypCommitTran {
+				sess.LogF(ctx, msdsn.LogTransaction, "COMMIT TRANSACTION %x", sess.tranid)
+			} else {
+				sess.LogF(ctx, msdsn.LogTransaction, "ROLLBACK TRANSACTION %x", sess.tranid)
 			}
 			sess.tranid = 0
 		case envEnlistDTC:
@@ -396,9 +391,7 @@ func processEnvChg(ctx context.Context, sess *tdsSession) {
 			sess.routedPort = newPort
 		default:
 			// ignore rest of records because we don't know how to skip those
-			if sess.logFlags&logDebug != 0 {
-				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("WARN: Unknown ENVCHANGE record detected with type id = %d", envtype))
-			}
+			sess.LogF(ctx, msdsn.LogDebug, "WARN: Unknown ENVCHANGE record detected with type id = %d", envtype)
 			return
 		}
 	}
@@ -592,7 +585,7 @@ func parseFeatureExtAck(r *tdsBuffer) featureExtAck {
 
 		// Skip unprocessed bytes
 		if length > 0 {
-			io.CopyN(ioutil.Discard, r, int64(length))
+			io.CopyN(io.Discard, r, int64(length))
 		}
 	}
 
@@ -616,7 +609,7 @@ func parseColMetadata72(r *tdsBuffer, s *tdsSession) (columns []columnStruct) {
 	for i := range columns {
 		column := &columns[i]
 		baseTi := getBaseTypeInfo(r, true)
-		typeInfo := readTypeInfo(r, baseTi.TypeId, column.cryptoMeta)
+		typeInfo := readTypeInfo(r, baseTi.TypeId, column.cryptoMeta, s.encoding)
 		typeInfo.UserType = baseTi.UserType
 		typeInfo.Flags = baseTi.Flags
 		typeInfo.TypeId = baseTi.TypeId
@@ -627,7 +620,7 @@ func parseColMetadata72(r *tdsBuffer, s *tdsSession) (columns []columnStruct) {
 
 		if column.isEncrypted() && s.alwaysEncrypted {
 			// Read Crypto Metadata
-			cryptoMeta := parseCryptoMetadata(r, cekTable)
+			cryptoMeta := parseCryptoMetadata(r, cekTable, s.encoding)
 			cryptoMeta.typeInfo.Flags = baseTi.Flags
 			column.cryptoMeta = &cryptoMeta
 		} else {
@@ -663,14 +656,14 @@ type cryptoMetadata struct {
 	typeInfo      typeInfo
 }
 
-func parseCryptoMetadata(r *tdsBuffer, cekTable *cekTable) cryptoMetadata {
+func parseCryptoMetadata(r *tdsBuffer, cekTable *cekTable, encoding msdsn.EncodeParameters) cryptoMetadata {
 	ordinal := uint16(0)
 	if cekTable != nil {
 		ordinal = r.uint16()
 	}
 
 	typeInfo := getBaseTypeInfo(r, false)
-	ti := readTypeInfo(r, typeInfo.TypeId, nil)
+	ti := readTypeInfo(r, typeInfo.TypeId, nil, encoding)
 	ti.UserType = typeInfo.UserType
 	ti.Flags = typeInfo.Flags
 	ti.TypeId = typeInfo.TypeId
@@ -787,7 +780,7 @@ func readCekTableEntry(r *tdsBuffer) cekTableEntry {
 // http://msdn.microsoft.com/en-us/library/dd357254.aspx
 func parseRow(ctx context.Context, r *tdsBuffer, s *tdsSession, columns []columnStruct, row []interface{}) error {
 	for i, column := range columns {
-		columnContent := column.ti.Reader(&column.ti, r, nil)
+		columnContent := column.ti.Reader(&column.ti, r, nil, s.encoding)
 		if columnContent == nil {
 			row[i] = columnContent
 			continue
@@ -799,7 +792,7 @@ func parseRow(ctx context.Context, r *tdsBuffer, s *tdsSession, columns []column
 				return err
 			}
 			// Decrypt
-			row[i] = column.cryptoMeta.typeInfo.Reader(&column.cryptoMeta.typeInfo, buffer, column.cryptoMeta)
+			row[i] = column.cryptoMeta.typeInfo.Reader(&column.cryptoMeta.typeInfo, buffer, column.cryptoMeta, s.encoding)
 		} else {
 			row[i] = columnContent
 		}
@@ -872,14 +865,14 @@ func parseNbcRow(ctx context.Context, r *tdsBuffer, s *tdsSession, columns []col
 			row[i] = nil
 			continue
 		}
-		columnContent := col.ti.Reader(&col.ti, r, nil)
+		columnContent := col.ti.Reader(&col.ti, r, nil, s.encoding)
 		if col.isEncrypted() {
 			buffer, err := decryptColumn(ctx, col, s, columnContent)
 			if err != nil {
 				return err
 			}
 			// Decrypt
-			row[i] = col.cryptoMeta.typeInfo.Reader(&col.cryptoMeta.typeInfo, buffer, col.cryptoMeta)
+			row[i] = col.cryptoMeta.typeInfo.Reader(&col.cryptoMeta.typeInfo, buffer, col.cryptoMeta, s.encoding)
 		} else {
 			row[i] = columnContent
 		}
@@ -935,12 +928,12 @@ func parseReturnValue(r *tdsBuffer, s *tdsSession) (nv namedValue) {
 
 	var cryptoMetadata *cryptoMetadata = nil
 	if s.alwaysEncrypted && (ti.Flags&fEncrypted) == fEncrypted {
-		cm := parseCryptoMetadata(r, nil) // CryptoMetadata
+		cm := parseCryptoMetadata(r, nil, s.encoding) // CryptoMetadata
 		cryptoMetadata = &cm
 	}
 
-	ti2 := readTypeInfo(r, ti.TypeId, cryptoMetadata)
-	nv.Value = ti2.Reader(&ti2, r, cryptoMetadata)
+	ti2 := readTypeInfo(r, ti.TypeId, cryptoMetadata, s.encoding)
+	nv.Value = ti2.Reader(&ti2, r, cryptoMetadata, s.encoding)
 
 	return
 }
@@ -948,16 +941,14 @@ func parseReturnValue(r *tdsBuffer, s *tdsSession) (nv namedValue) {
 func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenStruct, outs outputs) {
 	defer func() {
 		if err := recover(); err != nil {
-			if sess.logFlags&logErrors != 0 {
-				sess.logger.Log(ctx, msdsn.LogErrors, fmt.Sprintf("Intercepted panic %v", err))
-			}
+			sess.LogF(ctx, msdsn.LogErrors, "intercepted panic: %v", err)
 			if outs.msgq != nil {
 				var derr error
 				switch e := err.(type) {
 				case error:
 					derr = e
 				default:
-					derr = fmt.Errorf("Unhandled session error %v", e)
+					derr = fmt.Errorf("unhandled session error: %v", e)
 				}
 				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgError{Error: derr})
 
@@ -969,9 +960,7 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 	colsReceived := false
 	packet_type, err := sess.buf.BeginRead()
 	if err != nil {
-		if sess.logFlags&logErrors != 0 {
-			sess.logger.Log(ctx, msdsn.LogErrors, fmt.Sprintf("BeginRead failed %v", err))
-		}
+		sess.LogF(ctx, msdsn.LogErrors, "BeginRead failed %v", err)
 		switch e := err.(type) {
 		case *net.OpError:
 			err = e
@@ -989,9 +978,7 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 	errs := make([]Error, 0, 5)
 	for tokens := 0; ; tokens += 1 {
 		token := token(sess.buf.byte())
-		if sess.logFlags&logDebug != 0 {
-			sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got token %v", token))
-		}
+		sess.LogF(ctx, msdsn.LogDebug, "got token %v", token)
 		switch token {
 		case tokenSSPI:
 			ch <- parseSSPIMsg(sess.buf)
@@ -1014,20 +1001,21 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 		case tokenDoneInProc:
 			done := parseDoneInProc(sess.buf)
 
-			ch <- done
 			if done.Status&doneCount != 0 {
-				if sess.logFlags&logRows != 0 {
-					sess.logger.Log(ctx, msdsn.LogRows, fmt.Sprintf("(%d rows affected)", done.RowCount))
-				}
+				sess.LogF(ctx, msdsn.LogRows, "(%d rows affected)", done.RowCount)
 
 				if (colsReceived || done.CurCmd != cmdSelect) && outs.msgq != nil {
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgRowsAffected{Count: int64(done.RowCount)})
 				}
 			}
+
+			ch <- done
+
 			if outs.msgq != nil {
 				// For now we ignore ctx->Done errors that ReturnMessageEnqueue might return
 				// It's not clear how to handle them correctly here, and data/sql seems
 				// to set Rows.Err correctly when ctx expires already
+				sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDoneInProc")
 				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 			}
 			colsReceived = false
@@ -1035,6 +1023,7 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 				// Rows marks the request as done when seeing this done token. We queue another result set message
 				// so the app calls NextResultSet again which will return false.
 				if outs.msgq != nil {
+					sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDoneInProc with doneMore=0")
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 				}
 				return
@@ -1045,35 +1034,36 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 			if outs.msgq != nil {
 				errs = make([]Error, 0, 5)
 			}
-			if sess.logFlags&logDebug != 0 {
-				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got DONE or DONEPROC status=%d", done.Status))
-			}
+			sess.LogF(ctx, msdsn.LogDebug, "got DONE or DONEPROC status=%d", done.Status)
 			if done.Status&doneSrvError != 0 {
 				ch <- ServerError{done.getError()}
 				if outs.msgq != nil {
+					sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDone with doneSrvError")
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 				}
 				return
 			}
-			ch <- done
 			if done.Status&doneCount != 0 {
-				if sess.logFlags&logRows != 0 {
-					sess.logger.Log(ctx, msdsn.LogRows, fmt.Sprintf("(Rows affected: %d)", done.RowCount))
-				}
+				sess.LogF(ctx, msdsn.LogRows, "(Rows affected: %d)", done.RowCount)
 
 				if (colsReceived || done.CurCmd != cmdSelect) && outs.msgq != nil {
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgRowsAffected{Count: int64(done.RowCount)})
 				}
 
 			}
+
+			ch <- done
+
 			colsReceived = false
 			if outs.msgq != nil {
+				sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDone or tokenDoneProc")
 				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 			}
 			if done.Status&doneMore == 0 {
 				// Rows marks the request as done when seeing this done token. We queue another result set message
 				// so the app calls NextResultSet again which will return false.
 				if outs.msgq != nil {
+					sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDone or tokenDoneProc with doneMore=0")
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 				}
 				return
@@ -1106,24 +1096,16 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 			processEnvChg(ctx, sess)
 		case tokenError:
 			err := parseError72(sess.buf)
-			if sess.logFlags&logDebug != 0 {
-				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got ERROR %d %s", err.Number, err.Message))
-			}
+			sess.LogF(ctx, msdsn.LogDebug, "got ERROR %d %s", err.Number, err.Message)
 			errs = append(errs, err)
-			if sess.logFlags&logErrors != 0 {
-				sess.logger.Log(ctx, msdsn.LogErrors, err.Message)
-			}
+			sess.LogS(ctx, msdsn.LogErrors, err.Message)
 			if outs.msgq != nil {
 				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgError{Error: err})
 			}
 		case tokenInfo:
 			info := parseInfo(sess.buf)
-			if sess.logFlags&logDebug != 0 {
-				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got INFO %d %s", info.Number, info.Message))
-			}
-			if sess.logFlags&logMessages != 0 {
-				sess.logger.Log(ctx, msdsn.LogMessages, info.Message)
-			}
+			sess.LogF(ctx, msdsn.LogDebug, "got INFO %d %s", info.Number, info.Message)
+			sess.LogS(ctx, msdsn.LogMessages, info.Message)
 			if outs.msgq != nil {
 				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNotice{Message: info})
 			}
@@ -1214,6 +1196,7 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 	case tok, more := <-t.tokChan:
 		err, more := tok.(error)
 		if more {
+			t.sess.LogF(t.ctx, msdsn.LogDebug, "nextToken returned an error:"+err.Error())
 			// this is an error and not a token
 			return nil, err
 		} else {
@@ -1228,7 +1211,6 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 		if more {
 			err, ok := tok.(error)
 			if ok {
-				// this is an error and not a token
 				return nil, err
 			} else {
 				return tok, nil
@@ -1238,13 +1220,10 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 			return nil, nil
 		}
 	case <-t.ctx.Done():
-		// It seems the Message function on t.outs.msgq doesn't get the Done if it comes here instead
-		if t.outs.msgq != nil {
-			_ = sqlexp.ReturnMessageEnqueue(t.ctx, t.outs.msgq, sqlexp.MsgNextResultSet{})
-		}
 		if t.noAttn {
 			return nil, t.ctx.Err()
 		}
+		t.sess.LogF(t.ctx, msdsn.LogDebug, "Sending attention to the server")
 		if err := sendAttention(t.sess.buf); err != nil {
 			// unable to send attention, current connection is bad
 			// notify caller and close channel

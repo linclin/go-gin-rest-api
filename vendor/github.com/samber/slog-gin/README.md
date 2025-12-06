@@ -16,12 +16,12 @@
   <hr>
   <sup><b>Sponsored by:</b></sup>
   <br>
-  <a href="https://quickwit.io?utm_campaign=github_sponsorship&utm_medium=referral&utm_content=samber-slog-gin&utm_source=github">
+  <a href="https://www.dash0.com?utm_campaign=148395251-samber%20github%20sponsorship&utm_source=github&utm_medium=sponsorship&utm_content=samber">
     <div>
-      <img src="https://github.com/samber/oops/assets/2951285/49aaaa2b-b8c6-4f21-909f-c12577bb6a2e" width="240" alt="Quickwit">
+      <img src="https://github.com/user-attachments/assets/b1f2e876-0954-4dc3-824d-935d29ba8f3f" width="200" alt="Dash0">
     </div>
     <div>
-      Cloud-native search engine for observability - An OSS alternative to Splunk, Elasticsearch, Loki, and Tempo.
+      100% OpenTelemetry-native observability platform<br>Simple to use, built on open standards, and designed for full cost control
     </div>
   </a>
   <hr>
@@ -32,6 +32,7 @@
 - [slog-multi](https://github.com/samber/slog-multi): `slog.Handler` chaining, fanout, routing, failover, load balancing...
 - [slog-formatter](https://github.com/samber/slog-formatter): `slog` attribute formatting
 - [slog-sampling](https://github.com/samber/slog-sampling): `slog` sampling policy
+- [slog-mock](https://github.com/samber/slog-mock): `slog.Handler` for test purposes
 
 **HTTP middlewares:**
 
@@ -98,6 +99,8 @@ type Config struct {
 	WithSpanID         bool
 	WithTraceID        bool
 
+	HandleGinDebug bool
+
 	Filters []Filter
 }
 ```
@@ -114,6 +117,7 @@ sloggin.ResponseBodyMaxSize = 64 * 1024 // 64KB
 sloggin.HiddenRequestHeaders = map[string]struct{}{ ... }
 sloggin.HiddenResponseHeaders = map[string]struct{}{ ... }
 sloggin.RequestIDHeaderKey = "X-Request-Id"
+sloggin.RequestIDContextKey = "slog-gin.request-id"
 ```
 
 ### Minimal
@@ -213,8 +217,10 @@ Available filters:
 - Accept / Ignore
 - AcceptMethod / IgnoreMethod
 - AcceptStatus / IgnoreStatus
-- AcceptStatusGreaterThan / IgnoreStatusLessThan
-- AcceptStatusGreaterThanOrEqual / IgnoreStatusLessThanOrEqual
+- AcceptStatusGreaterThan / IgnoreStatusGreaterThan
+- AcceptStatusLessThan / IgnoreStatusLessThan
+- AcceptStatusGreaterThanOrEqual / IgnoreStatusGreaterThanOrEqual
+- AcceptStatusLessThanOrEqual / IgnoreStatusLessThanOrEqual
 - AcceptPath / IgnorePath
 - AcceptPathContains / IgnorePathContains
 - AcceptPathPrefix / IgnorePathPrefix

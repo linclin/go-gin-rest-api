@@ -1,3 +1,6 @@
+//go:build (amd64 && go1.17 && !go1.26) || (arm64 && go1.20 && !go1.26)
+// +build amd64,go1.17,!go1.26 arm64,go1.20,!go1.26
+
 /*
  * Copyright 2022 ByteDance Inc.
  *
@@ -29,7 +32,7 @@ func CorrectWith(dst []byte, src []byte, repl string) []byte {
     sstr := rt.Mem2Str(src)
     sidx := 0
 
-    /* state machine records the invalid postions */
+    /* state machine records the invalid positions */
     m := types.NewStateMachine()
     m.Sp = 0 // invalid utf8 numbers
 
@@ -62,7 +65,7 @@ func CorrectWith(dst []byte, src []byte, repl string) []byte {
     return dst
 }
 
-// Validate is a simd-accelereated drop-in replacement for the standard library's utf8.Valid.
+// Validate is a simd-accelerated drop-in replacement for the standard library's utf8.Valid.
 func Validate(src []byte) bool {
 	if src == nil {
 		return true

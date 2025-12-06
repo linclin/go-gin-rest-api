@@ -54,6 +54,7 @@ const (
     _OP_nil_1
     _OP_nil_2
     _OP_nil_3
+    _OP_empty_bytes
     _OP_deref
     _OP_index
     _OP_is_null
@@ -77,7 +78,6 @@ const (
     _OP_array_clear_p
     _OP_slice_init
     _OP_slice_append
-    _OP_object_skip
     _OP_object_next
     _OP_struct_field
     _OP_unmarshal
@@ -97,8 +97,10 @@ const (
     _OP_check_char_0
     _OP_dismatch_err
     _OP_go_skip
+    _OP_skip_emtpy
     _OP_add
     _OP_check_empty
+    _OP_unsupported
     _OP_debug
 )
 
@@ -134,6 +136,7 @@ var _OpNames = [256]string {
     _OP_nil_1            : "nil_1",
     _OP_nil_2            : "nil_2",
     _OP_nil_3            : "nil_3",
+    _OP_empty_bytes      : "empty bytes",
     _OP_deref            : "deref",
     _OP_index            : "index",
     _OP_is_null          : "is_null",
@@ -155,7 +158,6 @@ var _OpNames = [256]string {
     _OP_array_skip       : "array_skip",
     _OP_slice_init       : "slice_init",
     _OP_slice_append     : "slice_append",
-    _OP_object_skip      : "object_skip",
     _OP_object_next      : "object_next",
     _OP_struct_field     : "struct_field",
     _OP_unmarshal        : "unmarshal",
@@ -177,6 +179,7 @@ var _OpNames = [256]string {
     _OP_add              : "add",
     _OP_go_skip          : "go_skip",
     _OP_check_empty      : "check_empty",
+    _OP_unsupported      : "unsupported type",
     _OP_debug            : "debug",
 }
 
@@ -631,14 +634,21 @@ func (self *_Compiler) compileOps(p *_Program, sp int, vt reflect.Type) {
         case reflect.Ptr       : self.compilePtr       (p, sp, vt)
         case reflect.Slice     : self.compileSlice     (p, sp, vt)
         case reflect.Struct    : self.compileStruct    (p, sp, vt)
-        default                : panic                 (&json.UnmarshalTypeError{Type: vt})
+        default                : self.compileUnsupportedType      (p, vt)
     }
 }
 
+func (self *_Compiler) compileUnsupportedType(p *_Program, vt reflect.Type) {
+    i := p.pc()
+    p.add(_OP_is_null)
+    p.rtt(_OP_unsupported, vt)
+    p.pin(i)
+}
+
 func (self *_Compiler) compileMap(p *_Program, sp int, vt reflect.Type) {
-    if reflect.PtrTo(vt.Key()).Implements(encodingTextUnmarshalerType) {
+    if vt.Key().Kind() != reflect.Interface && reflect.PtrTo(vt.Key()).Implements(encodingTextUnmarshalerType) {
         self.compileMapOp(p, sp, vt, _OP_map_key_utext_p)
-    } else if vt.Key().Implements(encodingTextUnmarshalerType) {
+    } else if vt.Key().Kind() != reflect.Interface && vt.Key().Implements(encodingTextUnmarshalerType) {
         self.compileMapOp(p, sp, vt, _OP_map_key_utext)
     } else {
         self.compileMapUt(p, sp, vt)
@@ -737,7 +747,7 @@ func (self *_Compiler) compilePtr(p *_Program, sp int, et reflect.Type) {
         self.tab[et] = true
 
         /* not inline the pointer type
-        * recursing the defined pointer type's elem will casue issue379.
+        * recursing the defined pointer type's elem will cause issue379.
         */
         self.compileOps(p, sp, et)
     }
@@ -820,12 +830,19 @@ func (self *_Compiler) compileSliceBin(p *_Program, sp int, vt reflect.Type) {
     self.compileSliceBody(p, sp, vt.Elem())
     y := p.pc()
     p.add(_OP_goto)
+
+    // unmarshal `null` and `"` is different
     p.pin(i)
-    p.pin(k)
     p.add(_OP_nil_3)
+    y2 := p.pc()
+    p.add(_OP_goto)
+
+    p.pin(k)
+    p.add(_OP_empty_bytes)
     p.pin(x)
     p.pin(skip)
     p.pin(y)
+    p.pin(y2)
 }
 
 func (self *_Compiler) compileSliceList(p *_Program, sp int, vt reflect.Type) {
@@ -902,7 +919,24 @@ func (self *_Compiler) compileStructBody(p *_Program, sp int, vt reflect.Type) {
     n := p.pc()
     p.add(_OP_is_null)
 
-    skip := self.checkIfSkip(p, vt, '{')
+    j := p.pc()
+    p.chr(_OP_check_char_0, '{')
+    p.rtt(_OP_dismatch_err, vt)
+
+    /* special case for empty object */
+    if len(fv) == 0 {
+        p.pin(j)
+        s := p.pc()
+        p.add(_OP_skip_emtpy)
+        p.pin(s)
+        p.pin(n)
+        return
+    }
+
+    skip := p.pc()
+    p.add(_OP_go_skip)
+    p.pin(j)
+    p.int(_OP_add, 1)
     
     p.add(_OP_save)
     p.add(_OP_lspace)
@@ -920,11 +954,6 @@ func (self *_Compiler) compileStructBody(p *_Program, sp int, vt reflect.Type) {
     p.chr(_OP_check_char, '}')
     p.chr(_OP_match_char, ',')
 
-    /* special case of an empty struct */
-    if len(fv) == 0 {
-        p.add(_OP_object_skip)
-        goto end_of_object
-    }
 
     /* match the remaining fields */
     p.add(_OP_lspace)
@@ -960,7 +989,6 @@ func (self *_Compiler) compileStructBody(p *_Program, sp int, vt reflect.Type) {
         p.int(_OP_goto, y0)
     }
 
-end_of_object:
     p.pin(x)
     p.pin(y1)
     p.add(_OP_drop)
@@ -1125,13 +1153,11 @@ func (self *_Compiler) compileInterface(p *_Program, vt reflect.Type) {
     p.pin(j)
 }
 
-func (self *_Compiler) compilePrimitive(vt reflect.Type, p *_Program, op _Op) {
+func (self *_Compiler) compilePrimitive(_ reflect.Type, p *_Program, op _Op) {
     i := p.pc()
     p.add(_OP_is_null)
-    // skip := self.checkPrimitive(p, vt)
     p.add(op)
     p.pin(i)
-    // p.pin(skip)
 }
 
 func (self *_Compiler) compileUnmarshalEnd(p *_Program, vt reflect.Type, i int) {

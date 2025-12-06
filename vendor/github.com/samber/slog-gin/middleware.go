@@ -2,6 +2,7 @@ package sloggin
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -14,7 +15,6 @@ import (
 
 const (
 	customAttributesCtxKey = "slog-gin.custom-attributes"
-	requestIDCtx           = "slog-gin.request-id"
 )
 
 var (
@@ -38,7 +38,8 @@ var (
 	}
 
 	// Formatted with http.CanonicalHeaderKey
-	RequestIDHeaderKey = "X-Request-Id"
+	RequestIDHeaderKey  = "X-Request-Id"
+	RequestIDContextKey = "slog-gin.request-id"
 )
 
 type Config struct {
@@ -54,6 +55,8 @@ type Config struct {
 	WithResponseHeader bool
 	WithSpanID         bool
 	WithTraceID        bool
+
+	HandleGinDebug bool
 
 	Filters []Filter
 }
@@ -76,6 +79,8 @@ func New(logger *slog.Logger) gin.HandlerFunc {
 		WithResponseHeader: false,
 		WithSpanID:         false,
 		WithTraceID:        false,
+
+		HandleGinDebug: false,
 
 		Filters: []Filter{},
 	})
@@ -100,12 +105,19 @@ func NewWithFilters(logger *slog.Logger, filters ...Filter) gin.HandlerFunc {
 		WithSpanID:         false,
 		WithTraceID:        false,
 
+		HandleGinDebug: false,
+
 		Filters: filters,
 	})
 }
 
 // NewWithConfig returns a gin.HandlerFunc (middleware) that logs requests using slog.
 func NewWithConfig(logger *slog.Logger, config Config) gin.HandlerFunc {
+	if config.HandleGinDebug {
+		SetDebugPrintRouteFunc(logger)
+		SetDebugPrintFunc(logger)
+	}
+
 	return func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
@@ -122,7 +134,7 @@ func NewWithConfig(logger *slog.Logger, config Config) gin.HandlerFunc {
 				requestID = uuid.New().String()
 				c.Header(RequestIDHeaderKey, requestID)
 			}
-			c.Set(requestIDCtx, requestID)
+			c.Set(RequestIDContextKey, requestID)
 		}
 
 		// dump request body
@@ -134,6 +146,13 @@ func NewWithConfig(logger *slog.Logger, config Config) gin.HandlerFunc {
 		c.Writer = bw
 
 		c.Next()
+
+		// Pass thru filters and skip early the code below, to prevent unnecessary processing.
+		for _, filter := range config.Filters {
+			if !filter(c) {
+				return
+			}
+		}
 
 		status := c.Writer.Status()
 		method := c.Request.Method
@@ -148,7 +167,7 @@ func NewWithConfig(logger *slog.Logger, config Config) gin.HandlerFunc {
 		baseAttributes := []slog.Attr{}
 
 		requestAttributes := []slog.Attr{
-			slog.Time("time", start),
+			slog.Time("time", start.UTC()),
 			slog.String("method", method),
 			slog.String("host", host),
 			slog.String("path", path),
@@ -160,7 +179,7 @@ func NewWithConfig(logger *slog.Logger, config Config) gin.HandlerFunc {
 		}
 
 		responseAttributes := []slog.Attr{
-			slog.Time("time", end),
+			slog.Time("time", end.UTC()),
 			slog.Duration("latency", latency),
 			slog.Int("status", status),
 		}
@@ -238,20 +257,20 @@ func NewWithConfig(logger *slog.Logger, config Config) gin.HandlerFunc {
 			}
 		}
 
-		for _, filter := range config.Filters {
-			if !filter(c) {
-				return
-			}
-		}
-
 		level := config.DefaultLevel
 		msg := "Incoming request"
 		if status >= http.StatusBadRequest && status < http.StatusInternalServerError {
 			level = config.ClientErrorLevel
-			msg = c.Errors.String()
+			msg = strings.TrimSuffix(c.Errors.String(), "\n")
+			if msg == "" {
+				msg = fmt.Sprintf("HTTP error: %d %s", status, strings.ToLower(http.StatusText(status)))
+			}
 		} else if status >= http.StatusInternalServerError {
 			level = config.ServerErrorLevel
-			msg = c.Errors.String()
+			msg = strings.TrimSuffix(c.Errors.String(), "\n")
+			if msg == "" {
+				msg = fmt.Sprintf("HTTP error: %d %s", status, strings.ToLower(http.StatusText(status)))
+			}
 		}
 
 		logger.LogAttrs(c.Request.Context(), level, msg, attributes...)
@@ -260,7 +279,7 @@ func NewWithConfig(logger *slog.Logger, config Config) gin.HandlerFunc {
 
 // GetRequestID returns the request identifier.
 func GetRequestID(c *gin.Context) string {
-	requestID, ok := c.Get(requestIDCtx)
+	requestID, ok := c.Get(RequestIDContextKey)
 	if !ok {
 		return ""
 	}
@@ -273,21 +292,21 @@ func GetRequestID(c *gin.Context) string {
 }
 
 // AddCustomAttributes adds custom attributes to the request context.
-func AddCustomAttributes(c *gin.Context, attr slog.Attr) {
+func AddCustomAttributes(c *gin.Context, attrs ...slog.Attr) {
 	v, exists := c.Get(customAttributesCtxKey)
 	if !exists {
-		c.Set(customAttributesCtxKey, []slog.Attr{attr})
+		c.Set(customAttributesCtxKey, attrs)
 		return
 	}
 
-	switch attrs := v.(type) {
+	switch vAttrs := v.(type) {
 	case []slog.Attr:
-		c.Set(customAttributesCtxKey, append(attrs, attr))
+		c.Set(customAttributesCtxKey, append(vAttrs, attrs...))
 	}
 }
 
 func extractTraceSpanID(ctx context.Context, withTraceID bool, withSpanID bool) []slog.Attr {
-	if !(withTraceID || withSpanID) {
+	if !withTraceID && !withSpanID {
 		return []slog.Attr{}
 	}
 

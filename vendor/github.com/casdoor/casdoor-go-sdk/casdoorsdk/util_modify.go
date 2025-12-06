@@ -154,6 +154,37 @@ func (c *Client) modifyUserById(action string, id string, user *User, columns []
 		return nil, false, err
 	}
 
+	if action == "check-user-password" {
+		return resp, resp.Status == "ok", nil
+	}
+
+	return resp, resp.Data == "Affected", nil
+}
+
+func (c *Client) modifyUserByUserId(action string, owner string, userId string, user *User, columns []string) (*Response, bool, error) {
+	queryMap := map[string]string{
+		"owner":  owner,
+		"userId": userId,
+	}
+
+	if len(columns) != 0 {
+		queryMap["columns"] = strings.Join(columns, ",")
+	}
+
+	postBytes, err := json.Marshal(user)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resp, err := c.DoPost(action, queryMap, postBytes, false, false)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if action == "check-user-password" {
+		return resp, resp.Status == "ok", nil
+	}
+
 	return resp, resp.Data == "Affected", nil
 }
 
@@ -514,15 +545,26 @@ func (c *Client) modifySyncer(action string, syncer *Syncer, columns []string) (
 	return resp, resp.Data == "Affected", nil
 }
 
-// modifyTransaction is an encapsulation of cert CUD(Create, Update, Delete) operations.
-// possible actions are `add-transaction`, `update-transaction`, `delete-transaction`,
+// modifyTransaction is an encapsulation of transaction CUD(Create, Update, Delete) operations.
+// possible actions are `add-transaction`, `update-transaction`, `delete-transaction`.
 func (c *Client) modifyTransaction(action string, transaction *Transaction, columns []string) (*Response, bool, error) {
+	return c.modifyTransactionWithDryRun(action, transaction, columns, false)
+}
+
+// modifyTransactionWithDryRun is an encapsulation of transaction CUD(Create, Update, Delete) operations with dry run support.
+// possible actions are `add-transaction`, `update-transaction`, `delete-transaction`.
+// dryrun parameter is only applicable for `add-transaction` action.
+func (c *Client) modifyTransactionWithDryRun(action string, transaction *Transaction, columns []string, dryrun bool) (*Response, bool, error) {
 	queryMap := map[string]string{
 		"id": fmt.Sprintf("%s/%s", transaction.Owner, transaction.Name),
 	}
 
 	if len(columns) != 0 {
 		queryMap["columns"] = strings.Join(columns, ",")
+	}
+
+	if dryrun && action == "add-transaction" {
+		queryMap["dryRun"] = "1"
 	}
 
 	transaction.Owner = c.OrganizationName
@@ -578,6 +620,61 @@ func (c *Client) modifyToken(action string, token *Token, columns []string) (*Re
 	}
 
 	postBytes, err := json.Marshal(token)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resp, err := c.DoPost(action, queryMap, postBytes, false, false)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return resp, resp.Data == "Affected", nil
+}
+
+// modifyLdap is an encapsulation of LDAP CUD(Create, Update, Delete) operations.
+// possible actions are `add-ldap`, `update-ldap`, `delete-ldap`,
+func (c *Client) modifyLdap(action string, ldap *Ldap, columns []string) (*Response, bool, error) {
+	if ldap.Owner == "" {
+		ldap.Owner = "admin"
+	}
+
+	queryMap := map[string]string{
+		"id": fmt.Sprintf("%s/%s", ldap.Owner, ldap.Id),
+	}
+
+	if len(columns) != 0 {
+		queryMap["columns"] = strings.Join(columns, ",")
+	}
+
+	postBytes, err := json.Marshal(ldap)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resp, err := c.DoPost(action, queryMap, postBytes, false, false)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return resp, resp.Data == "Affected", nil
+}
+
+// modifyInvitation is an encapsulation of invitation CUD(Create, Update, Delete) operations.
+// possible actions are `add-invitation`, `update-invitation`, `delete-invitation`,
+func (c *Client) modifyInvitation(action string, invitation *Invitation, columns []string) (*Response, bool, error) {
+	queryMap := map[string]string{
+		"id": fmt.Sprintf("%s/%s", invitation.Owner, invitation.Name),
+	}
+
+	if len(columns) != 0 {
+		queryMap["columns"] = strings.Join(columns, ",")
+	}
+
+	if invitation.Owner == "" {
+		invitation.Owner = c.OrganizationName
+	}
+	postBytes, err := json.Marshal(invitation)
 	if err != nil {
 		return nil, false, err
 	}

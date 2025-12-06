@@ -27,22 +27,20 @@ type Transaction struct {
 	Name        string `xorm:"varchar(100) notnull pk" json:"name"`
 	CreatedTime string `xorm:"varchar(100)" json:"createdTime"`
 	DisplayName string `xorm:"varchar(100)" json:"displayName"`
-	// Transaction Provider Info
-	Provider string `xorm:"varchar(100)" json:"provider"`
-	Category string `xorm:"varchar(100)" json:"category"`
-	Type     string `xorm:"varchar(100)" json:"type"`
-	// Product Info
-	ProductName        string  `xorm:"varchar(100)" json:"productName"`
-	ProductDisplayName string  `xorm:"varchar(100)" json:"productDisplayName"`
-	Detail             string  `xorm:"varchar(255)" json:"detail"`
-	Tag                string  `xorm:"varchar(100)" json:"tag"`
-	Currency           string  `xorm:"varchar(100)" json:"currency"`
-	Amount             float64 `json:"amount"`
-	ReturnUrl          string  `xorm:"varchar(1000)" json:"returnUrl"`
-	// User Info
-	User        string `xorm:"varchar(100)" json:"user"`
+
 	Application string `xorm:"varchar(100)" json:"application"`
-	Payment     string `xorm:"varchar(100)" json:"payment"`
+	Domain      string `xorm:"varchar(1000)" json:"domain"`
+	Category    string `xorm:"varchar(100)" json:"category"`
+	Type        string `xorm:"varchar(100)" json:"type"`
+	Subtype     string `xorm:"varchar(100)" json:"subtype"`
+	Provider    string `xorm:"varchar(100)" json:"provider"`
+	User        string `xorm:"varchar(100)" json:"user"`
+	Tag         string `xorm:"varchar(100)" json:"tag"`
+
+	Amount   float64 `json:"amount"`
+	Currency string  `xorm:"varchar(100)" json:"currency"`
+
+	Payment string `xorm:"varchar(100)" json:"payment"`
 
 	State string `xorm:"varchar(100)" json:"state"`
 }
@@ -139,9 +137,22 @@ func (c *Client) UpdateTransaction(transaction *Transaction) (bool, error) {
 	return affected, err
 }
 
-func (c *Client) AddTransaction(transaction *Transaction) (bool, error) {
-	_, affected, err := c.modifyTransaction("add-transaction", transaction, nil)
-	return affected, err
+func (c *Client) AddTransaction(transaction *Transaction) (bool, string, error) {
+	return c.AddTransactionWithDryRun(transaction, false)
+}
+
+func (c *Client) AddTransactionWithDryRun(transaction *Transaction, dryrun bool) (bool, string, error) {
+	resp, affected, err := c.modifyTransactionWithDryRun("add-transaction", transaction, nil, dryrun)
+	if err != nil {
+		return false, "", err
+	}
+
+	transactionId, ok := resp.Data.(string)
+	if !ok {
+		return false, "", errors.New("failed to parse transaction id from response")
+	}
+
+	return affected, transactionId, nil
 }
 
 func (c *Client) DeleteTransaction(transaction *Transaction) (bool, error) {

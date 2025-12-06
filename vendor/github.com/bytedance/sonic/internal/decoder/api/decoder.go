@@ -35,6 +35,7 @@ const (
 	_F_use_int64 = consts.F_use_int64
 	_F_use_number = consts.F_use_number
 	_F_validate_string = consts.F_validate_string
+    _F_case_sensitive = consts.F_case_sensitive
 
 	_MaxStack = consts.MaxStack
 
@@ -44,6 +45,8 @@ const (
     OptionDisableUnknown   = consts.OptionDisableUnknown
     OptionCopyString       = consts.OptionCopyString
     OptionValidateString   = consts.OptionValidateString
+    OptionNoValidateJSON   = consts.OptionNoValidateJSON
+    OptionCaseSensitive    = consts.OptionCaseSensitive
 )
 
 type (

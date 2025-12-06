@@ -77,19 +77,26 @@ type Config struct {
     // CopyString indicates decoder to decode string values by copying instead of referring.
     CopyString                    bool
 
-    // ValidateString indicates decoder and encoder to valid string values: decoder will return errors 
+    // ValidateString indicates decoder and encoder to validate string values: decoder will return errors 
     // when unescaped control chars(\u0000-\u001f) in the string value of JSON.
     ValidateString                bool
 
     // NoValidateJSONMarshaler indicates that the encoder should not validate the output string
     // after encoding the JSONMarshaler to JSON.
     NoValidateJSONMarshaler       bool
+
+    // NoValidateJSONSkip indicates the decoder should not validate the JSON value when skipping it,
+    // such as unknown-fields, mismatched-type, redundant elements..
+    NoValidateJSONSkip bool
     
     // NoEncoderNewline indicates that the encoder should not add a newline after every message
     NoEncoderNewline bool
 
     // Encode Infinity or Nan float into `null`, instead of returning an error.
     EncodeNullForInfOrNan bool
+
+    // CaseSensitive indicates that the decoder should not ignore the case of object keys.
+    CaseSensitive bool
 }
  
 var (
@@ -107,15 +114,15 @@ var (
  
     // ConfigFastest is the fastest config of APIs, aiming at speed.
     ConfigFastest = Config{
-        NoQuoteTextMarshaler: true,
         NoValidateJSONMarshaler: true,
+        NoValidateJSONSkip: true,
     }.Froze()
 )
  
  
 // API is a binding of specific config.
 // This interface is inspired by github.com/json-iterator/go,
-// and has same behaviors under equavilent config.
+// and has same behaviors under equivalent config.
 type API interface {
     // MarshalToString returns the JSON encoding string of v
     MarshalToString(v interface{}) (string, error)

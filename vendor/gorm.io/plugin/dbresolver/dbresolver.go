@@ -2,7 +2,7 @@ package dbresolver
 
 import (
 	"errors"
-	"sync"
+	"sync/atomic"
 
 	"gorm.io/gorm"
 )
@@ -19,6 +19,7 @@ type DBResolver struct {
 	global           *resolver
 	prepareStmtStore map[gorm.ConnPool]*gorm.PreparedStmtDB
 	compileCallbacks []func(gorm.ConnPool) error
+	once             int32
 }
 
 type Config struct {
@@ -47,6 +48,7 @@ func (dr *DBResolver) Register(config Config, datas ...interface{}) *DBResolver 
 	}
 
 	config.datas = datas
+
 	dr.configs = append(dr.configs, config)
 	if dr.DB != nil {
 		dr.compileConfig(config)
@@ -58,10 +60,13 @@ func (dr *DBResolver) Name() string {
 	return "gorm:db_resolver"
 }
 
-func (dr *DBResolver) Initialize(db *gorm.DB) error {
-	dr.DB = db
-	dr.registerCallbacks(db)
-	return dr.compile()
+func (dr *DBResolver) Initialize(db *gorm.DB) (err error) {
+	if atomic.SwapInt32(&dr.once, 1) == 0 {
+		dr.DB = db
+		dr.registerCallbacks(db)
+		err = dr.compile()
+	}
+	return
 }
 
 func (dr *DBResolver) compile() error {
@@ -89,6 +94,7 @@ func (dr *DBResolver) compileConfig(config Config) (err error) {
 
 	if len(config.Sources) == 0 {
 		r.sources = []gorm.ConnPool{connPool}
+		dr.prepareStmtStore[connPool] = gorm.NewPreparedStmtDB(connPool, dr.PrepareStmtMaxSize, dr.PrepareStmtTTL)
 	} else if r.sources, err = dr.convertToConnPool(config.Sources); err != nil {
 		return err
 	}
@@ -135,17 +141,12 @@ func (dr *DBResolver) convertToConnPool(dialectors []gorm.Dialector) (connPools 
 	config := *dr.DB.Config
 	for _, dialector := range dialectors {
 		if db, err := gorm.Open(dialector, &config); err == nil {
-			connPool := db.Config.ConnPool
+			connPool := db.ConnPool
 			if preparedStmtDB, ok := connPool.(*gorm.PreparedStmtDB); ok {
 				connPool = preparedStmtDB.ConnPool
 			}
 
-			dr.prepareStmtStore[connPool] = &gorm.PreparedStmtDB{
-				ConnPool:    db.Config.ConnPool,
-				Stmts:       map[string]*gorm.Stmt{},
-				Mux:         &sync.RWMutex{},
-				PreparedSQL: make([]string, 0, 100),
-			}
+			dr.prepareStmtStore[connPool] = gorm.NewPreparedStmtDB(db.ConnPool, dr.PrepareStmtMaxSize, dr.PrepareStmtTTL)
 
 			connPools = append(connPools, connPool)
 		} else {

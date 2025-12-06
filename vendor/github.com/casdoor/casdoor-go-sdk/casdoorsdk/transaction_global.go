@@ -34,8 +34,12 @@ func UpdateTransaction(transaction *Transaction) (bool, error) {
 	return globalClient.UpdateTransaction(transaction)
 }
 
-func AddTransaction(transaction *Transaction) (bool, error) {
+func AddTransaction(transaction *Transaction) (bool, string, error) {
 	return globalClient.AddTransaction(transaction)
+}
+
+func AddTransactionWithDryRun(transaction *Transaction, dryrun bool) (bool, string, error) {
+	return globalClient.AddTransactionWithDryRun(transaction, dryrun)
 }
 
 func DeleteTransaction(transaction *Transaction) (bool, error) {

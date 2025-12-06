@@ -77,3 +77,42 @@ func (c *Client) GetPolicies(enforcerName string, adapterId string) ([]*CasbinRu
 	}
 	return policies, nil
 }
+
+// PolicyFilter represents a filter for getting policies
+type PolicyFilter struct {
+	Ptype       string   `json:"ptype"`
+	FieldIndex  *int     `json:"fieldIndex,omitempty"`
+	FieldValues []string `json:"fieldValues,omitempty"`
+}
+
+// GetFilteredPolicies gets policies with filtering capabilities based on field index and values
+func (c *Client) GetFilteredPolicies(enforcerId string, filters []*PolicyFilter) ([]*CasbinRule, error) {
+	queryMap := map[string]string{
+		"id": enforcerId,
+	}
+
+	// Convert filters to JSON
+	postBytes, err := json.Marshal(filters)
+	if err != nil {
+		return nil, err
+	}
+
+	// Make POST request with filters in body
+	resp, err := c.DoPost("get-filtered-policies", queryMap, postBytes, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract data from response
+	res, err := json.Marshal(resp.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	var policies []*CasbinRule
+	err = json.Unmarshal(res, &policies)
+	if err != nil {
+		return nil, err
+	}
+	return policies, nil
+}

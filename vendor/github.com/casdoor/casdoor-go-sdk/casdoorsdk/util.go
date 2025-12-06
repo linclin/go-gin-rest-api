@@ -22,6 +22,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -29,12 +30,11 @@ import (
 func (c *Client) GetUrl(action string, queryMap map[string]string) string {
 	query := ""
 	for k, v := range queryMap {
-		query += fmt.Sprintf("%s=%s&", k, v)
+		query += fmt.Sprintf("%s=%s&", url.QueryEscape(k), url.QueryEscape(v))
 	}
 	query = strings.TrimRight(query, "&")
 
-	url := fmt.Sprintf("%s/api/%s?%s", c.Endpoint, action, query)
-	return url
+	return fmt.Sprintf("%s/api/%s?%s", c.Endpoint, action, query)
 }
 
 func (c *Client) GetId(name string) string {
@@ -198,6 +198,11 @@ func (c *Client) DoPostBytesRaw(url string, contentType string, body io.Reader) 
 	req.SetBasicAuth(c.ClientId, c.ClientSecret)
 	req.Header.Set("Content-Type", contentType)
 
+	// Add custom headers
+	for key, value := range c.CustomHeaders {
+		req.Header.Set(key, value)
+	}
+
 	resp, err = client.Do(req)
 	if err != nil {
 		return nil, err
@@ -229,6 +234,11 @@ func (c *Client) doGetBytesRawWithoutCheck(url string) ([]byte, error) {
 	}
 
 	req.SetBasicAuth(c.ClientId, c.ClientSecret)
+
+	// Add custom headers
+	for key, value := range c.CustomHeaders {
+		req.Header.Set(key, value)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {

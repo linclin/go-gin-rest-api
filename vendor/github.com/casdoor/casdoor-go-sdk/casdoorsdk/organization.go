@@ -24,6 +24,7 @@ type AccountItem struct {
 	Visible    bool   `json:"visible"`
 	ViewRule   string `json:"viewRule"`
 	ModifyRule string `json:"modifyRule"`
+	Regex      string `json:"regex"`
 }
 
 type ThemeData struct {
@@ -39,31 +40,48 @@ type MfaItem struct {
 	Rule string `json:"rule"`
 }
 
-// Organization has the same definition as https://github.com/casdoor/casdoor/blob/master/object/organization.go#L25
+// Organization has the same definition as https://github.com/casdoor/casdoor/blob/master/object/organization.go#L50
 type Organization struct {
 	Owner       string `xorm:"varchar(100) notnull pk" json:"owner"`
 	Name        string `xorm:"varchar(100) notnull pk" json:"name"`
 	CreatedTime string `xorm:"varchar(100)" json:"createdTime"`
 
-	DisplayName        string     `xorm:"varchar(100)" json:"displayName"`
-	WebsiteUrl         string     `xorm:"varchar(100)" json:"websiteUrl"`
-	Favicon            string     `xorm:"varchar(100)" json:"favicon"`
-	PasswordType       string     `xorm:"varchar(100)" json:"passwordType"`
-	PasswordSalt       string     `xorm:"varchar(100)" json:"passwordSalt"`
-	PasswordOptions    []string   `xorm:"varchar(100)" json:"passwordOptions"`
-	CountryCodes       []string   `xorm:"varchar(200)"  json:"countryCodes"`
-	DefaultAvatar      string     `xorm:"varchar(200)" json:"defaultAvatar"`
-	DefaultApplication string     `xorm:"varchar(100)" json:"defaultApplication"`
-	Tags               []string   `xorm:"mediumtext" json:"tags"`
-	Languages          []string   `xorm:"varchar(255)" json:"languages"`
-	ThemeData          *ThemeData `xorm:"json" json:"themeData"`
-	MasterPassword     string     `xorm:"varchar(100)" json:"masterPassword"`
-	InitScore          int        `json:"initScore"`
-	EnableSoftDeletion bool       `json:"enableSoftDeletion"`
-	IsProfilePublic    bool       `json:"isProfilePublic"`
+	DisplayName            string     `xorm:"varchar(100)" json:"displayName"`
+	WebsiteUrl             string     `xorm:"varchar(100)" json:"websiteUrl"`
+	Logo                   string     `xorm:"varchar(200)" json:"logo"`
+	LogoDark               string     `xorm:"varchar(200)" json:"logoDark"`
+	Favicon                string     `xorm:"varchar(200)" json:"favicon"`
+	HasPrivilegeConsent    bool       `xorm:"bool" json:"hasPrivilegeConsent"`
+	PasswordType           string     `xorm:"varchar(100)" json:"passwordType"`
+	PasswordSalt           string     `xorm:"varchar(100)" json:"passwordSalt"`
+	PasswordOptions        []string   `xorm:"varchar(100)" json:"passwordOptions"`
+	PasswordObfuscatorType string     `xorm:"varchar(100)" json:"passwordObfuscatorType"`
+	PasswordObfuscatorKey  string     `xorm:"varchar(100)" json:"passwordObfuscatorKey"`
+	PasswordExpireDays     int        `json:"passwordExpireDays"`
+	CountryCodes           []string   `xorm:"mediumtext"  json:"countryCodes"`
+	DefaultAvatar          string     `xorm:"varchar(200)" json:"defaultAvatar"`
+	DefaultApplication     string     `xorm:"varchar(100)" json:"defaultApplication"`
+	UserTypes              []string   `xorm:"mediumtext" json:"userTypes"`
+	Tags                   []string   `xorm:"mediumtext" json:"tags"`
+	Languages              []string   `xorm:"varchar(255)" json:"languages"`
+	ThemeData              *ThemeData `xorm:"json" json:"themeData"`
+	MasterPassword         string     `xorm:"varchar(200)" json:"masterPassword"`
+	DefaultPassword        string     `xorm:"varchar(200)" json:"defaultPassword"`
+	MasterVerificationCode string     `xorm:"varchar(100)" json:"masterVerificationCode"`
+	IpWhitelist            string     `xorm:"varchar(200)" json:"ipWhitelist"`
+	InitScore              int        `json:"initScore"`
+	EnableSoftDeletion     bool       `json:"enableSoftDeletion"`
+	IsProfilePublic        bool       `json:"isProfilePublic"`
+	UseEmailAsUsername     bool       `json:"useEmailAsUsername"`
+	EnableTour             bool       `json:"enableTour"`
+	DisableSignin          bool       `json:"disableSignin"`
+	IpRestriction          string     `json:"ipRestriction"`
+	NavItems               []string   `xorm:"mediumtext" json:"navItems"`
+	WidgetItems            []string   `xorm:"mediumtext" json:"widgetItems"`
 
-	MfaItems     []*MfaItem     `xorm:"varchar(300)" json:"mfaItems"`
-	AccountItems []*AccountItem `xorm:"varchar(5000)" json:"accountItems"`
+	MfaItems           []*MfaItem     `xorm:"varchar(300)" json:"mfaItems"`
+	MfaRememberInHours int            `json:"mfaRememberInHours"`
+	AccountItems       []*AccountItem `xorm:"mediumtext" json:"accountItems"`
 }
 
 func (c *Client) GetOrganization(name string) (*Organization, error) {

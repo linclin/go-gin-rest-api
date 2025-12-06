@@ -5,56 +5,50 @@ import (
 	"strconv"
 
 	"github.com/bytedance/sonic/internal/native"
+	"github.com/bytedance/sonic/internal/utils"
 	"github.com/bytedance/sonic/internal/native/types"
 )
 
 
-func SkipNumberFast(json string, start int) (int, error) {
-	// find the number ending, we pasred in sonic-cpp, it alway valid
+func SkipNumberFast(json string, start int) (int, bool) {
+	// find the number ending, we parsed in native, it always valid
 	pos := start
 	for pos < len(json) && json[pos] != ']' && json[pos] != '}' && json[pos] != ',' {
 		if json[pos] >= '0' && json[pos] <= '9' || json[pos] == '.' || json[pos] == '-' || json[pos] == '+' || json[pos] == 'e' || json[pos] == 'E' {
 			pos += 1
 		} else {
-			return pos, error_syntax(pos, json, "invalid number")
-		}
-	}
-	return pos, nil
-}
-
-func ValidNumberFast(json string) error {
-	// find the number ending, we pasred in sonic-cpp, it alway valid
-	pos := 0
-	for pos < len(json) && json[pos] != ']' && json[pos] != '}' && json[pos] != ',' {
-		if json[pos] >= '0' && json[pos] <= '9' || json[pos] == '.' || json[pos] == '-' || json[pos] == '+' || json[pos] == 'e' || json[pos] == 'E' {
-			pos += 1
-		} else {
-			return error_syntax(pos, json, "invalid number")
+			break
 		}
 	}
 
-	if pos == 0 {
-		return error_syntax(pos, json, "invalid number")
+	// if not found number, return false
+	if pos == start {
+		return pos, false
 	}
-	return nil
+	return pos, true
 }
 
-func SkipOneFast2(json string, pos *int) (int, error) {
-	// find the number ending, we pasred in sonic-cpp, it alway valid
-	start := native.SkipOneFast(&json, pos)
-	if start < 0 {
-		return -1, error_syntax(*pos, json, types.ParsingError(-start).Error())
+// pos is the start index of the raw
+func ValidNumberFast(raw string) bool {
+	ret := utils.SkipNumber(raw, 0)
+	if ret < 0 {
+		return false
 	}
-	return start, nil
+
+	// check trailing chars
+	for ret < len(raw) {
+		return false
+	}
+
+	return true
 }
 
 func SkipOneFast(json string, pos int) (string, error) {
-	// find the number ending, we pasred in sonic-cpp, it alway valid
 	start := native.SkipOneFast(&json, &pos)
 	if start < 0 {
-		// TODO: details error code
 		return "", error_syntax(pos, json, types.ParsingError(-start).Error())
 	}
+
 	return json[start:pos], nil
 }
 

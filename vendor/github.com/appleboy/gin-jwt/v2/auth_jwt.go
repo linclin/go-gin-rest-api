@@ -11,11 +11,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/youmark/pkcs8"
 )
 
-// MapClaims type that uses the map[string]interface{} for JSON decoding
-// This is the default claims type if you don't supply one
-type MapClaims map[string]interface{}
+type MapClaims jwt.MapClaims
 
 // GinJWTMiddleware provides a Json-Web-Token authentication implementation. On failure, a 401 HTTP response
 // is returned. On success, the wrapped middleware is called, and the userID is made available as
@@ -157,6 +156,9 @@ type GinJWTMiddleware struct {
 
 	// ParseOptions allow to modify jwt's parser methods
 	ParseOptions []jwt.ParserOption
+
+	// Default vaule is "exp"
+	ExpField string
 }
 
 var (
@@ -245,10 +247,12 @@ func (mw *GinJWTMiddleware) readKeys() error {
 
 func (mw *GinJWTMiddleware) privateKey() error {
 	var keyData []byte
+	var err error
 	if mw.PrivKeyFile == "" {
 		keyData = mw.PrivKeyBytes
 	} else {
-		filecontent, err := os.ReadFile(mw.PrivKeyFile)
+		var filecontent []byte
+		filecontent, err = os.ReadFile(mw.PrivKeyFile)
 		if err != nil {
 			return ErrNoPrivKeyFile
 		}
@@ -256,16 +260,21 @@ func (mw *GinJWTMiddleware) privateKey() error {
 	}
 
 	if mw.PrivateKeyPassphrase != "" {
-		//nolint:staticcheck
-		key, err := jwt.ParseRSAPrivateKeyFromPEMWithPassword(keyData, mw.PrivateKeyPassphrase)
+		var key interface{}
+		key, err = pkcs8.ParsePKCS8PrivateKey(keyData, []byte(mw.PrivateKeyPassphrase))
 		if err != nil {
 			return ErrInvalidPrivKey
 		}
-		mw.privKey = key
+		rsaKey, ok := key.(*rsa.PrivateKey)
+		if !ok {
+			return ErrInvalidPrivKey
+		}
+		mw.privKey = rsaKey
 		return nil
 	}
 
-	key, err := jwt.ParseRSAPrivateKeyFromPEM(keyData)
+	var key *rsa.PrivateKey
+	key, err = jwt.ParseRSAPrivateKeyFromPEM(keyData)
 	if err != nil {
 		return ErrInvalidPrivKey
 	}
@@ -402,6 +411,10 @@ func (mw *GinJWTMiddleware) MiddlewareInit() error {
 		mw.CookieName = "jwt"
 	}
 
+	if mw.ExpField == "" {
+		mw.ExpField = "exp"
+	}
+
 	// bypass other key settings if KeyFunc is set
 	if mw.KeyFunc != nil {
 		return nil
@@ -414,6 +427,7 @@ func (mw *GinJWTMiddleware) MiddlewareInit() error {
 	if mw.Key == nil {
 		return ErrMissingSecretKey
 	}
+
 	return nil
 }
 
@@ -431,7 +445,7 @@ func (mw *GinJWTMiddleware) middlewareImpl(c *gin.Context) {
 		return
 	}
 
-	switch v := claims["exp"].(type) {
+	switch v := claims[mw.ExpField].(type) {
 	case nil:
 		mw.unauthorized(c, http.StatusBadRequest, mw.HTTPStatusMessageFunc(ErrMissingExpField, c))
 		return
@@ -517,7 +531,7 @@ func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 	}
 
 	expire := mw.TimeFunc().Add(mw.TimeoutFunc(claims))
-	claims["exp"] = expire.Unix()
+	claims[mw.ExpField] = expire.Unix()
 	claims["orig_iat"] = mw.TimeFunc().Unix()
 	tokenString, err := mw.signedString(token)
 	if err != nil {
@@ -592,7 +606,7 @@ func (mw *GinJWTMiddleware) RefreshToken(c *gin.Context) (string, time.Time, err
 	}
 
 	expire := mw.TimeFunc().Add(mw.TimeoutFunc(claims))
-	newClaims["exp"] = expire.Unix()
+	newClaims[mw.ExpField] = expire.Unix()
 	newClaims["orig_iat"] = mw.TimeFunc().Unix()
 	tokenString, err := mw.signedString(newToken)
 	if err != nil {
@@ -642,7 +656,7 @@ func (mw *GinJWTMiddleware) TokenGenerator(data interface{}) (string, time.Time,
 	}
 
 	expire := mw.TimeFunc().Add(mw.TimeoutFunc(claims))
-	claims["exp"] = expire.Unix()
+	claims[mw.ExpField] = expire.Unix()
 	claims["orig_iat"] = mw.TimeFunc().Unix()
 	tokenString, err := mw.signedString(token)
 	if err != nil {

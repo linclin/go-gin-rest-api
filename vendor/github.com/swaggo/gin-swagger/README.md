@@ -148,6 +148,32 @@ Demo project tree, `swag init` is run at relative `.`
 ├── go.sum
 └── main.go
 ```
+## Project with Nested Directory
+```
+.
+├── cmd
+│   └── ginsimple
+│       └── main.go
+├── docs
+│   ├── docs.go
+│   ├── swagger.json
+│   └── swagger.yaml
+├── go.mod
+├── go.sum
+└── internal
+    ├── handlers
+    │   ├── helloWorld.go
+    │   └── userHandler.go
+    └── models
+        ├── profile.go
+        └── user.go
+```
+Inorder generate swagger docs for projects with nested directories run the following command
+```bash
+swag init -g ./cmd/ginsimple/main.go -o cmd/docs
+```
+`-o` will set the auto generated file to the specified path
+
 
 ## Multiple APIs
 
@@ -178,3 +204,4 @@ func main() {
 | InstanceName             | string | "swagger"  | The instance name of the swagger document. If multiple different swagger instances should be deployed on one gin router, ensure that each instance has a unique name (use the _--instanceName_ parameter to generate swagger documents with _swag init_). |
 | PersistAuthorization     | bool   | false      | If set to true, it persists authorization data and it would not be lost on browser close/refresh.                                                                                                                                                         |
 | Oauth2DefaultClientID    | string | ""         | If set, it's used to prepopulate the _client_id_ field of the OAuth2 Authorization dialog.                                                                                                                                                                |
+| Oauth2UsePkce            | bool   | false      | If set to true, it enables Proof Key for Code Exchange to enhance security for OAuth public clients.                                                                                                                                                      |

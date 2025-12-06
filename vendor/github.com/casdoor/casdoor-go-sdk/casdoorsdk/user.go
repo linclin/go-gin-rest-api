@@ -192,18 +192,22 @@ type User struct {
 	MfaPhoneEnabled  bool     `json:"mfaPhoneEnabled"`
 	MfaEmailEnabled  bool     `json:"mfaEmailEnabled"`
 	// MultiFactorAuths    []*MfaProps           `xorm:"-" json:"multiFactorAuths,omitempty"`
+	Invitation     string `xorm:"varchar(100) index" json:"invitation"`
+	InvitationCode string `xorm:"varchar(100) index" json:"invitationCode"`
 
 	Ldap       string            `xorm:"ldap varchar(100)" json:"ldap"`
 	Properties map[string]string `json:"properties"`
 
-	Roles       []*Role       `json:"roles"`
-	Permissions []*Permission `json:"permissions"`
-	Groups      []string      `xorm:"groups varchar(1000)" json:"groups"`
+	Roles                  []*Role       `json:"roles"`
+	Permissions            []*Permission `json:"permissions"`
+	Groups                 []string      `xorm:"groups varchar(1000)" json:"groups"`
+	LastChangePasswordTime string        `xorm:"varchar(100)" json:"lastChangePasswordTime"`
 
 	LastSigninWrongTime string `xorm:"varchar(100)" json:"lastSigninWrongTime"`
 	SigninWrongTimes    int    `json:"signinWrongTimes"`
 
-	ManagedAccounts []ManagedAccount `xorm:"managedAccounts blob" json:"managedAccounts"`
+	ManagedAccounts    []ManagedAccount `xorm:"managedAccounts blob" json:"managedAccounts"`
+	NeedUpdatePassword bool             `json:"needUpdatePassword"`
 }
 
 func (c *Client) GetGlobalUsers() ([]*User, error) {
@@ -418,6 +422,11 @@ func (c *Client) SetPassword(owner, name, oldPassword, newPassword string) (bool
 
 func (c *Client) UpdateUserById(id string, user *User) (bool, error) {
 	_, affected, err := c.modifyUserById("update-user", id, user, nil)
+	return affected, err
+}
+
+func (c *Client) UpdateUserByUserId(owner string, userId string, user *User) (bool, error) {
+	_, affected, err := c.modifyUserByUserId("update-user", owner, userId, user, nil)
 	return affected, err
 }
 

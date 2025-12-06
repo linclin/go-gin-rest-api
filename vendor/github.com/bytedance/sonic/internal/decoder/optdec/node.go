@@ -12,7 +12,7 @@ import (
 type Context struct {
 	Parser      *Parser
 	efacePool   *efacePool
-	Stack       bounedStack
+	Stack       boundedStack
 	Utf8Inv     bool
 }
 
@@ -26,20 +26,20 @@ type parentStat struct {
 	con 	unsafe.Pointer
 	remain	uint64
 }
-type bounedStack struct {
+type boundedStack struct {
 	stack []parentStat
 	index int
 }
 
-func newStack(size int) bounedStack {
-	return bounedStack{
+func newStack(size int) boundedStack {
+	return boundedStack{
 		stack: make([]parentStat, size + 2),
 		index: 0,
 	}
 }
 
 //go:nosplit
-func (s *bounedStack) Pop() (unsafe.Pointer, int, bool){
+func (s *boundedStack) Pop() (unsafe.Pointer, int, bool){
 	s.index--
 	con := s.stack[s.index].con
 	remain := s.stack[s.index].remain &^ (uint64(1) << 63)
@@ -50,7 +50,7 @@ func (s *bounedStack) Pop() (unsafe.Pointer, int, bool){
 }
 
 //go:nosplit
-func (s *bounedStack) Push(p unsafe.Pointer, remain int, isObj bool) {
+func (s *boundedStack) Push(p unsafe.Pointer, remain int, isObj bool) {
 	s.stack[s.index].con = p
 	s.stack[s.index].remain = uint64(remain)
 	if isObj {
@@ -301,6 +301,17 @@ func (self Node) AsI64(ctx *Context) (int64, bool) {
 	}
 }
 
+func (self Node) AsByte(ctx *Context) (uint8, bool) {
+	typ := self.Type()
+	if typ == KUint && self.U64() <= math.MaxUint8 {
+		return uint8(self.U64()), true
+	} else if typ == KSint && self.I64() == 0 {
+		return 0, true
+	} else {
+		return 0, false
+	}
+}
+
 /********* Parse Node String into Value ***************/
 
 func (val Node) ParseI64(ctx *Context) (int64, bool) {
@@ -372,7 +383,7 @@ func (val Node) ParseF64(ctx *Context) (float64, bool) {
 }
 
 func (val Node) ParseString(ctx *Context) (string, bool) {
-	// shoud not use AsStrRef
+	// should not use AsStrRef
 	s, ok := val.AsStr(ctx)
 	if !ok {
 		return "", false
@@ -391,7 +402,7 @@ func (val Node) ParseString(ctx *Context) (string, bool) {
 
 
 func (val Node) ParseNumber(ctx *Context) (json.Number, bool) {
-	// shoud not use AsStrRef
+	// should not use AsStrRef
 	s, ok := val.AsStr(ctx)
 	if !ok {
 		return json.Number(""), false
@@ -401,9 +412,9 @@ func (val Node) ParseNumber(ctx *Context) (json.Number, bool) {
 		return json.Number(""), true
 	}
 
-	end, err := SkipNumberFast(s, 0)
+	end, ok := SkipNumberFast(s, 0)
 	// has error or trailing chars
-	if err != nil || end != len(s) {
+	if !ok || end != len(s) {
 		return json.Number(""),  false
 	}
 	return json.Number(s), true
@@ -457,20 +468,6 @@ func (val Node) AsStrRef(ctx *Context) (string, bool) {
 	}
 }
 
-func (val Node) AsBytesRef(ctx *Context) ([]byte, bool) {
-	switch val.Type() {
-	case KStringEscaped:
-		node := ptrCast(val.cptr)
-		offset := val.Position()
-		len := int(node.val)
-		return ctx.Parser.JsonBytes()[offset : offset + len], true
-	case KStringCommon:
-		return rt.Str2Mem(val.StringRef(ctx)), true
-	default:
-		return nil, false
-	}
-}
-
 func (val Node) AsStringText(ctx *Context) ([]byte, bool) {
 	if !val.IsStr() {
 		return nil, false
@@ -509,12 +506,11 @@ func (val Node) AsNumber(ctx *Context) (json.Number, bool) {
 	// parse JSON string as number
 	if val.IsStr() {
 		s, _ := val.AsStr(ctx)
-		err := ValidNumberFast(s)
-		if err != nil {
+		if !ValidNumberFast(s) {
 			return "", false
+		} else {
+			return json.Number(s), true
 		}
-		
-		return json.Number(s), true
 	}
 
 	return val.NonstrAsNumber(ctx)
@@ -532,8 +528,8 @@ func (val Node) NonstrAsNumber(ctx *Context) (json.Number, bool) {
 	}
 
 	start := val.Position()
-	end, err := SkipNumberFast(ctx.Parser.Json, start)
-	if err != nil {
+	end, ok := SkipNumberFast(ctx.Parser.Json, start)
+	if !ok {
 		return "", false
 	}
 	return json.Number(ctx.Parser.Json[start:end]), true
@@ -552,7 +548,7 @@ func (val Node) AsRaw(ctx *Context) string {
 		node := ptrCast(val.cptr)
 		len := int(node.val)
 		offset := val.Position()
-		// add start abd end quote
+		// add start and end quote
 		ref := rt.Str2Mem(ctx.Parser.Json)[offset-1 : offset+len+1]
 		return rt.Mem2Str(ref)
 	case KRawNumber: fallthrough
@@ -868,15 +864,38 @@ func (node *Node) AsSliceString(ctx *Context, vp unsafe.Pointer) error {
 	return gerr
 }
 
-func (node *Node) AsSliceBytes(ctx *Context) ([]byte, error) {
-	b, ok := node.AsBytesRef(ctx)
-	if !ok {
-		return nil, newUnmatched(node.Position(), rt.BytesType)
+func (val *Node) AsSliceBytes(ctx *Context) ([]byte, error) {
+	var origin []byte
+	switch val.Type() {
+	case KStringEscaped:
+		node := ptrCast(val.cptr)
+		offset := val.Position()
+		len := int(node.val)
+		origin = ctx.Parser.JsonBytes()[offset : offset + len]
+	case KStringCommon:
+		origin = rt.Str2Mem(val.StringRef(ctx))
+	case KArray:
+		arr := val.Array()
+		size := arr.Len()
+		a := make([]byte, size)
+		elem := NewNode(arr.Children())
+		var gerr error
+		var ok bool
+		for i := 0; i < size; i++ {
+			a[i], ok = elem.AsByte(ctx)
+			if !ok && gerr == nil {
+				gerr = newUnmatched(val.Position(), rt.BytesType)
+			}
+			elem = NewNode(PtrOffset(elem.cptr, 1))
+		}
+		return a, gerr
+	default:
+		return nil,  newUnmatched(val.Position(), rt.BytesType)
 	}
-
-	b64, err := rt.DecodeBase64(b)
+	
+	b64, err := rt.DecodeBase64(origin)
 	if err != nil {
-		return nil, newUnmatched(node.Position(), rt.BytesType)
+		return nil, newUnmatched(val.Position(), rt.BytesType)
 	}
 	return b64, nil
 }
@@ -1234,7 +1253,7 @@ func (node *Node) AsEfaceFallback(ctx *Context) (interface{}, error) {
 		if ctx.Parser.options & (1 << _F_use_number) != 0 {
 			num, ok := node.AsNumber(ctx)
 			if !ok {
-				// skip the unmacthed type
+				// skip the unmatched type
 				*node = NewNode(node.Next())
 				return nil, newUnmatched(node.Position(), rt.JsonNumberType)
 			} else {
@@ -1256,13 +1275,13 @@ func (node *Node) AsEfaceFallback(ctx *Context) (interface{}, error) {
 				return f, nil
 			}
 		
-			// skip the unmacthed type
+			// skip the unmatched type
 			*node = NewNode(node.Next())
 			return nil, newUnmatched(node.Position(), rt.Int64Type)
 		} else {
 			num, ok := node.AsF64(ctx)
 			if !ok {
-				// skip the unmacthed type
+				// skip the unmatched type
 				*node = NewNode(node.Next())
 				return nil, newUnmatched(node.Position(), rt.Float64Type)
 			} else {
