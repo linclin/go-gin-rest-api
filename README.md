@@ -152,7 +152,8 @@ docker run -d --name mysql -h mysql -p 3306:3306 --restart=always -v D:\MySQL:/v
 ## 快速开始开发
 ```  
 # 设置常用环境变量
-go env -w GOROOT=C:\Go 
+go env -w GOPATH=D:\project
+go env -w GOBIN=D:\project\bin
 go env -w GO111MODULE=on
 go env -w GOPROXY=https://goproxy.cn,direct
 go env -w GOSUMDB=off 
@@ -203,7 +204,7 @@ GitCommitLog=${GitCommitLog//\'/\"}
 BuildTime=`date +'%Y.%m.%d.%H%M%S'`
 #构建go版本
 BuildGoVersion=`go version`
-LDFlags="-w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"
+LDFlags="-s -w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"
 go build -ldflags="$LDFlags" -o  ./go-gin-rest-api
 ```
 ## 镜像构建-Docker构建 

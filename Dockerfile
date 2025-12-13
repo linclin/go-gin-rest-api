@@ -15,7 +15,7 @@ RUN export GitBranch=$(git name-rev --name-only HEAD) && \
     export BuildTime=`date +'%Y.%m.%d.%H%M%S'` && \
     export BuildGoVersion=`go version` && \
     export LDFlags="-s -w -X 'main.GitBranch=${GitBranch}' -X 'main.GitRevision=${GitRevision}' -X 'main.GitCommitLog=${GitCommitLog}' -X 'main.BuildTime=${BuildTime}' -X 'main.BuildGoVersion=${BuildGoVersion}'"  && \
-    go build -tags=jsoniter -ldflags="$LDFlags" -o  ./go-gin-rest-api
+    go build -ldflags="$LDFlags" -o  ./go-gin-rest-api
 
 FROM registry.cn-shenzhen.aliyuncs.com/dev-ops/alpine:3.23.0
 LABEL MAINTAINER="13579443@qq.com"
@@ -27,7 +27,7 @@ RUN TERM=linux && export TERM
 RUN sed -i 's/https/http/' /etc/apk/repositories && \
     sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update && \
-    apk add --no-cache ca-certificates tzdata bash sudo busybox-extras curl && \
+    apk add --no-cache ca-certificates tzdata bash sudo busybox-extras less gzip curl net-tools bind-tools && \
     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtim && \
     echo "Asia/Shanghai" > /etc/timezone && \ 
     rm -rf /var/cache/apk/*   /tmp/* && \
