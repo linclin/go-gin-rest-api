@@ -33,7 +33,8 @@ func Login(c *gin.Context) {
 	execTime := time.Now().Sub(startTime)
 	sys.AddReqApi(c, "POST", fmt.Sprintf("%s/api/login/oauth/authorize", global.Conf.Casdoor.Endpoint), fmt.Sprintf("?state=%s&code=%s", state, code), utils.JsonStr(token), execTime.String(), 0, time.Now())
 	if err != nil {
-		models.FailWithMessage(err.Error(), c)
+		global.Log.Error(fmt.Sprintf("用户登录失败: %v", err))
+		models.FailWithMessage("登录失败，请稍后重试", c)
 		return
 	}
 	models.OkWithData(token, c)
@@ -55,7 +56,8 @@ func GetUserInfo(c *gin.Context) {
 	execTime := time.Now().Sub(startTime)
 	sys.AddReqApi(c, "POST", fmt.Sprintf("%s/api/login/oauth/access_token", global.Conf.Casdoor.Endpoint), token, utils.JsonStr(claims), execTime.String(), 0, time.Now())
 	if err != nil {
-		models.FailWithMessage(err.Error(), c)
+		global.Log.Error(fmt.Sprintf("获取用户信息失败: %v", err))
+		models.FailWithMessage("获取用户信息失败，请稍后重试", c)
 		return
 	}
 	models.OkWithData(claims.User, c)

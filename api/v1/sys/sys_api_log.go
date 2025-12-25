@@ -35,14 +35,17 @@ func GetApiLog(c *gin.Context) {
 		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
+
 	rqlParams, err := rqlQueryParser.ParseQuery(&rqlQuery)
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
+
 	if rqlParams.Sort == "" {
 		rqlParams.Sort = "id desc"
 	}
+
 	list := make([]sys.SysApiLog, 0)
 	query := global.DB
 	count := int64(0)
@@ -51,11 +54,13 @@ func GetApiLog(c *gin.Context) {
 		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
+
 	err = query.Where(rqlParams.FilterExp, rqlParams.FilterArgs...).Limit(rqlParams.Limit).Offset(rqlParams.Offset).Order(rqlParams.Sort).Find(&list).Error
 	if err != nil {
 		models.FailWithDetailed("", err.Error(), c)
 		return
 	}
+
 	models.OkWithDataList(list, count, c)
 }
 

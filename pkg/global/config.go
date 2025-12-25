@@ -16,13 +16,15 @@ type Configuration struct {
 }
 
 type SystemConfiguration struct {
-	AppName       string `mapstructure:"app-name" json:"appName"`
-	RunMode       string `mapstructure:"run-mode" json:"runMode"`
-	UrlPathPrefix string `mapstructure:"url-path-prefix" json:"urlPathPrefix"`
-	Port          int    `mapstructure:"port" json:"port"`
-	BaseApi       string `mapstructure:"base-api" json:"baseApi"`
-	Transaction   bool   `mapstructure:"transaction" json:"transaction"`
-	InitData      bool   `mapstructure:"init-data" json:"initData"`
+	AppName           string `mapstructure:"app-name" json:"appName"`
+	RunMode           string `mapstructure:"run-mode" json:"runMode"`
+	UrlPathPrefix     string `mapstructure:"url-path-prefix" json:"urlPathPrefix"`
+	Port              int    `mapstructure:"port" json:"port"`
+	BaseApi           string `mapstructure:"base-api" json:"baseApi"`
+	Transaction       bool   `mapstructure:"transaction" json:"transaction"`
+	InitData          bool   `mapstructure:"init-data" json:"initData"`
+	RsaPrivateKeyPath string `mapstructure:"rsa-private-key-path" json:"rsaPrivateKeyPath"`
+	RsaPublicKeyPath  string `mapstructure:"rsa-public-key-path" json:"rsaPublicKeyPath"`
 }
 
 type LogsConfiguration struct {

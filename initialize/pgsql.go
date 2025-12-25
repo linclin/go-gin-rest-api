@@ -38,13 +38,13 @@ func Pgsql() {
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		global.Log.Error(fmt.Sprintf("获取数据库连接错误: %v", err))
-		panic(fmt.Sprintf("获取数据库连接错误: %v", err))
+		global.Log.Error(fmt.Sprintf("获取数据库连接池失败: %v", err))
+		panic(fmt.Sprintf("获取数据库连接池失败: %v", err))
 	}
 
-	// SetMaxIdleCons 设置连接池中的最大闲置连接数。
+	// SetMaxIdleConns 设置连接池中的最大闲置连接数。
 	sqlDB.SetMaxIdleConns(10)
-	// SetMaxOpenCons 设置数据库的最大连接数量。
+	// SetMaxOpenConns 设置数据库的最大连接数量。
 	sqlDB.SetMaxOpenConns(500)
 	// SetConnMaxLifetime 设置连接的最大可复用时间。
 	sqlDB.SetConnMaxLifetime(time.Hour)

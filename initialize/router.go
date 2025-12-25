@@ -6,6 +6,7 @@ import (
 	"go-gin-rest-api/middleware"
 	"go-gin-rest-api/models/sys"
 	"go-gin-rest-api/pkg/global"
+	"go-gin-rest-api/pkg/utils"
 	sysRouter "go-gin-rest-api/router/sys"
 	"time"
 
@@ -26,7 +27,8 @@ func Routers() *gin.Engine {
 	// 初始化路由接口到数据库表中
 	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
 		//global.Log.Debug(fmt.Sprint("router %v %v %v %v\n", httpMethod, absolutePath, handlerName, nuHandlers))
-		go func(httpMethod, absolutePath, handlerName string) {
+		// 使用 SafeGo 确保 panic 不会影响路由注册
+		utils.SafeGo(func() {
 			sys_router := sys.SysRouter{
 				HttpMethod:   httpMethod,
 				AbsolutePath: absolutePath,
@@ -34,9 +36,9 @@ func Routers() *gin.Engine {
 			}
 			err := global.DB.Where(&sys_router).FirstOrCreate(&sys_router).Error
 			if err != nil {
-				global.Log.Error(fmt.Sprint("SysRouter 数据初始化失败", err.Error()))
+				global.Log.Error(fmt.Sprintf("SysRouter 数据初始化失败: %v", err))
 			}
-		}(httpMethod, absolutePath, handlerName)
+		})
 	}
 	if global.Conf.System.RunMode == "prd" {
 		gin.SetMode(gin.ReleaseMode)

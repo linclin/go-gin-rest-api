@@ -16,8 +16,8 @@ func InitAuth() (*jwt.GinJWTMiddleware, error) {
 	return jwt.New(&jwt.GinJWTMiddleware{
 		Realm:            global.Conf.System.AppName, // jwt标识
 		SigningAlgorithm: "RS512",
-		PrivKeyFile:      "./conf/rsa/rsa-private.pem", // Private key
-		PubKeyFile:       "./conf/rsa/rsa-public.pem",  // Public key
+		PrivKeyFile:      global.Conf.System.RsaPrivateKeyPath, // Private key
+		PubKeyFile:       global.Conf.System.RsaPublicKeyPath,  // Public key
 		IdentityKey:      "AppId",
 		Timeout:          time.Hour * time.Duration(global.Conf.Jwt.Timeout),    // token过期时间
 		MaxRefresh:       time.Hour * time.Duration(global.Conf.Jwt.MaxRefresh), // token更新时间

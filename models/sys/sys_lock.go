@@ -25,7 +25,7 @@ func NewLock(lockMethod string, expireTime int64) *SysLock {
 
 func (lock *SysLock) TryLock() bool {
 	if err := lock.deleteExpiredLock(); err != nil {
-		global.Log.Error(fmt.Sprint("清理过期任务锁失败", lock.LockMethod, err.Error()))
+		global.Log.Error(fmt.Sprintf("清理过期任务锁失败 %s: %v", lock.LockMethod, err))
 		return false
 	}
 	var newlock = SysLock{
@@ -39,9 +39,10 @@ func (lock *SysLock) TryLock() bool {
 	err := global.DB.Create(&newlock).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") {
+			// 重复条目表示锁已被其他实例获取
 			return false
 		}
-		global.Log.Error(fmt.Sprint("获取任务锁失败", err.Error()))
+		global.Log.Error(fmt.Sprintf("获取任务锁失败: %v", err))
 		return false
 	}
 	return true

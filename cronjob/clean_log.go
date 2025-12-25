@@ -11,7 +11,7 @@ import (
 	loggable "github.com/linclin/gorm2-loggable"
 )
 
-// 清理超过一周的日志表数据
+// CleanLog 清理超过一周的日志表数据
 type CleanLog struct {
 }
 
@@ -25,39 +25,57 @@ func (u CleanLog) Run() {
 		lock := sys.NewLock("CleanLog", 600)
 		lock.DeleteLock()
 	}()
-	//获取任务锁
+
+	// 获取任务锁
 	lock := sys.NewLock("CleanLog", 600)
 	if !lock.TryLock() {
 		global.Log.Error("cronjob定时任务:CleanLog获取任务锁失败")
 		return
 	}
 	defer lock.DeleteLock()
-	//删除日志
-	err := global.DB.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysApiLog{}).Error
+
+	// 删除日志
+	var totalErr error
+	var err error
+
+	// 删除 SysApiLog
+	err = global.DB.Where("StartTime < ?", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysApiLog{}).Error
 	if err != nil {
-		global.Log.Error("cronjob定时任务:CleanLog删除SysApiLog失败")
+		global.Log.Error(fmt.Sprintf("cronjob定时任务:CleanLog删除SysApiLog失败: %v", err))
+		totalErr = err
 	}
-	err = global.DB.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysReqApiLog{}).Error
+
+	// 删除 SysReqApiLog
+	err = global.DB.Where("StartTime < ?", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysReqApiLog{}).Error
 	if err != nil {
-		global.Log.Error("cronjob定时任务:CleanLog删除SysReqApiLog失败")
+		global.Log.Error(fmt.Sprintf("cronjob定时任务:CleanLog删除SysReqApiLog失败: %v", err))
+		totalErr = err
 	}
-	err = global.DB.Where("StartTime < ? ", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysCronjobLog{}).Error
+
+	// 删除 SysCronjobLog
+	err = global.DB.Where("StartTime < ?", time.Now().AddDate(0, 0, -7)).Unscoped().Delete(sys.SysCronjobLog{}).Error
 	if err != nil {
-		global.Log.Error("cronjob定时任务:CleanLog删除SysCronjobLog失败")
+		global.Log.Error(fmt.Sprintf("cronjob定时任务:CleanLog删除SysCronjobLog失败: %v", err))
+		totalErr = err
 	}
-	err = global.DB.Table("sys_change_logs").Where("created_at < ? ", time.Now().AddDate(0, 0, -7).Unix()).Unscoped().Delete(loggable.ChangeLog{}).Error
+
+	// 删除 ChangeLog
+	err = global.DB.Table("sys_change_logs").Where("created_at < ?", time.Now().AddDate(0, 0, -7).Unix()).Unscoped().Delete(loggable.ChangeLog{}).Error
 	if err != nil {
-		global.Log.Error("cronjob定时任务:CleanLog删除ChangeLog失败")
+		global.Log.Error(fmt.Sprintf("cronjob定时任务:CleanLog删除ChangeLog失败: %v", err))
+		totalErr = err
 	}
-	//记录任务日志表
+
+	// 记录任务日志表
 	endTime := time.Now()
 	execTime := endTime.Sub(startTime).Seconds()
 	status := "success"
 	errMsg := ""
-	if err != nil {
+	if totalErr != nil {
 		status = "fail"
-		errMsg = err.Error()
+		errMsg = totalErr.Error()
 	}
+
 	utils.SafeGo(func() {
 		sys.AddSysCronjobLog("CleanLog", "@every 1m", status, errMsg, startTime, endTime, execTime)
 	})

@@ -49,8 +49,8 @@ func Mysql() {
 
 				dbForCreateDatabase, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=utf8", global.Conf.Mysql.Username, global.Conf.Mysql.Password, global.Conf.Mysql.Host, global.Conf.Mysql.Port)+"&loc=Asia%2FShanghai")
 				if err != nil {
-					global.Log.Error(fmt.Sprintf("数据库连接错误:%v", err))
-					panic(fmt.Sprintf("数据库连接错误:%v", err))
+					global.Log.Error(fmt.Sprintf("数据库连接错误: %v", err))
+					panic(fmt.Sprintf("数据库连接错误: %v", err))
 				}
 				defer dbForCreateDatabase.Close()
 				info, err := dbForCreateDatabase.Exec(createsql)
@@ -69,12 +69,16 @@ func Mysql() {
 			panic(fmt.Sprintf("初始化mysql异常: %v", err))
 		}
 	}
-	sqlDB, _ := db.DB()
-	// SetMaxIdleCons 设置连接池中的最大闲置连接数。
+	sqlDB, err := db.DB()
+	if err != nil {
+		global.Log.Error(fmt.Sprintf("获取数据库连接池失败: %v", err))
+		panic(fmt.Sprintf("获取数据库连接池失败: %v", err))
+	}
+	// SetMaxIdleConns 设置连接池中的最大闲置连接数。
 	sqlDB.SetMaxIdleConns(10)
-	// SetMaxOpenCons 设置数据库的最大连接数量。
+	// SetMaxOpenConns 设置数据库的最大连接数量。
 	sqlDB.SetMaxOpenConns(500)
-	// SetConnMaxLifetiment 设置连接的最大可复用时间。
+	// SetConnMaxLifetime 设置连接的最大可复用时间。
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	global.DB = db
 	// 自动迁移表结构
