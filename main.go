@@ -18,14 +18,56 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-var (
-	// 初始化为 unknown，如果编译时没有传入这些值，则为 unknown
-	GitBranch      = "unknown"
-	GitRevision    = "unknown"
-	GitCommitLog   = "unknown"
-	BuildTime      = "unknown"
-	BuildGoVersion = "unknown"
-)
+// 使用 debug.ReadBuildInfo 来获取构建信息
+func buildInfo() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "无法获取构建信息\n"
+	}
+
+	// 获取 Go 版本
+	goVersion := info.GoVersion
+	if goVersion == "" {
+		goVersion = "unknown"
+	}
+
+	// 获取主模块信息
+	mainModule := info.Main
+	modulePath := mainModule.Path
+	moduleVersion := mainModule.Version
+
+	// 提取 Git 相关信息
+	var gitInfo []string
+	var gitBranch string
+	for _, setting := range info.Settings {
+		switch setting.Key {
+		case "vcs.revision":
+			gitInfo = append(gitInfo, fmt.Sprintf("GitCommit=%s", setting.Value))
+		case "vcs.time":
+			gitInfo = append(gitInfo, fmt.Sprintf("GitTime=%s", setting.Value))
+		case "vcs.modified":
+			gitInfo = append(gitInfo, fmt.Sprintf("GitModified=%s", setting.Value))
+		case "vcs":
+			gitInfo = append(gitInfo, fmt.Sprintf("VCS=%s", setting.Value))
+		case "vcs.branch":
+			// 某些构建可能包含分支信息
+			gitBranch = setting.Value
+			gitInfo = append(gitInfo, fmt.Sprintf("GitBranch=%s", setting.Value))
+		}
+	}
+	result := fmt.Sprintf(
+		"Module: %s\nVersion: %s\nGoVersion: %s\nGitBranch: %s\nGitInfo: %s\nruntime=%s/%s\n",
+		modulePath,
+		moduleVersion,
+		goVersion,
+		gitBranch,
+		gitInfo,
+		runtime.GOOS,
+		runtime.GOARCH,
+	)
+
+	return result
+}
 
 func init() {
 	//输出程序分支 commit golang版本  构建时间
@@ -118,10 +160,4 @@ func main() {
 		global.Log.Error(fmt.Sprint("Server forced to shutdown: ", err))
 	}
 	global.Log.Info("Server exiting")
-}
-
-// 返回构建信息 多行格式
-func buildInfo() string {
-	return fmt.Sprintf("GitBranch=%s\nGitRevision=%s\nGitCommitLog=%s\nBuildTime=%s\nGoVersion=%s\nruntime=%s/%s\n",
-		GitBranch, GitRevision, GitCommitLog, BuildTime, BuildGoVersion, runtime.GOOS, runtime.GOARCH)
 }
