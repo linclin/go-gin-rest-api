@@ -30,13 +30,12 @@ type Payment struct {
 	Provider string `xorm:"varchar(100)" json:"provider"`
 	Type     string `xorm:"varchar(100)" json:"type"`
 	// Product Info
-	ProductName        string  `xorm:"varchar(100)" json:"productName"`
-	ProductDisplayName string  `xorm:"varchar(100)" json:"productDisplayName"`
-	Detail             string  `xorm:"varchar(255)" json:"detail"`
-	Tag                string  `xorm:"varchar(100)" json:"tag"`
-	Currency           string  `xorm:"varchar(100)" json:"currency"`
-	Price              float64 `json:"price"`
-	ReturnUrl          string  `xorm:"varchar(1000)" json:"returnUrl"`
+	Products            []string `xorm:"varchar(1000)" json:"products"`
+	ProductsDisplayName string   `xorm:"varchar(1000)" json:"productsDisplayName"`
+	Detail              string   `xorm:"varchar(255)" json:"detail"`
+	Currency            string   `xorm:"varchar(100)" json:"currency"`
+	Price               float64  `json:"price"`
+
 	// Payer Info
 	User         string `xorm:"varchar(100)" json:"user"`
 	PersonName   string `xorm:"varchar(100)" json:"personName"`
@@ -50,11 +49,13 @@ type Payment struct {
 	InvoiceRemark string `xorm:"varchar(100)" json:"invoiceRemark"`
 	InvoiceUrl    string `xorm:"varchar(255)" json:"invoiceUrl"`
 	// Order Info
-	OutOrderId string `xorm:"varchar(100)" json:"outOrderId"`
+	Order      string `xorm:"varchar(100)" json:"order"` // Internal order name
+	OrderObj   *Order `xorm:"-" json:"orderObj,omitempty"`
+	OutOrderId string `xorm:"varchar(100)" json:"outOrderId"` // External payment provider's order ID
 	PayUrl     string `xorm:"varchar(2000)" json:"payUrl"`
-	// State      pp.PaymentState `xorm:"varchaFr(100)" json:"state"`
-	State   string `xorm:"varchar(100)" json:"state"`
-	Message string `xorm:"varchar(2000)" json:"message"`
+	SuccessUrl string `xorm:"varchar(2000)" json:"successUrl"` // `successUrl` is redirected from `payUrl` after pay success
+	State      string `xorm:"varchar(100)" json:"state"`
+	Message    string `xorm:"varchar(2000)" json:"message"`
 }
 
 func (c *Client) GetPayments() ([]*Payment, error) {

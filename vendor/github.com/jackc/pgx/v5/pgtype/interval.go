@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	microsecondsPerSecond = 1000000
+	microsecondsPerSecond = 1_000_000
 	microsecondsPerMinute = 60 * microsecondsPerSecond
 	microsecondsPerHour   = 60 * microsecondsPerMinute
 	microsecondsPerDay    = 24 * microsecondsPerHour
@@ -51,8 +51,7 @@ func (interval *Interval) Scan(src any) error {
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		return scanPlanTextAnyToIntervalScanner{}.Scan([]byte(src), interval)
 	}
 
@@ -161,13 +160,11 @@ func (encodePlanIntervalCodecText) Encode(value any, buf []byte) (newBuf []byte,
 func (IntervalCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
 	switch format {
 	case BinaryFormatCode:
-		switch target.(type) {
-		case IntervalScanner:
+		if _, ok := target.(IntervalScanner); ok {
 			return scanPlanBinaryIntervalToIntervalScanner{}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case IntervalScanner:
+		if _, ok := target.(IntervalScanner); ok {
 			return scanPlanTextAnyToIntervalScanner{}
 		}
 	}
@@ -223,6 +220,8 @@ func (scanPlanTextAnyToIntervalScanner) Scan(src []byte, dst any) error {
 			months += int32(scalar)
 		case "day", "days":
 			days = int32(scalar)
+		default:
+			return fmt.Errorf("bad interval format: %q", parts[i+1])
 		}
 	}
 

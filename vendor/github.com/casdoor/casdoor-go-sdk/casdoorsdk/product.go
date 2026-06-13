@@ -27,16 +27,19 @@ type Product struct {
 	CreatedTime string `xorm:"varchar(100)" json:"createdTime"`
 	DisplayName string `xorm:"varchar(100)" json:"displayName"`
 
-	Image       string   `xorm:"varchar(100)" json:"image"`
-	Detail      string   `xorm:"varchar(255)" json:"detail"`
-	Description string   `xorm:"varchar(100)" json:"description"`
-	Tag         string   `xorm:"varchar(100)" json:"tag"`
-	Currency    string   `xorm:"varchar(100)" json:"currency"`
-	Price       float64  `json:"price"`
-	Quantity    int      `json:"quantity"`
-	Sold        int      `json:"sold"`
-	Providers   []string `xorm:"varchar(100)" json:"providers"`
-	ReturnUrl   string   `xorm:"varchar(1000)" json:"returnUrl"`
+	Image                 string    `xorm:"varchar(100)" json:"image"`
+	Detail                string    `xorm:"varchar(1000)" json:"detail"`
+	Description           string    `xorm:"varchar(200)" json:"description"`
+	Tag                   string    `xorm:"varchar(100)" json:"tag"`
+	Currency              string    `xorm:"varchar(100)" json:"currency"`
+	Price                 float64   `json:"price"`
+	Quantity              int       `json:"quantity"`
+	Sold                  int       `json:"sold"`
+	IsRecharge            bool      `json:"isRecharge"`
+	RechargeOptions       []float64 `xorm:"varchar(500)" json:"rechargeOptions"`
+	DisableCustomRecharge bool      `json:"disableCustomRecharge"`
+	Providers             []string  `xorm:"varchar(255)" json:"providers"`
+	SuccessUrl            string    `xorm:"varchar(1000)" json:"successUrl"`
 
 	State string `xorm:"varchar(100)" json:"state"`
 
@@ -122,30 +125,4 @@ func (c *Client) AddProduct(product *Product) (bool, error) {
 func (c *Client) DeleteProduct(product *Product) (bool, error) {
 	_, affected, err := c.modifyProduct("delete-product", product, nil)
 	return affected, err
-}
-
-func (c *Client) BuyProduct(name string, providerName string, userName string) (*Product, error) {
-	queryMap := map[string]string{
-		"id":           fmt.Sprintf("%s/%s", c.OrganizationName, name),
-		"providerName": providerName,
-		"userName":     userName,
-	}
-
-	resp, err := c.DoPost("buy-product", queryMap, []byte(""), false, false)
-	if err != nil {
-		return nil, err
-	}
-
-	productJson, err := json.Marshal(resp.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	var product Product
-	err = json.Unmarshal(productJson, &product)
-	if err != nil {
-		return nil, err
-	}
-
-	return &product, nil
 }

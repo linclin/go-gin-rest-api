@@ -34,9 +34,11 @@ type Record struct {
 	Method       string `xorm:"varchar(100)" json:"method"`
 	RequestUri   string `xorm:"varchar(1000)" json:"requestUri"`
 	Action       string `xorm:"varchar(1000)" json:"action"`
+	Language     string `xorm:"varchar(100)" json:"language"`
 
-	Object       string `xorm:"-" json:"object"`
-	ExtendedUser *User  `xorm:"-" json:"extendedUser"`
+	StatusCode   int    `json:"statusCode"`
+	Response     string `xorm:"mediumtext" json:"response"`
+	Object       string `xorm:"mediumtext" json:"object"`
 
 	IsTriggered bool `json:"isTriggered"`
 }

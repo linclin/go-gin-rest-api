@@ -22,16 +22,12 @@ type HTTPStreamer interface {
 	HTTPStream() *Stream
 }
 
-// The maximum length of an encoded HTTP/3 frame header is 16:
-// The frame has a type and length field, both QUIC varints (maximum 8 bytes in length)
-const frameHeaderLen = 16
-
 const maxSmallResponseSize = 4096
 
 type responseWriter struct {
 	str *Stream
 
-	conn     *Conn
+	conn     *rawConn
 	header   http.Header
 	trailers map[string]struct{}
 	buf      []byte
@@ -56,7 +52,7 @@ type responseWriter struct {
 var (
 	_ http.ResponseWriter = &responseWriter{}
 	_ http.Flusher        = &responseWriter{}
-	_ Hijacker            = &responseWriter{}
+	_ Settingser          = &responseWriter{}
 	_ HTTPStreamer        = &responseWriter{}
 	// make sure that we implement (some of the) methods used by the http.ResponseController
 	_ interface {
@@ -67,7 +63,7 @@ var (
 	} = &responseWriter{}
 )
 
-func newResponseWriter(str *Stream, conn *Conn, isHead bool, logger *slog.Logger) *responseWriter {
+func newResponseWriter(str *Stream, conn *rawConn, isHead bool, logger *slog.Logger) *responseWriter {
 	return &responseWriter{
 		str:    str,
 		conn:   conn,
@@ -224,7 +220,7 @@ func (w *responseWriter) writeHeader(status int) error {
 	// Handle trailer fields
 	if vals, ok := w.header["Trailer"]; ok {
 		for _, val := range vals {
-			for _, trailer := range strings.Split(val, ",") {
+			for trailer := range strings.SplitSeq(val, ",") {
 				// We need to convert to the canonical header key value here because this will be called when using
 				// headers.Add or headers.Set.
 				trailer = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(trailer))
@@ -278,7 +274,9 @@ func (w *responseWriter) flushTrailers() {
 		return
 	}
 	if err := w.writeTrailers(); err != nil {
-		w.logger.Debug("could not write trailers", "error", err)
+		if w.logger != nil {
+			w.logger.Debug("could not write trailers", "error", err)
+		}
 	}
 }
 
@@ -295,7 +293,9 @@ func (w *responseWriter) Flush() {
 func (w *responseWriter) declareTrailer(k string) {
 	if !httpguts.ValidTrailerHeader(k) {
 		// Forbidden by RFC 9110, section 6.5.1.
-		w.logger.Debug("ignoring invalid trailer", slog.String("header", k))
+		if w.logger != nil {
+			w.logger.Debug("ignoring invalid trailer", slog.String("header", k))
+		}
 		return
 	}
 	if w.trailers == nil {
@@ -304,59 +304,31 @@ func (w *responseWriter) declareTrailer(k string) {
 	w.trailers[k] = struct{}{}
 }
 
-// hasNonEmptyTrailers checks to see if there are any trailers with an actual
-// value set. This is possible by adding trailers to the "Trailers" header
-// but never actually setting those names as trailers in the course of handling
-// the request. In that case, this check may save us some allocations.
-func (w *responseWriter) hasNonEmptyTrailers() bool {
-	for trailer := range w.trailers {
-		if _, ok := w.header[trailer]; ok {
-			return true
-		}
-	}
-	return false
-}
-
 // writeTrailers will write trailers to the stream if there are any.
 func (w *responseWriter) writeTrailers() error {
 	// promote headers added via "Trailer:" convention as trailers, these can be added after
 	// streaming the status/headers have been written.
 	for k := range w.header {
-		// Handle "Trailer:" prefix
 		if strings.HasPrefix(k, http.TrailerPrefix) {
 			w.declareTrailer(k)
 		}
 	}
 
-	if !w.hasNonEmptyTrailers() {
+	if len(w.trailers) == 0 {
 		return nil
 	}
 
-	var b bytes.Buffer
-	var headerFields []qlog.HeaderField
-	enc := qpack.NewEncoder(&b)
+	trailers := make(http.Header, len(w.trailers))
 	for trailer := range w.trailers {
-		trailerName := strings.ToLower(strings.TrimPrefix(trailer, http.TrailerPrefix))
 		if vals, ok := w.header[trailer]; ok {
-			for _, val := range vals {
-				if err := enc.WriteField(qpack.HeaderField{Name: trailerName, Value: val}); err != nil {
-					return err
-				}
-				if w.str.qlogger != nil {
-					headerFields = append(headerFields, qlog.HeaderField{Name: trailerName, Value: val})
-				}
-			}
+			trailers[strings.TrimPrefix(trailer, http.TrailerPrefix)] = vals
 		}
 	}
 
-	buf := make([]byte, 0, frameHeaderLen+b.Len())
-	buf = (&headersFrame{Length: uint64(b.Len())}).Append(buf)
-	buf = append(buf, b.Bytes()...)
-	if w.str.qlogger != nil {
-		qlogCreatedHeadersFrame(w.str.qlogger, w.str.StreamID(), len(buf), b.Len(), headerFields)
+	written, err := writeTrailers(w.str.datagramStream, trailers, w.str.StreamID(), w.str.qlogger)
+	if written {
+		w.trailerWritten = true
 	}
-	_, err := w.str.writeUnframed(buf)
-	w.trailerWritten = true
 	return err
 }
 
@@ -368,8 +340,12 @@ func (w *responseWriter) HTTPStream() *Stream {
 
 func (w *responseWriter) wasStreamHijacked() bool { return w.hijacked }
 
-func (w *responseWriter) Connection() *Conn {
-	return w.conn
+func (w *responseWriter) ReceivedSettings() <-chan struct{} {
+	return w.conn.ReceivedSettings()
+}
+
+func (w *responseWriter) Settings() *Settings {
+	return w.conn.Settings()
 }
 
 func (w *responseWriter) SetReadDeadline(deadline time.Time) error {

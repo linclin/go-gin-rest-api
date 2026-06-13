@@ -14,7 +14,7 @@ import (
 )
 
 // PostgreSQL internal numeric storage uses 16-bit "digits" with base of 10,000
-const nbase = 10000
+const nbase = 10_000
 
 const (
 	pgNumericNaN     = 0x00000000c0000000
@@ -28,7 +28,6 @@ const (
 )
 
 var (
-	big0    *big.Int = big.NewInt(0)
 	big1    *big.Int = big.NewInt(1)
 	big10   *big.Int = big.NewInt(10)
 	big100  *big.Int = big.NewInt(100)
@@ -71,13 +70,14 @@ func (n Numeric) NumericValue() (Numeric, error) {
 
 // Float64Value implements the [Float64Valuer] interface.
 func (n Numeric) Float64Value() (Float8, error) {
-	if !n.Valid {
+	switch {
+	case !n.Valid:
 		return Float8{}, nil
-	} else if n.NaN {
+	case n.NaN:
 		return Float8{Float64: math.NaN(), Valid: true}, nil
-	} else if n.InfinityModifier == Infinity {
+	case n.InfinityModifier == Infinity:
 		return Float8{Float64: math.Inf(1), Valid: true}, nil
-	} else if n.InfinityModifier == NegativeInfinity {
+	case n.InfinityModifier == NegativeInfinity:
 		return Float8{Float64: math.Inf(-1), Valid: true}, nil
 	}
 
@@ -129,11 +129,11 @@ func (n Numeric) Int64Value() (Int8, error) {
 }
 
 func (n *Numeric) ScanScientific(src string) error {
-	if !strings.ContainsAny("eE", src) {
+	if !strings.ContainsAny(src, "eE") {
 		return scanPlanTextAnyToNumericScanner{}.Scan([]byte(src), n)
 	}
 
-	if bigF, ok := new(big.Float).SetString(string(src)); ok {
+	if bigF, ok := new(big.Float).SetString(src); ok {
 		smallF, _ := bigF.Float64()
 		src = strconv.FormatFloat(smallF, 'f', -1, 64)
 	}
@@ -166,7 +166,7 @@ func (n *Numeric) toBigInt() (*big.Int, error) {
 	div.Exp(big10, big.NewInt(int64(-n.Exp)), nil)
 	remainder := &big.Int{}
 	num.DivMod(num, div, remainder)
-	if remainder.Cmp(big0) != 0 {
+	if remainder.Sign() != 0 {
 		return nil, fmt.Errorf("cannot convert %v to integer", n)
 	}
 	return num, nil
@@ -194,14 +194,11 @@ func parseNumericString(str string) (n *big.Int, exp int32, err error) {
 }
 
 func nbaseDigitsToInt64(src []byte) (accum int64, bytesRead, digitsRead int) {
-	digits := len(src) / 2
-	if digits > 4 {
-		digits = 4
-	}
+	digits := min(len(src)/2, 4)
 
 	rp := 0
 
-	for i := 0; i < digits; i++ {
+	for i := range digits {
 		if i > 0 {
 			accum *= nbase
 		}
@@ -219,8 +216,7 @@ func (n *Numeric) Scan(src any) error {
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		return scanPlanTextAnyToNumericScanner{}.Scan([]byte(src), n)
 	}
 
@@ -268,6 +264,10 @@ func (n *Numeric) UnmarshalJSON(src []byte) error {
 
 // numberString returns a string of the number. undefined if NaN, infinite, or NULL
 func (n Numeric) numberTextBytes() []byte {
+	if n.Int == nil {
+		return []byte("0")
+	}
+
 	intStr := n.Int.String()
 
 	buf := &bytes.Buffer{}
@@ -278,16 +278,17 @@ func (n Numeric) numberTextBytes() []byte {
 	}
 
 	exp := int(n.Exp)
-	if exp > 0 {
+	switch {
+	case exp > 0:
 		buf.WriteString(intStr)
-		for i := 0; i < exp; i++ {
+		for range exp {
 			buf.WriteByte('0')
 		}
-	} else if exp < 0 {
+	case exp < 0:
 		if len(intStr) <= -exp {
 			buf.WriteString("0.")
 			leadingZeros := -exp - len(intStr)
-			for i := 0; i < leadingZeros; i++ {
+			for range leadingZeros {
 				buf.WriteByte('0')
 			}
 			buf.WriteString(intStr)
@@ -297,7 +298,7 @@ func (n Numeric) numberTextBytes() []byte {
 			buf.WriteByte('.')
 			buf.WriteString(intStr[dpPos:])
 		}
-	} else {
+	default:
 		buf.WriteString(intStr)
 	}
 
@@ -362,11 +363,12 @@ func (encodePlanNumericCodecBinaryFloat64Valuer) Encode(value any, buf []byte) (
 		return nil, nil
 	}
 
-	if math.IsNaN(n.Float64) {
+	switch {
+	case math.IsNaN(n.Float64):
 		return encodeNumericBinary(Numeric{NaN: true, Valid: true}, buf)
-	} else if math.IsInf(n.Float64, 1) {
+	case math.IsInf(n.Float64, 1):
 		return encodeNumericBinary(Numeric{InfinityModifier: Infinity, Valid: true}, buf)
-	} else if math.IsInf(n.Float64, -1) {
+	case math.IsInf(n.Float64, -1):
 		return encodeNumericBinary(Numeric{InfinityModifier: NegativeInfinity, Valid: true}, buf)
 	}
 	num, exp, err := parseNumericString(strconv.FormatFloat(n.Float64, 'f', -1, 64))
@@ -397,19 +399,20 @@ func encodeNumericBinary(n Numeric, buf []byte) (newBuf []byte, err error) {
 		return nil, nil
 	}
 
-	if n.NaN {
+	switch {
+	case n.NaN:
 		buf = pgio.AppendUint64(buf, pgNumericNaN)
 		return buf, nil
-	} else if n.InfinityModifier == Infinity {
+	case n.InfinityModifier == Infinity:
 		buf = pgio.AppendUint64(buf, pgNumericPosInf)
 		return buf, nil
-	} else if n.InfinityModifier == NegativeInfinity {
+	case n.InfinityModifier == NegativeInfinity:
 		buf = pgio.AppendUint64(buf, pgNumericNegInf)
 		return buf, nil
 	}
 
 	var sign int16
-	if n.Int.Cmp(big0) < 0 {
+	if n.Int != nil && n.Int.Sign() < 0 {
 		sign = 16384
 	}
 
@@ -417,7 +420,9 @@ func encodeNumericBinary(n Numeric, buf []byte) (newBuf []byte, err error) {
 	wholePart := &big.Int{}
 	fracPart := &big.Int{}
 	remainder := &big.Int{}
-	absInt.Abs(n.Int)
+	if n.Int != nil {
+		absInt.Abs(n.Int)
+	}
 
 	// Normalize absInt and exp to where exp is always a multiple of 4. This makes
 	// converting to 16-bit base 10,000 digits easier.
@@ -447,12 +452,12 @@ func encodeNumericBinary(n Numeric, buf []byte) (newBuf []byte, err error) {
 
 	var wholeDigits, fracDigits []int16
 
-	for wholePart.Cmp(big0) != 0 {
+	for wholePart.Sign() != 0 {
 		wholePart.DivMod(wholePart, bigNBase, remainder)
 		wholeDigits = append(wholeDigits, int16(remainder.Int64()))
 	}
 
-	if fracPart.Cmp(big0) != 0 {
+	if fracPart.Sign() != 0 {
 		for fracPart.Cmp(big1) != 0 {
 			fracPart.DivMod(fracPart, bigNBase, remainder)
 			fracDigits = append(fracDigits, int16(remainder.Int64()))
@@ -514,13 +519,14 @@ func (encodePlanNumericCodecTextFloat64Valuer) Encode(value any, buf []byte) (ne
 		return nil, nil
 	}
 
-	if math.IsNaN(n.Float64) {
+	switch {
+	case math.IsNaN(n.Float64):
 		buf = append(buf, "NaN"...)
-	} else if math.IsInf(n.Float64, 1) {
+	case math.IsInf(n.Float64, 1):
 		buf = append(buf, "Infinity"...)
-	} else if math.IsInf(n.Float64, -1) {
+	case math.IsInf(n.Float64, -1):
 		buf = append(buf, "-Infinity"...)
-	} else {
+	default:
 		buf = append(buf, strconv.FormatFloat(n.Float64, 'f', -1, 64)...)
 	}
 	return buf, nil
@@ -547,13 +553,14 @@ func encodeNumericText(n Numeric, buf []byte) (newBuf []byte, err error) {
 		return nil, nil
 	}
 
-	if n.NaN {
+	switch {
+	case n.NaN:
 		buf = append(buf, "NaN"...)
 		return buf, nil
-	} else if n.InfinityModifier == Infinity {
+	case n.InfinityModifier == Infinity:
 		buf = append(buf, "Infinity"...)
 		return buf, nil
-	} else if n.InfinityModifier == NegativeInfinity {
+	case n.InfinityModifier == NegativeInfinity:
 		buf = append(buf, "-Infinity"...)
 		return buf, nil
 	}
@@ -613,11 +620,12 @@ func (scanPlanBinaryNumericToNumericScanner) Scan(src []byte, dst any) error {
 	dscale := int16(binary.BigEndian.Uint16(src[rp:]))
 	rp += 2
 
-	if sign == pgNumericNaNSign {
+	switch sign {
+	case pgNumericNaNSign:
 		return scanner.ScanNumeric(Numeric{NaN: true, Valid: true})
-	} else if sign == pgNumericPosInfSign {
+	case pgNumericPosInfSign:
 		return scanner.ScanNumeric(Numeric{InfinityModifier: Infinity, Valid: true})
-	} else if sign == pgNumericNegInfSign {
+	case pgNumericNegInfSign:
 		return scanner.ScanNumeric(Numeric{InfinityModifier: NegativeInfinity, Valid: true})
 	}
 
@@ -658,18 +666,19 @@ func (scanPlanBinaryNumericToNumericScanner) Scan(src []byte, dst any) error {
 	exp := (int32(weight) - int32(ndigits) + 1) * 4
 
 	if dscale > 0 {
-		fracNBaseDigits := int16(int32(ndigits) - int32(weight) - 1)
+		fracNBaseDigits := int(ndigits) - int(weight) - 1
 		fracDecimalDigits := fracNBaseDigits * 4
+		dscaleInt := int(dscale)
 
-		if dscale > fracDecimalDigits {
-			multCount := int(dscale - fracDecimalDigits)
-			for i := 0; i < multCount; i++ {
+		if dscaleInt > fracDecimalDigits {
+			multCount := dscaleInt - fracDecimalDigits
+			for range multCount {
 				accum.Mul(accum, big10)
 				exp--
 			}
-		} else if dscale < fracDecimalDigits {
-			divCount := int(fracDecimalDigits - dscale)
-			for i := 0; i < divCount; i++ {
+		} else if dscaleInt < fracDecimalDigits {
+			divCount := fracDecimalDigits - dscaleInt
+			for range divCount {
 				accum.Div(accum, big10)
 				exp++
 			}
@@ -681,7 +690,7 @@ func (scanPlanBinaryNumericToNumericScanner) Scan(src []byte, dst any) error {
 	if exp >= 0 {
 		for {
 			reduced.DivMod(accum, big10, remainder)
-			if remainder.Cmp(big0) != 0 {
+			if remainder.Sign() != 0 {
 				break
 			}
 			accum.Set(reduced)
@@ -781,11 +790,12 @@ func (scanPlanTextAnyToNumericScanner) Scan(src []byte, dst any) error {
 		return scanner.ScanNumeric(Numeric{})
 	}
 
-	if string(src) == "NaN" {
+	switch string(src) {
+	case "NaN":
 		return scanner.ScanNumeric(Numeric{NaN: true, Valid: true})
-	} else if string(src) == "Infinity" {
+	case "Infinity":
 		return scanner.ScanNumeric(Numeric{InfinityModifier: Infinity, Valid: true})
-	} else if string(src) == "-Infinity" {
+	case "-Infinity":
 		return scanner.ScanNumeric(Numeric{InfinityModifier: NegativeInfinity, Valid: true})
 	}
 

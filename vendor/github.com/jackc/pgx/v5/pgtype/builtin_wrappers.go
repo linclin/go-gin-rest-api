@@ -822,7 +822,7 @@ func (a *anyMultiDimSliceArray) Index(i int) any {
 	for j := len(a.dims) - 1; j >= 0; j-- {
 		dimLen := int(a.dims[j].Length)
 		indexes[j] = i % dimLen
-		i = i / dimLen
+		i /= dimLen
 	}
 
 	v := a.slice
@@ -892,7 +892,7 @@ func (a *anyMultiDimSliceArray) makeMultidimensionalSlice(sliceType reflect.Type
 
 	sliceLen := int(dimensions[0].Length)
 	slice := reflect.MakeSlice(sliceType, sliceLen, sliceLen)
-	for i := 0; i < sliceLen; i++ {
+	for i := range sliceLen {
 		subSlice := a.makeMultidimensionalSlice(sliceType.Elem(), dimensions[1:], flatSlice, flatSliceIdx+(i*int(dimensions[1].Length)))
 		slice.Index(i).Set(subSlice)
 	}
