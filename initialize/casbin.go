@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-gin-rest-api/pkg/global"
 	"go-gin-rest-api/pkg/utils"
+	"os"
 	"time"
 
 	"github.com/casbin/casbin/v2"
@@ -32,9 +33,13 @@ func InitCasbin() {
 	// 加载策略
 	global.CasbinACLEnforcer.StartAutoLoadPolicy(time.Minute * time.Duration(1))
 	//global.CasbinACLEnforcer.EnableEnforce(false)
-	// 添加API系统权限
-	global.CasbinACLEnforcer.AddPolicy("api-00000001", "/*", "*", "*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)", "allow")
-	global.CasbinACLEnforcer.AddPolicy("api-00000002", "/*", "*", "*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)", "allow")
+	// 添加API系统权限（仅当对应环境变量设置时才授权）
+	if os.Getenv("SYSTEM_API_SECRET_1") != "" {
+		global.CasbinACLEnforcer.AddPolicy("api-00000001", "/*", "*", "*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)", "allow")
+	}
+	if os.Getenv("SYSTEM_API_SECRET_2") != "" {
+		global.CasbinACLEnforcer.AddPolicy("api-00000002", "/*", "*", "*", "(GET)|(POST)|(PUT)|(DELETE)|(OPTIONS)|(PATCH)", "allow")
+	}
 	// 添加前台普通用户组权限
 	global.CasbinACLEnforcer.AddPolicy("group_user", "/*", "*", "*", "GET", "allow")
 	// 添加前台操作用户组权限

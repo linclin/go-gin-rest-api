@@ -3,6 +3,7 @@ package sys
 import (
 	"fmt"
 	"go-gin-rest-api/pkg/global"
+	"os"
 
 	loggable "github.com/linclin/gorm2-loggable"
 	"gorm.io/gorm"
@@ -45,7 +46,7 @@ func InitSysSystem() {
 				ID: 1,
 			},
 			AppId:      "api-00000001",
-			AppSecret:  "fa2e25cb060c8d748fd16ac5210581f41",
+			AppSecret:  os.Getenv("SYSTEM_API_SECRET_1"),
 			SystemName: "api",
 			IP:         "",
 			Operator:   "lc",
@@ -55,13 +56,17 @@ func InitSysSystem() {
 				ID: 2,
 			},
 			AppId:      "api-00000002",
-			AppSecret:  "61c94399f47c485334b48f8f340bc07b2",
+			AppSecret:  os.Getenv("SYSTEM_API_SECRET_2"),
 			SystemName: "UI",
 			IP:         "",
 			Operator:   "lc",
 		},
 	}
 	for _, system := range systems {
+		if system.AppSecret == "" {
+			global.Log.Info("跳过系统账号 " + system.AppId + "：未设置环境变量")
+			continue
+		}
 		err := global.DB.Where(&system).FirstOrCreate(&system).Error
 		if err != nil {
 			global.Log.Error(fmt.Sprint("InitSysSystem 数据初始化失败", err.Error()))

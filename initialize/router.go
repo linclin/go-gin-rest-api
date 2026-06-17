@@ -62,7 +62,7 @@ func Routers() *gin.Engine {
 	// 添加跨域中间件, 让请求支持跨域
 	// 定义跨域配置
 	crosConfig := cors.Config{
-		AllowOrigins:     []string{"*", "http://localhost:3000", "http://127.0.0.1:3000"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://127.0.0.1:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Access-Control-Allow-Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "X-Auth-Token", "X-Real-IP"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -90,8 +90,10 @@ func Routers() *gin.Engine {
 			}),
 		),
 	)
-	// 初始化pprof
-	pprof.Register(r)
+	// 初始化pprof，仅非生产环境开启
+	if global.Conf.System.RunMode != "prd" {
+		pprof.Register(r)
+	}
 	// 初始化jwt auth中间件
 	authMiddleware, err := middleware.InitAuth()
 	if err != nil {
